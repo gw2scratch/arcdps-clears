@@ -20,6 +20,9 @@ mod settings;
 mod ui;
 mod translations;
 
+const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
+const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
+
 arcdps_export! {
     name: "Clears",
     sig: 0xC1EA55u32,
@@ -42,9 +45,6 @@ lazy_static! {
 pub struct Data {
     clears: ClearData
 }
-
-const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
-const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
 
 fn init() {
     std::thread::spawn(move || {
