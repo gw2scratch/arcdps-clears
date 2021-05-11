@@ -106,10 +106,12 @@ fn settings(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         .build() {
         settings.set_main_api_key(Some(ApiKey::new(api_key.to_str())));
     }
+    ui.same_line(0.0);
+    utils::help_marker(ui, tr.im_string("setting-gw2-api-key-description"));
 
     ui.checkbox(&tr.im_string("setting-short-encounter-names"), &mut settings.short_names);
-
-    // TODO: Add an explanation of where to get an API key.
+    ui.same_line(0.0);
+    utils::help_marker(ui, tr.im_string("setting-short-encounter-names-description"));
 }
 
 mod utils {
@@ -123,5 +125,14 @@ mod utils {
         let new_x = (current_x + column_width / 2. - text_width / 2.).max(current_x);
         ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
         ui.text(text);
+    }
+
+    pub fn help_marker<T : AsRef<str>>(ui: &Ui, text: T) {
+        ui.text_disabled("(?)");
+        if ui.is_item_hovered() {
+            ui.tooltip(|| {
+                ui.text(text);
+            });
+        }
     }
 }
