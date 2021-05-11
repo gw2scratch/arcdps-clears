@@ -83,11 +83,17 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
     }
     let mut data = DATA.lock().unwrap();
     let translation = TRANSLATION.lock().unwrap();
+    let workers = BACKGROUND_WORKERS.lock().unwrap();
+    if workers.is_none() {
+        // We wait for workers to get started first.
+        return;
+    }
 
     ui::draw_main_window(imgui_ui,
                          &mut ui_state,
                          &mut data,
                          &mut settings.as_mut().expect("Settings should be loaded at this point."),
+                         &workers.as_ref().expect("Workers should be created at this point."),
                          &translation,
     );
 

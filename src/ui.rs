@@ -3,12 +3,14 @@ use crate::translations::Translation;
 use crate::settings::{ApiKey, Settings};
 use arcdps::imgui::{im_str, ImString, TabItem, TableBgTarget, TableFlags, TabBar, Window, Ui};
 use crate::{Data};
+use crate::workers::BackgroundWorkers;
+use std::time::{SystemTime, Instant};
 
 pub struct UiState {
     pub ui_shown: bool,
 }
 
-pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settings: &mut Settings, tr: &Translation) {
+pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settings: &mut Settings, bg_workers: &BackgroundWorkers, tr: &Translation) {
     if !ui_state.ui_shown {
         return;
     }
@@ -23,7 +25,7 @@ pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settin
             TabBar::new(im_str!("main_tabs"))
                 .build(&ui, || {
                     TabItem::new(&tr.im_string("clears-tab-title"))
-                        .build(&ui, || { clears(ui, data, tr) });
+                        .build(&ui, || { clears(ui, data, bg_workers, tr) });
                     TabItem::new(&tr.im_string("friends-tab-title"))
                         .build(&ui, || { friends(ui, tr) });
                     TabItem::new(&tr.im_string("settings-tab-title"))
@@ -32,7 +34,7 @@ pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settin
         });
 }
 
-fn clears(ui: &Ui, data: &Data, tr: &Translation) {
+fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, tr: &Translation) {
     if let Some(raids) = data.clears.raids() {
         if let Some(clears) = data.clears.state() {
             let max_bosses = raids.wings().iter().map(|x| x.encounters().len()).max().unwrap_or_default();
@@ -57,7 +59,6 @@ fn clears(ui: &Ui, data: &Data, tr: &Translation) {
                             [157. / 255., 0. / 255., 6. / 255., 1.]
                         };
 
-                        // Center the text
                         utils::centered_text(&ui, &ImString::new(encounter.english_name()));
 
                         ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
@@ -66,7 +67,17 @@ fn clears(ui: &Ui, data: &Data, tr: &Translation) {
                 }
             }
             ui.end_table();
+        } else {
+            utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
+            utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-api-key-prompt"));
+            ui.text("");
+
+            let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+            let until_wakeup = time.saturating_duration_since(Instant::now());
+            utils::centered_text(&ui, &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")));
         }
+    } else {
+        ui.text(tr.im_string("clears-no-public-data-yet"))
     }
 }
 

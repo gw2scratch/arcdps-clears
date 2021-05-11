@@ -6,5 +6,10 @@
   "friends-tab-title": "Friends",
   "settings-tab-title": "Settings",
   "setting-gw2-api-key": "GW2 API Key",
-  "not-implemented-yet": "Not implemented yet."
+  "not-implemented-yet": "Not implemented yet.",
+  "clears-no-public-data-yet": "Data from the GW2 API is not yet available.",
+  "clears-no-clears-data-yet": "Clear data is not yet available.",
+  "clears-no-clears-data-api-key-prompt": "Have you added a valid API key in the settings?",
+  "next-refresh-secs-prefix": "Next refresh in ",
+  "next-refresh-secs-suffix": " seconds."
 }

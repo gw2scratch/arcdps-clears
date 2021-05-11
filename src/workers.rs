@@ -1,7 +1,7 @@
 use std::thread::{JoinHandle, sleep};
 use std::thread;
-use std::time::Duration;
-use std::sync::Mutex;
+use std::time::{Duration, SystemTime, Instant};
+use std::sync::{Mutex, Arc};
 use crate::{Data, Settings};
 use std::ops::Deref;
 use crate::api::{LiveApi, Gw2Api};
@@ -9,6 +9,13 @@ use crate::translations::Translation;
 
 pub struct BackgroundWorkers {
     api_worker_handle: JoinHandle<()>,
+    api_worker_next_wakeup: Arc<Mutex<Instant>>
+}
+
+impl BackgroundWorkers {
+    pub fn api_worker_next_wakeup(&self) -> &Arc<Mutex<Instant>> {
+        &self.api_worker_next_wakeup
+    }
 }
 
 pub fn start_workers(
@@ -16,6 +23,8 @@ pub fn start_workers(
     settings_mutex: &'static Mutex<Option<Settings>>,
     api: LiveApi,
 ) -> BackgroundWorkers {
+    let api_next_wakeup = Arc::new(Mutex::new(Instant::now()));
+    let api_next_wakeup_for_worker = api_next_wakeup.clone();
     BackgroundWorkers {
         api_worker_handle: thread::spawn(move || {
             loop {
@@ -27,7 +36,6 @@ pub fn start_workers(
                     }
                 }
 
-                // TODO: Separate api source from data and only lock data when saving it!
                 if let Some(main_key) = api_key {
                     // Do not refresh raid data once we have it once
                     if data_mutex.lock().unwrap().clears.raids().is_none() {
@@ -41,8 +49,11 @@ pub fn start_workers(
                     }
                 }
 
-                sleep(Duration::from_secs(60));
+                let sleep_duration = Duration::from_secs(60);
+                *api_next_wakeup_for_worker.lock().unwrap() = Instant::now() + sleep_duration;
+                sleep(sleep_duration);
             }
-        })
+        }),
+        api_worker_next_wakeup: api_next_wakeup
     }
 }
