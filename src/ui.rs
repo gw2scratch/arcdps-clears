@@ -89,11 +89,16 @@ fn settings(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     let mut api_key = settings.main_api_key().as_ref()
         .map(|x| ImString::new(x.key())).unwrap_or_default();
 
+    // This has to be a password box to protect streamers and users
+    // who may have others watching them.
     if ui.input_text(&tr.im_string("setting-gw2-api-key"), &mut api_key)
+        .password(true)
         .resize_buffer(true)
         .build() {
         settings.set_main_api_key(Some(ApiKey::new(api_key.to_str())));
     }
+
+    // TODO: Add an explanation of where to get an API key.
 }
 
 mod utils {
