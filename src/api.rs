@@ -106,7 +106,6 @@ impl Gw2Api for LiveApi {
                 }
             }
         }
-        //Ok(RaidClearState { finished_encounter_ids: Vec::new() })
     }
 }
 
