@@ -1,6 +1,6 @@
 use arcdps::arcdps_export;
 use arcdps::imgui;
-use arcdps::imgui::{im_str, Window, StyleColor, ImString, StyleVar, TabBar, TabItem};
+use arcdps::imgui::{im_str, Window, StyleColor, ImString, StyleVar, TabBar, TabItem, TableBgTarget, TableFlags, ImStr};
 use std::sync::Mutex;
 use lazy_static::lazy_static;
 use crate::clears::ClearData;
@@ -9,6 +9,7 @@ use crate::api::{ApiMock, LiveApi};
 use crate::workers::BackgroundWorkers;
 use std::ops::{Deref, DerefMut};
 use std::error::Error;
+use itertools::Itertools;
 
 mod api;
 mod clears;
@@ -17,7 +18,7 @@ mod settings;
 
 arcdps_export! {
     name: "Clears",
-    sig: 894894615u32,
+    sig: 0xC1EA55u32,
     options_end: options_end,
     imgui: imgui,
     init: init,
@@ -73,7 +74,8 @@ fn imgui(ui: &imgui::Ui, not_loading_or_character_selection: bool) {
     let mut data = DATA.lock().unwrap();
     let mut settings = SETTINGS.lock().unwrap();
 
-    //ui.show_demo_window(&mut true);
+    //ui.show_demo_window(&mut ui_state.ui_shown);
+
     Window::new(im_str!("Clears"))
         .always_auto_resize(true)
         .focus_on_appearing(false)
@@ -88,42 +90,43 @@ fn imgui(ui: &imgui::Ui, not_loading_or_character_selection: bool) {
                             if let Some(raids) = data.clears.raids() {
                                 if let Some(clears) = data.clears.state() {
                                     let max_bosses = raids.wings().iter().map(|x| x.encounters().len()).max().unwrap_or_default();
-
-                                    for wing in raids.wings() {
+                                    ui.begin_table_with_flags(im_str!("ClearsTable"), (max_bosses + 1) as i32, TableFlags::BORDERS);
+                                    ui.table_setup_column(&im_str!(""));
+                                    for boss in 0..max_bosses {
+                                        ui.table_setup_column(&im_str!("Boss {}", boss + 1));
+                                    }
+                                    ui.table_headers_row();
+                                    for (wing_index, wing) in raids.wings().iter().enumerate() {
+                                        ui.table_next_row();
+                                        ui.table_next_column();
+                                        ui.text(im_str!("W{}", wing_index + 1));
                                         for column in 0..max_bosses {
+                                            ui.table_next_column();
                                             if let Some(encounter) = wing.encounters().get(column) {
-                                                if column != 0 {
-                                                    ui.same_line(0.0);
-                                                }
-
                                                 let finished = clears.is_finished(&encounter);
 
-                                                if finished {
-                                                    let green = [0.0, 0.6, 0.0, 0.85];
-                                                    let color = ui.push_style_color(StyleColor::Button, green);
-                                                    let color2 = ui.push_style_color(StyleColor::ButtonHovered, green);
-                                                    let color3 = ui.push_style_color(StyleColor::ButtonActive, green);
-                                                    let var = ui.push_style_var(StyleVar::FramePadding([3.0, 3.0]));
-                                                    ui.button(&ImString::new(encounter.english_name()), [0., 0.]);
-                                                    color.pop(&ui);
-                                                    color2.pop(&ui);
-                                                    color3.pop(&ui);
-                                                    var.pop(&ui);
+                                                let bg_color = if finished {
+                                                    [8. / 255., 148. / 255., 0. / 255., 1.]
                                                 } else {
-                                                    let red = [0.6, 0.0, 0.0, 0.85];
-                                                    let color = ui.push_style_color(StyleColor::Button, red);
-                                                    let color2 = ui.push_style_color(StyleColor::ButtonHovered, red);
-                                                    let color3 = ui.push_style_color(StyleColor::ButtonActive, red);
-                                                    let var = ui.push_style_var(StyleVar::FramePadding([2.0, 3.0]));
-                                                    ui.button(&ImString::new(encounter.english_name()), [0., 0.]);
-                                                    color.pop(&ui);
-                                                    color2.pop(&ui);
-                                                    color3.pop(&ui);
-                                                    var.pop(&ui);
-                                                }
+                                                    [157. / 255., 0. / 255., 6. / 255., 1.]
+                                                };
+
+                                                let text = ImString::new(encounter.english_name());
+
+                                                // Center the text
+                                                let current_x = ui.cursor_pos()[0];
+                                                let text_width = ui.calc_text_size(&text, false, -1.0)[0];
+                                                let column_width = ui.current_column_width();
+                                                let new_x = (current_x + column_width / 2. - text_width / 2.).max(current_x);
+                                                ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
+                                                ui.text(text);
+
+                                                ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
                                             }
+                                            ui.next_column()
                                         }
                                     }
+                                    ui.end_table();
                                 }
                             }
                         });

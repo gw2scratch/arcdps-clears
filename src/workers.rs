@@ -18,7 +18,6 @@ pub fn start_workers(
     BackgroundWorkers {
         api_worker_handle: thread::spawn(move || {
             loop {
-                eprintln!("api worker tick, updates");
                 let mut api_key: Option<String> = None;
 
                 if let Some(settings) = settings_mutex.lock().unwrap().deref() {

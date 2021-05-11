@@ -56,8 +56,9 @@ impl RaidEncounter {
             capitalized
         }
         let parts = self.id.split("_");
-        parts.map(|x| {
-            if ["of", "in", "the"].contains(&x) {
+        parts.enumerate().map(|(i, x)| {
+            // The first word should always get capitalized
+            if i > 0 && ["of", "in", "the"].contains(&x) {
                 x.to_string()
             } else {
                 capitalize(x)
@@ -251,7 +252,7 @@ impl Gw2Api for ApiMock {
 
 #[cfg(test)]
 mod tests {
-    use crate::api::{parse_raids, EncounterType};
+    use crate::api::{parse_raids, EncounterType, parse_clears, RaidEncounter};
 
     #[test]
     fn raids_parsed_correctly() {
@@ -431,5 +432,30 @@ mod tests {
         assert_eq!(parsed.wings[0].encounters[1].encounter_type, EncounterType::Checkpoint);
         assert_eq!(parsed.wings[3].id, "bastion_of_the_penitent");
         assert_eq!(parsed.wings[3].encounters.len(), 4);
+    }
+
+    #[test]
+    fn clears_parsed_correctly() {
+        let api_response_json = r#"[
+    "gorseval",
+    "bandit_trio",
+    "slothasor",
+    "sabetha",
+    "matthias",
+    "xera",
+    "samarog",
+    "deimos",
+    "mursaat_overseer",
+    "cairn",
+    "voice_in_the_void",
+    "soulless_horror",
+    "conjured_amalgamate",
+    "adina",
+    "sabir"
+]
+"#;
+        let parsed = parse_clears(&api_response_json).expect("Failed to deserialize api data json.");
+        assert_eq!(parsed.finished_encounter_ids.len(), 15);
+        assert!(parsed.is_finished(RaidEncounter::))
     }
 }
