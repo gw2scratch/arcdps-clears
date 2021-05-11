@@ -57,15 +57,8 @@ fn clears(ui: &Ui, data: &Data, tr: &Translation) {
                             [157. / 255., 0. / 255., 6. / 255., 1.]
                         };
 
-                        let text = ImString::new(encounter.english_name());
-
                         // Center the text
-                        let current_x = ui.cursor_pos()[0];
-                        let text_width = ui.calc_text_size(&text, false, -1.0)[0];
-                        let column_width = ui.current_column_width();
-                        let new_x = (current_x + column_width / 2. - text_width / 2.).max(current_x);
-                        ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
-                        ui.text(text);
+                        utils::centered_text(&ui, &ImString::new(encounter.english_name()));
 
                         ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
                     }
@@ -89,5 +82,19 @@ fn settings(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         .resize_buffer(true)
         .build() {
         settings.set_main_api_key(Some(ApiKey::new(api_key.to_str())));
+    }
+}
+
+mod utils {
+    use super::*;
+    use arcdps::imgui::ImStr;
+
+    pub fn centered_text(ui: &Ui, text: &ImStr)  {
+        let current_x = ui.cursor_pos()[0];
+        let text_width = ui.calc_text_size(&text, false, -1.0)[0];
+        let column_width = ui.current_column_width();
+        let new_x = (current_x + column_width / 2. - text_width / 2.).max(current_x);
+        ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
+        ui.text(text);
     }
 }
