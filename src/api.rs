@@ -1,95 +1,16 @@
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use ureq::{Response, Error};
+use ureq::{Error, Response};
+
+use crate::clears::{EncounterType, RaidClearState, RaidEncounter, RaidWing, RaidWings};
 
 const LIVE_GW2_API_URL: &str = "https://api.guildwars2.com/";
-
-pub struct RaidWings {
-    wings: Vec<RaidWing>
-}
-
-impl RaidWings {
-    pub fn wings(&self) -> &Vec<RaidWing> {
-        &self.wings
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct RaidWing {
-    id: String,
-    #[serde(rename(deserialize = "events"))]
-    encounters: Vec<RaidEncounter>,
-}
-
-impl RaidWing {
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-    pub fn encounters(&self) -> &Vec<RaidEncounter> {
-        &self.encounters
-    }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct RaidEncounter {
-    id: String,
-    #[serde(rename(deserialize = "type"))]
-    encounter_type: EncounterType,
-}
-
-impl RaidEncounter {
-    pub fn id(&self) -> &str {
-        &self.id
-    }
-    pub fn encounter_type(&self) -> &EncounterType {
-        &self.encounter_type
-    }
-    pub fn english_name(&self) -> String {
-        fn capitalize(str: &str) -> String {
-            let capitalized = str.chars().enumerate().map(|(i, char)| {
-                if i == 0 {
-                    char.to_uppercase().next().unwrap()
-                } else {
-                    char
-                }
-            }).collect();
-            capitalized
-        }
-        let parts = self.id.split("_");
-        parts.enumerate().map(|(i, x)| {
-            // The first word should always get capitalized
-            if i > 0 && ["of", "in", "the"].contains(&x) {
-                x.to_string()
-            } else {
-                capitalize(x)
-            }
-        }).join(" ")
-    }
-}
-
-#[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]
-pub enum EncounterType {
-    Unknown,
-    Checkpoint,
-    Boss,
-}
 
 pub enum ApiError {
     UnknownError,
     InvalidKey,
     JsonDeserializationFailed,
     TooManyRequests,
-}
-
-pub struct RaidClearState {
-    // TODO: Store last update time as well
-    finished_encounter_ids: Vec<String>
-}
-
-impl RaidClearState {
-    pub fn is_finished(&self, encounter: &RaidEncounter) -> bool {
-        self.finished_encounter_ids.iter().any(|x| *x == encounter.id)
-    }
 }
 
 fn parse_raids(json: &str) -> Result<RaidWings, serde_json::Error> {
@@ -101,12 +22,12 @@ fn parse_raids(json: &str) -> Result<RaidWings, serde_json::Error> {
         wings: Vec<RaidWing>,
     }
     let raids: Vec<Raid> = serde_json::from_str(json)?;
-    Ok(RaidWings { wings: raids.into_iter().flat_map(|x| x.wings).collect() })
+    Ok(RaidWings::new(raids.into_iter().flat_map(|x| x.wings).collect()))
 }
 
 fn parse_clears(json: &str) -> Result<RaidClearState, serde_json::Error> {
     let cleared_ids: Vec<String> = serde_json::from_str(json)?;
-    Ok(RaidClearState {finished_encounter_ids: cleared_ids})
+    Ok(RaidClearState::new(cleared_ids))
 }
 
 pub trait Gw2Api {
@@ -199,60 +120,30 @@ impl ApiMock {
 
 impl Gw2Api for ApiMock {
     fn get_raids(&self) -> Result<RaidWings, ApiError> {
-        Ok(RaidWings {
-            wings: vec![
-                RaidWing {
-                    id: "spirit_vale".to_string(),
-                    encounters: vec![
-                        RaidEncounter {
-                            id: "vale_guardian".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                        RaidEncounter {
-                            id: "spirit_woods".to_string(),
-                            encounter_type: EncounterType::Checkpoint,
-                        },
-                        RaidEncounter {
-                            id: "gorseval".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                        RaidEncounter {
-                            id: "sabetha".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                    ],
-                },
-                RaidWing {
-                    id: "salvation_pass".to_string(),
-                    encounters: vec![
-                        RaidEncounter {
-                            id: "slothasor".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                        RaidEncounter {
-                            id: "bandit_trio".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                        RaidEncounter {
-                            id: "matthias".to_string(),
-                            encounter_type: EncounterType::Boss,
-                        },
-                    ],
-                },
-            ]
-        })
+        Ok(RaidWings::new(vec![
+            RaidWing::new("spirit_vale".to_string(), vec![
+                RaidEncounter::new("vale_guardian".to_string(), EncounterType::Boss),
+                RaidEncounter::new("spirit_woods".to_string(), EncounterType::Checkpoint),
+                RaidEncounter::new("gorseval".to_string(), EncounterType::Boss),
+                RaidEncounter::new("sabetha".to_string(), EncounterType::Boss),
+            ]),
+            RaidWing::new("salvation_pass".to_string(), vec![
+                RaidEncounter::new("slothasor".to_string(), EncounterType::Boss),
+                RaidEncounter::new("bandit_trio".to_string(), EncounterType::Boss),
+                RaidEncounter::new("matthias".to_string(), EncounterType::Boss),
+            ]),
+        ]))
     }
 
     fn get_raids_state(&self, _: &str) -> Result<RaidClearState, ApiError> {
-        Ok(RaidClearState {
-            finished_encounter_ids: vec!["gorseval".to_string(), "slothasor".to_string(), "bandit_trio".to_string()]
-        })
+        Ok(RaidClearState::new(vec!["gorseval".to_string(), "slothasor".to_string(), "bandit_trio".to_string()]))
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::api::{parse_raids, EncounterType, parse_clears, RaidEncounter};
+    use crate::api::{parse_clears, parse_raids};
+    use crate::clears::{EncounterType, RaidEncounter};
 
     #[test]
     fn raids_parsed_correctly() {
@@ -424,14 +315,14 @@ mod tests {
 ]
 "#;
         let parsed = parse_raids(&api_data_json).expect("Failed to deserialize api data json.");
-        assert_eq!(parsed.wings.len(), 7);
-        assert_eq!(parsed.wings[0].id, "spirit_vale");
-        assert_eq!(parsed.wings[0].encounters[0].id, "vale_guardian");
-        assert_eq!(parsed.wings[0].encounters[0].encounter_type, EncounterType::Boss);
-        assert_eq!(parsed.wings[0].encounters[1].id, "spirit_woods");
-        assert_eq!(parsed.wings[0].encounters[1].encounter_type, EncounterType::Checkpoint);
-        assert_eq!(parsed.wings[3].id, "bastion_of_the_penitent");
-        assert_eq!(parsed.wings[3].encounters.len(), 4);
+        assert_eq!(parsed.wings().len(), 7);
+        assert_eq!(parsed.wings()[0].id(), "spirit_vale");
+        assert_eq!(parsed.wings()[0].encounters()[0].id(), "vale_guardian");
+        assert_eq!(parsed.wings()[0].encounters()[0].encounter_type(), EncounterType::Boss);
+        assert_eq!(parsed.wings()[0].encounters()[1].id(), "spirit_woods");
+        assert_eq!(parsed.wings()[0].encounters()[1].encounter_type(), EncounterType::Checkpoint);
+        assert_eq!(parsed.wings()[3].id(), "bastion_of_the_penitent");
+        assert_eq!(parsed.wings()[3].encounters().len(), 4);
     }
 
     #[test]
@@ -455,7 +346,9 @@ mod tests {
 ]
 "#;
         let parsed = parse_clears(&api_response_json).expect("Failed to deserialize api data json.");
-        assert_eq!(parsed.finished_encounter_ids.len(), 15);
-        assert!(parsed.is_finished(RaidEncounter::))
+        assert_eq!(parsed.finished_encounter_ids().len(), 15);
+        assert!(parsed.is_finished(&RaidEncounter::new("gorseval".to_string(), EncounterType::Boss)));
+        assert!(parsed.is_finished(&RaidEncounter::new("adina".to_string(), EncounterType::Boss)));
+        assert!(!parsed.is_finished(&RaidEncounter::new("vale_guardian".to_string(), EncounterType::Boss)));
     }
 }
