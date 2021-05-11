@@ -78,27 +78,6 @@ impl RaidEncounter {
     pub fn encounter_type(&self) -> &EncounterType {
         &self.encounter_type
     }
-    pub fn english_name(&self) -> String {
-        fn capitalize(str: &str) -> String {
-            let capitalized = str.chars().enumerate().map(|(i, char)| {
-                if i == 0 {
-                    char.to_uppercase().next().unwrap()
-                } else {
-                    char
-                }
-            }).collect();
-            capitalized
-        }
-        let parts = self.id.split("_");
-        parts.enumerate().map(|(i, x)| {
-            // The first word should always get capitalized
-            if i > 0 && ["of", "in", "the"].contains(&x) {
-                x.to_string()
-            } else {
-                capitalize(x)
-            }
-        }).join(" ")
-    }
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Debug)]

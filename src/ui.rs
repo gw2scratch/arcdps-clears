@@ -1,5 +1,5 @@
 use arcdps::imgui;
-use crate::translations::Translation;
+use crate::translations::{Translation, encounter_english_name};
 use crate::settings::{ApiKey, Settings};
 use arcdps::imgui::{im_str, ImString, TabItem, TableBgTarget, TableFlags, TabBar, Window, Ui};
 use crate::{Data};
@@ -25,7 +25,7 @@ pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settin
             TabBar::new(im_str!("main_tabs"))
                 .build(&ui, || {
                     TabItem::new(&tr.im_string("clears-tab-title"))
-                        .build(&ui, || { clears(ui, data, bg_workers, tr) });
+                        .build(&ui, || { clears(ui, data, bg_workers, settings, tr) });
                     TabItem::new(&tr.im_string("friends-tab-title"))
                         .build(&ui, || { friends(ui, tr) });
                     TabItem::new(&tr.im_string("settings-tab-title"))
@@ -34,7 +34,7 @@ pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settin
         });
 }
 
-fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, tr: &Translation) {
+fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, settings: &Settings, tr: &Translation) {
     if let Some(raids) = data.clears.raids() {
         if let Some(clears) = data.clears.state() {
             let max_bosses = raids.wings().iter().map(|x| x.encounters().len()).max().unwrap_or_default();
@@ -59,7 +59,11 @@ fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, tr: &Translation
                             [157. / 255., 0. / 255., 6. / 255., 1.]
                         };
 
-                        utils::centered_text(&ui, &ImString::new(encounter.english_name()));
+                        if settings.short_names() {
+                            utils::centered_text(&ui, &tr.encounter_short_name_im_string(encounter));
+                        } else {
+                            utils::centered_text(&ui, &ImString::new(encounter_english_name(encounter)));
+                        }
 
                         ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
                     }
@@ -77,7 +81,12 @@ fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, tr: &Translation
             utils::centered_text(&ui, &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")));
         }
     } else {
-        ui.text(tr.im_string("clears-no-public-data-yet"))
+        ui.text(tr.im_string("clears-no-public-data-yet"));
+        ui.text("");
+
+        let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+        let until_wakeup = time.saturating_duration_since(Instant::now());
+        utils::centered_text(&ui, &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")));
     }
 }
 
@@ -97,6 +106,8 @@ fn settings(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         .build() {
         settings.set_main_api_key(Some(ApiKey::new(api_key.to_str())));
     }
+
+    ui.checkbox(im_str!("Short encounter names"), &mut settings.short_names);
 
     // TODO: Add an explanation of where to get an API key.
 }

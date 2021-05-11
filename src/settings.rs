@@ -6,7 +6,8 @@ use std::sync::Mutex;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
-    main_api_key: Option<ApiKey>
+    main_api_key: Option<ApiKey>,
+    pub(crate) short_names: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,12 +29,17 @@ impl ApiKey {
 impl Settings {
     fn default() -> Self {
         Settings {
-            main_api_key: None
+            main_api_key: None,
+            short_names: true
         }
     }
 
     pub fn main_api_key(&self) -> &Option<ApiKey> {
         &self.main_api_key
+    }
+
+    pub fn short_names(&self) -> bool {
+        self.short_names
     }
 
     pub fn set_main_api_key(&mut self, main_api_key: Option<ApiKey>) {
