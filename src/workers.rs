@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use crate::{Data, Settings};
 use std::ops::Deref;
 use crate::api::{LiveApi, Gw2Api};
+use crate::translations::Translation;
 
 pub struct BackgroundWorkers {
     api_worker_handle: JoinHandle<()>,
