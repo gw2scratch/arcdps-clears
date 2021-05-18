@@ -6,8 +6,14 @@ use std::sync::Mutex;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default)]
     main_api_key: Option<ApiKey>,
-    pub(crate) short_names: bool,
+    #[serde(default = "default_short_name")]
+    pub short_names: bool,
+}
+
+fn default_short_name() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize)]
