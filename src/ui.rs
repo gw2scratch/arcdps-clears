@@ -131,7 +131,9 @@ mod utils {
         ui.text_disabled("(?)");
         if ui.is_item_hovered() {
             ui.tooltip(|| {
+                let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 35.0);
                 ui.text(text);
+                wrap.pop(&ui);
             });
         }
     }
