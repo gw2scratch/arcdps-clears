@@ -11,12 +11,22 @@
     "setting-gw2-api-key-description": "Create on https://account.arena.net/applications, requires account and progression permissions.",
     "setting-short-encounter-names": "Short encounter names",
     "setting-short-encounter-names-description": "Show shorter names in the table instead of the official ones from the API.",
+    "setting-check-updates": "Check for updates",
+    "setting-check-updates-description": "Check for updates every time the game is launched, and show a window with details if one is available.",
     "not-implemented-yet": "Not implemented yet.",
     "clears-no-public-data-yet": "Data from the GW2 API is not yet available.",
     "clears-no-clears-data-yet": "Clear data is not yet available.",
     "clears-no-clears-data-api-key-prompt": "Have you added a valid API key in the settings?",
     "next-refresh-secs-prefix": "Next refresh in ",
-    "next-refresh-secs-suffix": " seconds."
+    "next-refresh-secs-suffix": " seconds.",
+    "update-window-title": "arcdps clears - update",
+    "update-available": "A new update is available!",
+    "update-not-available": "No new update available.",
+    "update-current-version-prefix": "Current version",
+    "update-new-version-prefix": "New version",
+    "update-button-download": "Download",
+    "update-button-changelog": "Changelog",
+    "update-button-ignore": "Ignore"
   },
   "encounter_short_names": {
     "vale_guardian": "VG",

@@ -8,7 +8,7 @@ use crate::settings::{Settings, ApiKey};
 use crate::translations::{Translation};
 use crate::api::{ApiMock, LiveApi};
 use crate::workers::BackgroundWorkers;
-use crate::ui::{UiState, draw_main_window};
+use crate::ui::{UiState, draw_ui};
 use std::ops::{Deref, DerefMut};
 use std::error::Error;
 use itertools::Itertools;
@@ -19,6 +19,7 @@ mod workers;
 mod settings;
 mod ui;
 mod translations;
+mod updates;
 
 const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
 const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
@@ -36,7 +37,7 @@ arcdps_export! {
 lazy_static! {
     static ref BACKGROUND_WORKERS: Mutex<Option<BackgroundWorkers>> = Mutex::new(None);
     static ref DATA: Mutex<Data> = Mutex::new(Data {clears: ClearData::new()});
-    static ref UI_STATE: Mutex<UiState> = Mutex::new(UiState {ui_shown: false});
+    static ref UI_STATE: Mutex<UiState> = Mutex::new(UiState::new());
     static ref SETTINGS: Mutex<Option<Settings>> = Mutex::new(None);
     // We fall back to the default translation before there's an attempt to load a translation.
     static ref TRANSLATION: Mutex<Translation> = Mutex::new(Translation::load_from_string(translations::get_default_translation_contents()).expect("Failed to load default translation!"));
@@ -54,6 +55,16 @@ fn init() {
         }
     });
     settings::load_bg(&SETTINGS, SETTINGS_FILENAME, Some(|| {
+        if SETTINGS.lock().unwrap().as_ref().expect("Settings should be loaded by now.").check_updates {
+            std::thread::spawn(move || {
+                // TODO: Log update check failures
+                if let Ok(Some(release)) = updates::get_update(&SETTINGS.lock().unwrap().as_ref().unwrap()) {
+                    let mut ui_state = UI_STATE.lock().unwrap();
+                    ui_state.update_window.release = Some(release);
+                    ui_state.update_window.shown = true;
+                }
+            });
+        }
         *BACKGROUND_WORKERS.lock().unwrap() = Some(workers::start_workers(&DATA, &SETTINGS, LiveApi::official()));
     }));
 }
@@ -89,15 +100,15 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
         return;
     }
 
-    ui::draw_main_window(imgui_ui,
-                         &mut ui_state,
-                         &mut data,
-                         &mut settings.as_mut().expect("Settings should be loaded at this point."),
-                         &workers.as_ref().expect("Workers should be created at this point."),
-                         &translation,
+    ui::draw_ui(imgui_ui,
+                &mut ui_state,
+                &mut data,
+                &mut settings.as_mut().expect("Settings should be loaded at this point."),
+                &workers.as_ref().expect("Workers should be created at this point."),
+                &translation,
     );
 
-    //ui.show_demo_window(&mut ui_state.ui_shown);
+    imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
 }
 
 fn options_end(ui: &imgui::Ui) {

@@ -51,9 +51,9 @@ impl LiveApi {
 
 impl Gw2Api for LiveApi {
     fn get_raids(&self) -> Result<RaidWings, ApiError> {
-        eprintln!("get_raids");
-        // TODO: user agent once we have a name (call header)
-        match ureq::get(&format!("{}v2/raids?ids=all", self.url)).call()
+        match ureq::get(&format!("{}v2/raids?ids=all", self.url))
+            .set("User-Agent", &format!("arcdps-clears v{}", env!("CARGO_PKG_VERSION")))
+            .call()
         {
             Ok(response) => {
                 if let Ok(text) = response.into_string() {
@@ -75,6 +75,7 @@ impl Gw2Api for LiveApi {
     fn get_raids_state(&self, api_key: &str) -> Result<RaidClearState, ApiError> {
         // TODO: Check last update in account data
         match ureq::get(&format!("{}v2/account/raids", self.url))
+            .set("User-Agent", &format!("arcdps-clears v{}", env!("CARGO_PKG_VERSION")))
             .set("Authorization", &format!("Bearer {}", api_key))
             .call() {
             Ok(response) => {

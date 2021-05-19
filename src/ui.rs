@@ -5,33 +5,99 @@ use arcdps::imgui::{im_str, ImString, TabItem, TableBgTarget, TableFlags, TabBar
 use crate::{Data};
 use crate::workers::BackgroundWorkers;
 use std::time::{SystemTime, Instant};
+use crate::updates::Release;
 
 pub struct UiState {
-    pub ui_shown: bool,
+    pub main_window: MainWindowState,
+    pub update_window: UpdateWindowState
 }
 
-pub fn draw_main_window(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settings: &mut Settings, bg_workers: &BackgroundWorkers, tr: &Translation) {
-    if !ui_state.ui_shown {
-        return;
+impl UiState {
+    pub fn new() -> Self {
+        UiState {
+            main_window: MainWindowState { shown: false },
+            update_window: UpdateWindowState { shown: false, release: None },
+        }
+    }
+}
+
+pub struct MainWindowState {
+    pub shown: bool
+}
+
+pub struct UpdateWindowState {
+    pub shown: bool,
+    pub release: Option<Release>
+}
+
+pub fn draw_ui(ui: &Ui, ui_state: &mut UiState, data: &mut Data, settings: &mut Settings, bg_workers: &BackgroundWorkers, tr: &Translation) {
+    if ui_state.main_window.shown {
+        Window::new(&tr.im_string("window-title"))
+            .always_auto_resize(true)
+            .focus_on_appearing(false)
+            .no_nav()
+            .collapsible(false)
+            .opened(&mut ui_state.main_window.shown)
+            .build(&ui, || {
+                TabBar::new(im_str!("main_tabs"))
+                    .build(&ui, || {
+                        TabItem::new(&tr.im_string("clears-tab-title"))
+                            .build(&ui, || { clears(ui, data, bg_workers, settings, tr) });
+                        TabItem::new(&tr.im_string("friends-tab-title"))
+                            .build(&ui, || { friends(ui, tr) });
+                        TabItem::new(&tr.im_string("settings-tab-title"))
+                            .build(&ui, || { self::settings(ui, settings, tr) });
+                    });
+            });
     }
 
-    Window::new(&tr.im_string("window-title"))
-        .always_auto_resize(true)
-        .focus_on_appearing(false)
-        .no_nav()
-        .collapsible(false)
-        .opened(&mut ui_state.ui_shown)
-        .build(&ui, || {
-            TabBar::new(im_str!("main_tabs"))
-                .build(&ui, || {
-                    TabItem::new(&tr.im_string("clears-tab-title"))
-                        .build(&ui, || { clears(ui, data, bg_workers, settings, tr) });
-                    TabItem::new(&tr.im_string("friends-tab-title"))
-                        .build(&ui, || { friends(ui, tr) });
-                    TabItem::new(&tr.im_string("settings-tab-title"))
-                        .build(&ui, || { self::settings(ui, settings, tr) });
-                });
-        });
+    if ui_state.update_window.shown {
+        let release = &ui_state.update_window.release;
+        let mut shown = ui_state.update_window.shown;
+        let mut close = false;
+        Window::new(&tr.im_string("update-window-title"))
+            .always_auto_resize(true)
+            .focus_on_appearing(false)
+            .no_nav()
+            .collapsible(false)
+            .opened(&mut shown)
+            .build(&ui, || {
+                if let Some(release) = release {
+                    ui.text(tr.im_string("update-available"));
+                    ui.separator();
+                    if ui.begin_table(im_str!("UpdateVersionColumns"), 2) {
+                        ui.table_next_row();
+                        ui.table_next_column();
+                        ui.text(tr.im_string("update-current-version-prefix"));
+                        ui.table_next_column();
+                        ui.text(env!("CARGO_PKG_VERSION"));
+                        ui.table_next_row();
+                        ui.table_next_column();
+                        ui.text(tr.im_string("update-new-version-prefix"));
+                        ui.table_next_column();
+                        ui.text(release.version());
+                        ui.end_table();
+                    }
+                    ui.separator();
+                    if ui.button(&tr.im_string("update-button-ignore"), [0.0, 0.0]) {
+                        settings.ignore_version(release.version());
+                        close = true;
+                    }
+                    ui.same_line(0.0);
+                    if ui.button(&tr.im_string("update-button-changelog"), [0.0, 0.0]) {
+                        open::that(release.changelog_url());
+                    }
+                    ui.same_line(0.0);
+                    if ui.button(&tr.im_string("update-button-download"), [0.0, 0.0]) {
+                        open::that(release.tool_site_url());
+                    }
+                } else {
+                    ui.text(tr.im_string("update-not-available"))
+                }
+            });
+
+        ui_state.update_window.shown = shown && !close;
+    }
 }
 
 fn clears(ui: &Ui, data: &Data, bg_workers: &BackgroundWorkers, settings: &Settings, tr: &Translation) {
@@ -112,6 +178,10 @@ fn settings(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     ui.checkbox(&tr.im_string("setting-short-encounter-names"), &mut settings.short_names);
     ui.same_line(0.0);
     utils::help_marker(ui, tr.im_string("setting-short-encounter-names-description"));
+
+    ui.checkbox(&tr.im_string("setting-check-updates"), &mut settings.check_updates);
+    ui.same_line(0.0);
+    utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
 }
 
 mod utils {
