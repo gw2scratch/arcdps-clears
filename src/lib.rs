@@ -27,7 +27,7 @@ const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
 arcdps_export! {
     name: "Clears",
     sig: 0xC1EA55u32,
-    options_end: options_end,
+    options_windows: options,
     imgui: imgui,
     init: init,
     release: release,
@@ -44,7 +44,7 @@ lazy_static! {
 }
 
 pub struct Data {
-    clears: ClearData
+    clears: ClearData,
 }
 
 impl Data {
@@ -117,13 +117,17 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
     imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
 }
 
-fn options_end(ui: &imgui::Ui) {
-    let tr = TRANSLATION.lock().unwrap();
-    let mut ui_state = UI_STATE.lock().unwrap();
-    /*
-    if ui.button(im_str!("Clears"), [ui.current_column_width(), ui.current_font_size() + 8.0]) {
-        ui_state.ui_shown = true;
+fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
+    if window_name.is_none() {
+        let tr = TRANSLATION.lock().unwrap();
+        let mut ui_state = UI_STATE.lock().unwrap();
+        /*
+        if ui.button(im_str!("Clears"), [ui.current_column_width(), ui.current_font_size() + 8.0]) {
+            ui_state.main_window.shown = true;
+        }
+        */
+        ui.checkbox(&tr.im_string("arcdps-menu-name"), &mut ui_state.main_window.shown);
     }
-    */
-    ui.checkbox(&tr.im_string("arcdps-menu-name"), &mut ui_state.main_window.shown);
+
+    return false;
 }
