@@ -21,4 +21,4 @@ uuid = { version = "0.8.2", features = ["serde", "v4"] }
 chrono = { version = "0.4.19", features = ["serde"] }
 
 [dependencies.arcdps]
-path = "../../arcdps_bindings/core"
+git = "https://github.com/greaka/arcdps_bindings.git"

@@ -2,7 +2,8 @@
 # It is not intended for manual editing.
 [[package]]
 name = "arcdps"
-version = "0.1.8"
+version = "0.5.0"
+source = "git+https://github.com/greaka/arcdps_bindings.git#70988e5f2a2de88ed0b53e00e746a4ef1ea26c2d"
 dependencies = [
  "arcdps_codegen",
  "imgui",
@@ -12,6 +13,7 @@ dependencies = [
 [[package]]
 name = "arcdps_codegen"
 version = "0.1.0"
+source = "git+https://github.com/greaka/arcdps_bindings.git#70988e5f2a2de88ed0b53e00e746a4ef1ea26c2d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -137,7 +139,7 @@ dependencies = [
 [[package]]
 name = "imgui"
 version = "0.7.0"
-source = "git+https://github.com/Sejsel/imgui-rs#7fcc7938c999a72b61ba1b489f017834b56a244a"
+source = "git+https://github.com/greaka/imgui-rs#f2552a170d7de724e03800e41d0523ddbc34f87e"
 dependencies = [
  "bitflags",
  "imgui-sys",
@@ -147,7 +149,7 @@ dependencies = [
 [[package]]
 name = "imgui-sys"
 version = "0.7.0"
-source = "git+https://github.com/Sejsel/imgui-rs#7fcc7938c999a72b61ba1b489f017834b56a244a"
+source = "git+https://github.com/greaka/imgui-rs#f2552a170d7de724e03800e41d0523ddbc34f87e"
 dependencies = [
  "cc",
  "chlorine",
