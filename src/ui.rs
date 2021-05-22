@@ -4,10 +4,7 @@ use crate::updates::Release;
 use crate::workers::{ApiJob, BackgroundWorkers};
 use crate::Data;
 use arcdps::imgui;
-use arcdps::imgui::{
-    im_str, ChildWindow, Condition, ImStr, ImString, Selectable, StyleVar, TabBar, TabItem,
-    TableBgTarget, TableFlags, Ui, Window,
-};
+use arcdps::imgui::{im_str, ChildWindow, Condition, ImStr, ImString, Selectable, StyleVar, TabBar, TabItem, TableBgTarget, TableFlags, Ui, Window, ColorEdit, ColorEditFlags};
 use std::time::{Instant, SystemTime};
 use uuid::Uuid;
 
@@ -436,9 +433,9 @@ fn clears(
                             let finished = clears.is_finished(&encounter);
 
                             let bg_color = if finished {
-                                [8. / 255., 148. / 255., 0. / 255., 1.]
+                                settings.finished_clear_color
                             } else {
-                                [157. / 255., 0. / 255., 6. / 255., 1.]
+                                settings.unfinished_clear_color
                             };
 
                             if settings.short_names() {
@@ -516,6 +513,20 @@ fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Trans
     );
     ui.same_line(0.0);
     utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
+
+    ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
+
+    ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 
     if ui.button(&tr.im_string("setting-button-manage-api-keys"), [0.0, 0.0]) {
         ui_state.api_key_window.shown = true;

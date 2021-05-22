@@ -15,6 +15,10 @@ pub struct Settings {
     pub short_names: bool,
     #[serde(default = "default_check_updates")]
     pub check_updates: bool,
+    #[serde(default = "default_finished_clear_color")]
+    pub finished_clear_color: [f32; 4],
+    #[serde(default = "default_unfinished_clear_color")]
+    pub unfinished_clear_color: [f32; 4],
 }
 
 fn default_short_name() -> bool {
@@ -25,6 +29,12 @@ fn default_check_updates() -> bool {
 }
 fn default_api_keys() -> Vec<ApiKey> {
     Vec::new()
+}
+fn default_finished_clear_color() -> [f32; 4] {
+    [23. / 255., 152. / 255., 16. / 255., 1.]
+}
+fn default_unfinished_clear_color() -> [f32; 4] {
+    [192. / 255., 24. / 255., 30. / 255., 1.]
 }
 
 #[derive(Serialize, Deserialize)]
@@ -57,7 +67,7 @@ impl ApiKey {
             id: new_api_key_id(),
             key: str.to_string(),
             data: ApiKeyData::empty(),
-            show_key_in_clears: default_show_key_in_clears()
+            show_key_in_clears: default_show_key_in_clears(),
         }
     }
     pub fn change_key(&mut self, str: &str) {
@@ -181,6 +191,8 @@ impl Settings {
             api_keys: default_api_keys(),
             short_names: default_short_name(),
             check_updates: default_check_updates(),
+            finished_clear_color: default_finished_clear_color(),
+            unfinished_clear_color: default_unfinished_clear_color(),
         }
     }
 
