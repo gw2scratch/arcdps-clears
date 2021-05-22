@@ -2,15 +2,18 @@ use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
 use crate::api::Gw2Api;
+use std::collections::HashMap;
+use uuid::Uuid;
+use crate::settings::ApiKey;
 
 pub struct ClearData {
     raids: Option<RaidWings>,
-    state: Option<RaidClearState>,
+    state: HashMap<Uuid, RaidClearState>,
 }
 
 impl ClearData {
     pub fn new() -> Self {
-        ClearData { raids: None, state: None }
+        ClearData { raids: None, state: HashMap::new() }
     }
 }
 
@@ -18,14 +21,18 @@ impl ClearData {
     pub fn raids(&self) -> &Option<RaidWings> {
         &self.raids
     }
-    pub fn state(&self) -> &Option<RaidClearState> {
-        &self.state
+    pub fn state(&self, key: &ApiKey) -> Option<&RaidClearState> {
+        self.state.get(key.id())
     }
     pub fn set_raids(&mut self, raids: Option<RaidWings>) {
         self.raids = raids;
     }
-    pub fn set_state(&mut self, state: Option<RaidClearState>) {
-        self.state = state;
+    pub fn set_state(&mut self, uuid: Uuid, state: Option<RaidClearState>) {
+        if let Some(state) = state {
+            self.state.insert(uuid, state);
+        } else {
+            self.state.remove(&uuid);
+        }
     }
 }
 
@@ -101,5 +108,9 @@ impl RaidClearState {
 impl RaidClearState {
     pub fn is_finished(&self, encounter: &RaidEncounter) -> bool {
         self.finished_encounter_ids.iter().any(|x| *x == encounter.id)
+    }
+
+    pub fn finished_encounter_ids(&self) -> &Vec<String> {
+        &self.finished_encounter_ids
     }
 }

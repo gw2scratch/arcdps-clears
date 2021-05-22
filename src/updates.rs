@@ -5,7 +5,7 @@ use std::fmt::Formatter;
 use version_compare::{VersionCompare, Version};
 use crate::settings::Settings;
 
-const FEED_URL: &str = "https://gw2scratch.com/releases/arcdps-clears.json";
+const FEED_URL: &str = "http://localhost:8080/releases/arcdps-clears.json";
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Release {

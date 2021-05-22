@@ -36,7 +36,7 @@ arcdps_export! {
 // This entire thing is probably overcomplicated.
 lazy_static! {
     static ref BACKGROUND_WORKERS: Mutex<Option<BackgroundWorkers>> = Mutex::new(None);
-    static ref DATA: Mutex<Data> = Mutex::new(Data {clears: ClearData::new()});
+    static ref DATA: Mutex<Data> = Mutex::new(Data::new());
     static ref UI_STATE: Mutex<UiState> = Mutex::new(UiState::new());
     static ref SETTINGS: Mutex<Option<Settings>> = Mutex::new(None);
     // We fall back to the default translation before there's an attempt to load a translation.
@@ -45,6 +45,12 @@ lazy_static! {
 
 pub struct Data {
     clears: ClearData
+}
+
+impl Data {
+    pub fn new() -> Self {
+        Data { clears: ClearData::new() }
+    }
 }
 
 fn init() {
