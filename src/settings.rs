@@ -15,16 +15,10 @@ pub struct Settings {
     pub short_names: bool,
     #[serde(default = "default_check_updates")]
     pub check_updates: bool,
-    // TODO: Remove and just keep check_updates
-    #[serde(default = "default_ignored_versions")]
-    ignored_versions: Vec<String>,
 }
 
 fn default_short_name() -> bool {
     true
-}
-fn default_ignored_versions() -> Vec<String> {
-    Vec::new()
 }
 fn default_check_updates() -> bool {
     true
@@ -186,7 +180,6 @@ impl Settings {
         Settings {
             api_keys: default_api_keys(),
             short_names: default_short_name(),
-            ignored_versions: default_ignored_versions(),
             check_updates: default_check_updates(),
         }
     }
@@ -209,14 +202,6 @@ impl Settings {
 
     pub fn short_names(&self) -> bool {
         self.short_names
-    }
-
-    pub fn is_ignored_version(&self, version: &str) -> bool {
-        self.ignored_versions.iter().any(|ver| ver == &version)
-    }
-
-    pub fn ignore_version(&mut self, version: &str) {
-        self.ignored_versions.push(version.to_string());
     }
 
     pub fn load_from_file(filename: &str) -> Result<Self, Box<dyn Error>> {

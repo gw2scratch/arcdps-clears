@@ -113,7 +113,7 @@ pub fn draw_ui(
                 if let Some(release) = release {
                     ui.text(tr.im_string("update-available"));
                     ui.separator();
-                    if ui.begin_table(im_str!("UpdateVersionColumns"), 2) {
+                    if ui.begin_table_with_flags(im_str!("UpdateVersionColumns"), 2, TableFlags::SIZING_FIXED_FIT) {
                         ui.table_next_row();
                         ui.table_next_column();
                         ui.text(tr.im_string("update-current-version-prefix"));
@@ -127,11 +127,6 @@ pub fn draw_ui(
                         ui.end_table();
                     }
                     ui.separator();
-                    if ui.button(&tr.im_string("update-button-ignore"), [0.0, 0.0]) {
-                        settings.ignore_version(release.version());
-                        close = true;
-                    }
-                    ui.same_line(0.0);
                     if ui.button(&tr.im_string("update-button-changelog"), [0.0, 0.0]) {
                         open::that(release.changelog_url());
                     }
@@ -228,7 +223,6 @@ pub fn draw_ui(
                             }
                             if key.data().account_data().is_some() || key.data().token_info().is_some() {
                                 ui.separator();
-                                // TODO: Also do SIZING_FIXED_FIT for updates and check how that looks
                                 if ui.begin_table_with_flags(im_str!("ApiKeyData"), 2, TableFlags::SIZING_FIXED_FIT) {
                                     ui.table_next_row();
                                     ui.table_next_column();

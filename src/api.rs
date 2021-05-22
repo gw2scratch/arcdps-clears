@@ -550,7 +550,7 @@ mod tests {
     }
 
     #[test]
-    fn token_info_parsed_correctly_key() {
+    fn token_info_parsed_correctly() {
         let api_response_json = r#"{
   "id": "EDBBF0DE-1234-5678-8E7A-000000000000",
   "name": "Clears",
