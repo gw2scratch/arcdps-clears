@@ -139,7 +139,7 @@ dependencies = [
 [[package]]
 name = "imgui"
 version = "0.7.0"
-source = "git+https://github.com/greaka/imgui-rs#f2552a170d7de724e03800e41d0523ddbc34f87e"
+source = "git+https://github.com/greaka/imgui-rs#ac6ba81974bc3811d1b4d8f614c67f7223e9081f"
 dependencies = [
  "bitflags",
  "imgui-sys",
@@ -149,7 +149,7 @@ dependencies = [
 [[package]]
 name = "imgui-sys"
 version = "0.7.0"
-source = "git+https://github.com/greaka/imgui-rs#f2552a170d7de724e03800e41d0523ddbc34f87e"
+source = "git+https://github.com/greaka/imgui-rs#ac6ba81974bc3811d1b4d8f614c67f7223e9081f"
 dependencies = [
  "cc",
  "chlorine",

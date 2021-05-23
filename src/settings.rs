@@ -19,6 +19,8 @@ pub struct Settings {
     pub finished_clear_color: [f32; 4],
     #[serde(default = "default_unfinished_clear_color")]
     pub unfinished_clear_color: [f32; 4],
+    #[serde(default = "default_clears_style")]
+    pub clears_style: ClearsStyle
 }
 
 fn default_short_name() -> bool {
@@ -35,6 +37,16 @@ fn default_finished_clear_color() -> [f32; 4] {
 }
 fn default_unfinished_clear_color() -> [f32; 4] {
     [192. / 255., 24. / 255., 30. / 255., 0.]
+}
+fn default_clears_style() -> ClearsStyle {
+    ClearsStyle::WingRows
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
+pub enum ClearsStyle {
+    WingColumns,
+    WingRows,
+    SingleRow,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -193,6 +205,7 @@ impl Settings {
             check_updates: default_check_updates(),
             finished_clear_color: default_finished_clear_color(),
             unfinished_clear_color: default_unfinished_clear_color(),
+            clears_style: default_clears_style()
         }
     }
 

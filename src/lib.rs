@@ -106,6 +106,9 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
         return;
     }
 
+    #[cfg(debug_assertions)]
+    imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
+
     ui::draw_ui(imgui_ui,
                 &mut ui_state,
                 &mut data,
@@ -113,8 +116,6 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
                 &workers.as_ref().expect("Workers should be created at this point."),
                 &translation,
     );
-
-    imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
 }
 
 fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
