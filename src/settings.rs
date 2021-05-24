@@ -20,7 +20,9 @@ pub struct Settings {
     #[serde(default = "default_unfinished_clear_color")]
     pub unfinished_clear_color: [f32; 4],
     #[serde(default = "default_clears_style")]
-    pub clears_style: ClearsStyle
+    pub clears_style: ClearsStyle,
+    #[serde(default = "default_account_header")]
+    pub account_header_style: AccountHeaderStyle,
 }
 
 fn default_short_name() -> bool {
@@ -40,6 +42,15 @@ fn default_unfinished_clear_color() -> [f32; 4] {
 }
 fn default_clears_style() -> ClearsStyle {
     ClearsStyle::WingRows
+}
+fn default_account_header() -> AccountHeaderStyle {
+    AccountHeaderStyle::CenteredText
+}
+
+#[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
+pub enum AccountHeaderStyle {
+    None,
+    CenteredText,
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -205,7 +216,8 @@ impl Settings {
             check_updates: default_check_updates(),
             finished_clear_color: default_finished_clear_color(),
             unfinished_clear_color: default_unfinished_clear_color(),
-            clears_style: default_clears_style()
+            clears_style: default_clears_style(),
+            account_header_style: default_account_header()
         }
     }
 

@@ -24,6 +24,8 @@
     "setting-clears-style-option-columns": "Raid wing columns",
     "setting-clears-style-option-single-row": "Single row per account",
     "setting-button-manage-api-keys": "Manage GW2 API keys",
+    "setting-clears-header-style": "Show account name headers",
+    "setting-clears-header-style-description": "Show account names in My clears. Useful if showing clears for multiple accounts. Does not affect the single row layout.",
     "not-implemented-yet": "Not implemented yet.",
     "clears-no-public-data-yet": "Data from the GW2 API is not yet available.",
     "clears-no-clears-data-yet": "Clear data is not yet available.",

@@ -1,4 +1,4 @@
-use crate::settings::{ApiKey, Settings, TokenType, ClearsStyle};
+use crate::settings::{ApiKey, Settings, TokenType, ClearsStyle, AccountHeaderStyle};
 use crate::translations::{encounter_english_name, Translation};
 use crate::updates::Release;
 use crate::workers::{ApiJob, BackgroundWorkers};
@@ -406,7 +406,11 @@ fn clears(
                     }
                     first_key = false;
 
-                    utils::centered_text(ui, &get_api_key_name(key, tr));
+                    match settings.account_header_style {
+                        AccountHeaderStyle::None => {}
+                        AccountHeaderStyle::CenteredText => utils::centered_text(ui, &get_api_key_name(key, tr)),
+                    };
+
                     if let Some(clears) = data.clears.state(key) {
                         ui.begin_table_with_flags(
                             &im_str!("ClearsTableRows##{}", key.id()),
@@ -478,7 +482,11 @@ fn clears(
                     }
                     first_key = false;
 
-                    utils::centered_text(ui, &get_api_key_name(key, tr));
+                    match settings.account_header_style {
+                        AccountHeaderStyle::None => {}
+                        AccountHeaderStyle::CenteredText => utils::centered_text(ui, &get_api_key_name(key, tr)),
+                    };
+
                     if let Some(clears) = data.clears.state(key) {
                         ui.begin_table_with_flags(
                             &im_str!("ClearsTableColumns##{}", key.id()),
@@ -741,23 +749,43 @@ fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Trans
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 
-    let style_options = [
+    // We currently only have two account header styles, so we use a checkbox.
+    // In the future, this may be changed into a combo box.
+    let mut show_account_headers = match settings.account_header_style {
+        AccountHeaderStyle::None => false,
+        AccountHeaderStyle::CenteredText => true
+    };
+
+    if ui.checkbox(
+        &tr.im_string("setting-clears-header-style"),
+        &mut show_account_headers
+    ) {
+        settings.account_header_style = match show_account_headers {
+            true => AccountHeaderStyle::CenteredText,
+            false => AccountHeaderStyle::None
+        };
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
+
+    let table_styles = [
         ClearsStyle::WingRows,
         ClearsStyle::WingColumns,
         ClearsStyle::SingleRow,
     ];
 
-    let mut style_index = style_options.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
+    let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
 
     if ComboBox::new(&tr.im_string("setting-clears-style"))
-        .build_simple(&ui, &mut style_index, &style_options, &|style|
+        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
             Cow::from(match style {
                 ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
                 ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
                 ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
             })
         ) {
-        settings.clears_style = style_options[style_index].clone();
+        settings.clears_style = table_styles[table_style_index];
     }
     ui.same_line(0.0);
     ui.align_text_to_frame_padding();
