@@ -594,7 +594,7 @@ fn clears(
                 for (wing_index, wing) in raids.wings().iter().enumerate() {
                     let inner_width = (ui.current_font_size() * 1.5).ceil() * wing.encounters().len() as f32
                         + (wing.encounters().len() - 1) as f32 // Inner borders
-                        + if wing_index == raids.wings().len() - 1 { 1.0 } else { 0.0 }; // Last column needs an extra pixel because of border offset
+                        + 2.0; // Outer borders
                     table_headers_names.push(im_str!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
                     ui.table_setup_column_with_weight(table_headers_names.last().unwrap(), TableColumnFlags::WIDTH_FIXED, inner_width);
                 }
