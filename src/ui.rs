@@ -564,6 +564,10 @@ fn clears(
                 borders add a border on the top as well, which only looks fine if there is
                 no gap between it and the header. We reduce this padding to zero and reintroduce it
                 manually in the headers.
+
+                Also note that getting good rendering of borders requires a very specific
+                configuration of flags that we found by experimenting, and in some cases vertical
+                borders are affected by horizontal ones.
                 */
 
                 let max_name_width = settings.api_keys.iter()
@@ -631,7 +635,7 @@ fn clears(
                     ui.begin_table_with_flags(
                         &im_str!("ClearsTableCompactWing{}", wing_index),
                         wing.encounters().len() as i32,
-                        TableFlags::NO_PAD_OUTER_X | TableFlags::NO_PAD_INNER_X | TableFlags::BORDERS_INNER | TableFlags::BORDERS_OUTER_V
+                        TableFlags::NO_PAD_OUTER_X | TableFlags::NO_PAD_INNER_X | TableFlags::BORDERS_INNER | TableFlags::BORDERS_OUTER_V | TableFlags::BORDERS_OUTER_H
                     );
 
                     for (encounter_index, encounter) in wing.encounters().iter().enumerate() {
