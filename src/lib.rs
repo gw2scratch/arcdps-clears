@@ -146,6 +146,14 @@ fn wnd_filter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
                 return false;
             }
         }
+
+        if let Some(api_window_keybind) = settings.api_window_keybind {
+            if key_down && key == api_window_keybind {
+                let shown = UI_STATE.lock().unwrap().api_key_window.shown;
+                UI_STATE.lock().unwrap().api_key_window.shown = !shown;
+                return false;
+            }
+        }
     }
 
     return true;

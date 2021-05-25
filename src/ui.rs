@@ -820,6 +820,15 @@ fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Trans
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-keybind-window-clears-description"));
 
+        /* Keybind: API key window */
+        utils::keybind_input(&ui, im_str!("##APIKeyWindowKeybindInput"), &mut settings.api_window_keybind, tr);
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        ui.text(tr.im_string("setting-keybind-window-apikeys"));
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-keybind-window-apikeys-description"));
+
         /* Close on escape */
         ui.checkbox(
             &tr.im_string("setting-close-window-with-escape"),

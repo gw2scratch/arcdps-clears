@@ -25,6 +25,8 @@ pub struct Settings {
     pub account_header_style: AccountHeaderStyle,
     #[serde(default = "default_main_window_keybind")]
     pub main_window_keybind: Option<usize>,
+    #[serde(default = "default_api_window_keybind")]
+    pub api_window_keybind: Option<usize>,
     #[serde(default = "default_close_window_with_escape")]
     pub close_window_with_escape: bool
 }
@@ -49,6 +51,9 @@ fn default_clears_style() -> ClearsStyle {
 }
 fn default_account_header() -> AccountHeaderStyle {
     AccountHeaderStyle::CenteredText
+}
+fn default_api_window_keybind() -> Option<usize> {
+    None
 }
 fn default_main_window_keybind() -> Option<usize> {
     // C (for clears)
@@ -233,6 +238,7 @@ impl Settings {
             clears_style: default_clears_style(),
             account_header_style: default_account_header(),
             main_window_keybind: default_main_window_keybind(),
+            api_window_keybind: default_api_window_keybind(),
             close_window_with_escape: default_close_window_with_escape(),
         }
     }
