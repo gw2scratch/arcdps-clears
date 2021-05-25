@@ -1,17 +1,14 @@
 use arcdps::arcdps_export;
 use arcdps::imgui;
-use arcdps::imgui::{im_str, Window, StyleColor, ImString, StyleVar, TabBar, TabItem, TableBgTarget, TableFlags, ImStr};
 use std::sync::Mutex;
 use lazy_static::lazy_static;
 use crate::clears::ClearData;
-use crate::settings::{Settings, ApiKey};
+use crate::settings::Settings;
 use crate::translations::{Translation};
-use crate::api::{ApiMock, LiveApi};
+use crate::api::LiveApi;
 use crate::workers::BackgroundWorkers;
-use crate::ui::{UiState, draw_ui};
-use std::ops::{Deref, DerefMut};
-use std::error::Error;
-use itertools::Itertools;
+use crate::ui::UiState;
+use std::ops::Deref;
 
 mod api;
 mod clears;
@@ -137,7 +134,7 @@ fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
 }
 
 
-fn wnd_filter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
+fn wnd_filter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
     if let Some(settings) = SETTINGS.lock().unwrap().as_ref() {
         if let Some(main_window_keybind) = settings.main_window_keybind {
             if key_down && key == main_window_keybind {
@@ -159,7 +156,7 @@ fn wnd_filter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
     return true;
 }
 
-fn wnd_nofilter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
+fn wnd_nofilter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
     if let Some(settings) = SETTINGS.lock().unwrap().as_ref() {
         if settings.close_window_with_escape {
             if key_down && key == input::KEY_ESCAPE {

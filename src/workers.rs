@@ -1,15 +1,12 @@
 use std::thread::{JoinHandle, sleep};
 use std::thread;
-use std::time::{Duration, SystemTime, Instant};
+use std::time::{Duration, Instant};
 use std::sync::{Mutex, Arc};
 use crate::{Data, Settings};
-use std::ops::Deref;
 use crate::api::{LiveApi, Gw2Api};
-use crate::translations::Translation;
 use uuid::Uuid;
-use std::sync::mpsc::{Sender, Receiver, RecvError};
+use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
-use crate::settings::{ApiKeyData, AccountData};
 
 pub struct BackgroundWorkers {
     api_sender: Sender<ApiJob>,

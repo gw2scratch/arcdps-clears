@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
 use std::fmt::Formatter;
-use version_compare::{VersionCompare, Version};
+use version_compare::Version;
 use crate::settings::Settings;
 
 const FEED_URL: &str = "https://gw2scratch.com/releases/arcdps-clears.json";
@@ -80,7 +80,7 @@ fn get_release_feed() -> Result<ReleaseFeed, Box<dyn Error>> {
     Ok(feed)
 }
 
-fn is_ignored(settings: &Settings, release: &Release) -> bool {
+fn is_ignored(_settings: &Settings, release: &Release) -> bool {
     // We ignore versions that are not newer
     if let Some(current_version) = Version::from(env!("CARGO_PKG_VERSION")) {
         if let Some(release_version) = Version::from(&release.version) {

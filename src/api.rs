@@ -1,10 +1,9 @@
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
-use ureq::{Error, Response};
+use ureq::Error;
 
 use crate::clears::{EncounterType, RaidClearState, RaidEncounter, RaidWing, RaidWings};
 use chrono::{DateTime, Utc, TimeZone};
-use crate::settings::{ApiKeyData, AccountData, TokenInfo, TokenType};
+use crate::settings::{AccountData, TokenInfo, TokenType};
 
 const USER_AGENT: &str = concat!("arcdps-clears v", env!("CARGO_PKG_VERSION"));
 const LIVE_GW2_API_URL: &str = "https://api.guildwars2.com/";
@@ -206,6 +205,7 @@ impl Gw2Api for LiveApi {
 pub struct ApiMock {}
 
 impl ApiMock {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         ApiMock {}
     }

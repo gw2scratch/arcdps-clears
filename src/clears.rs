@@ -1,7 +1,5 @@
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 
-use crate::api::Gw2Api;
 use std::collections::HashMap;
 use uuid::Uuid;
 use crate::settings::ApiKey;
