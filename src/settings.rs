@@ -23,6 +23,8 @@ pub struct Settings {
     pub clears_style: ClearsStyle,
     #[serde(default = "default_account_header")]
     pub account_header_style: AccountHeaderStyle,
+    #[serde(default = "default_main_window_keybind")]
+    pub main_window_keybind: Option<usize>,
 }
 
 fn default_short_name() -> bool {
@@ -45,6 +47,13 @@ fn default_clears_style() -> ClearsStyle {
 }
 fn default_account_header() -> AccountHeaderStyle {
     AccountHeaderStyle::CenteredText
+}
+fn default_main_window_keybind() -> Option<usize> {
+    // C (for clears)
+    // Note that arcdps uses this as a default keybind, but it seems to be an uncommonly used one.
+    // As we eat the input, there should be no issue and the behavior should be obvious. The user
+    // can change the conflicting keybind in our plugin or in arcdps itself if needed.
+    Some(67)
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -217,7 +226,8 @@ impl Settings {
             finished_clear_color: default_finished_clear_color(),
             unfinished_clear_color: default_unfinished_clear_color(),
             clears_style: default_clears_style(),
-            account_header_style: default_account_header()
+            account_header_style: default_account_header(),
+            main_window_keybind: default_main_window_keybind()
         }
     }
 

@@ -3,7 +3,7 @@
 [[package]]
 name = "arcdps"
 version = "0.5.0"
-source = "git+https://github.com/greaka/arcdps_bindings.git#debe2a2977680d6657b405178ac5901f3b7f79d4"
+source = "git+https://github.com/greaka/arcdps_bindings.git#12277a6e6ea6c40765957b3cccc42381c3d32e64"
 dependencies = [
  "arcdps_codegen",
  "imgui",
@@ -13,7 +13,7 @@ dependencies = [
 [[package]]
 name = "arcdps_codegen"
 version = "0.1.0"
-source = "git+https://github.com/greaka/arcdps_bindings.git#debe2a2977680d6657b405178ac5901f3b7f79d4"
+source = "git+https://github.com/greaka/arcdps_bindings.git#12277a6e6ea6c40765957b3cccc42381c3d32e64"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -46,9 +46,9 @@ checksum = "63396b8a4b9de3f4fdfb320ab6080762242f66a8ef174c49d8e19b674db4cdbe"
 
 [[package]]
 name = "cc"
-version = "1.0.67"
+version = "1.0.68"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3c69b077ad434294d3ce9f1f6143a2a4b89a8a2d54ef813d85003a4fd1137fd"
+checksum = "4a72c244c1ff497a746a7e1fb3d14bd08420ecda70c8f25c7112f2781652d787"
 
 [[package]]
 name = "cfg-if"

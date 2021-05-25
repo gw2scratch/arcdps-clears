@@ -10,6 +10,9 @@
     "clears-compressed-layout-short-unknown": "?",
     "friends-tab-title": "Friends",
     "settings-tab-title": "Settings",
+    "settings-section-updates": "Updates",
+    "settings-section-style": "Style",
+    "settings-section-keybinds": "Keyboard shortcuts",
     "setting-short-encounter-names": "Short encounter names",
     "setting-short-encounter-names-description": "Show shorter names in the table instead of the official ones from the API.",
     "setting-check-updates": "Check for updates",
@@ -26,6 +29,8 @@
     "setting-button-manage-api-keys": "Manage GW2 API keys",
     "setting-clears-header-style": "Show account name headers",
     "setting-clears-header-style-description": "Show account names in My clears. Useful if showing clears for multiple accounts. Does not affect the single row layout.",
+    "setting-keybind-window-clears": "Open clears window",
+    "setting-keybind-window-clears-description": "The key for opening the clears window, used with the modifiers configured in arcdps. The numbers are virtual key codes, you can find tables on the internet. Leave empty to disable.",
     "not-implemented-yet": "Not implemented yet.",
     "clears-no-public-data-yet": "Data from the GW2 API is not yet available.",
     "clears-no-clears-data-yet": "Clear data is not yet available.",
@@ -70,7 +75,9 @@
     "api-key-warning-subtoken-url-missing-account-raids": "The subtoken does not have access to /v2/account/raids!",
     "api-key-show-in-my-clears-checkbox": "Show in My clears",
     "api-key-remove-key-button": "Remove key",
-    "api-key-new-key-name": "New API key"
+    "api-key-new-key-name": "New API key",
+    "input-keybind-unknown": "unknown",
+    "input-keybind-disabled": "disabled"
   },
   "encounter_short_names": {
     "vale_guardian": "VG",

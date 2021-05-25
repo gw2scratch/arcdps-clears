@@ -4,7 +4,7 @@ use crate::updates::Release;
 use crate::workers::{ApiJob, BackgroundWorkers};
 use crate::Data;
 use arcdps::imgui;
-use arcdps::imgui::{im_str, ChildWindow, Condition, ImStr, ImString, Selectable, StyleVar, TabBar, TabItem, TableBgTarget, TableFlags, Ui, Window, ColorEdit, ColorEditFlags, ComboBox, ComboBoxFlags, TableColumnFlags, StyleColor, TableRowFlags};
+use arcdps::imgui::{im_str, ChildWindow, Condition, ImStr, ImString, Selectable, StyleVar, TabBar, TabItem, TableBgTarget, TableFlags, Ui, Window, ColorEdit, ColorEditFlags, ComboBox, ComboBoxFlags, TableColumnFlags, StyleColor, TableRowFlags, ItemFlag, InputText, ImGuiInputTextFlags, CollapsingHeader, TreeNodeFlags};
 use std::time::{Instant, SystemTime};
 use uuid::Uuid;
 use std::borrow::Cow;
@@ -583,7 +583,7 @@ fn clears(
                 ui.begin_table_with_flags(
                     &im_str!("ClearsTableCompactOuter"),
                     (raids.wings().len() + 1) as i32,
-                    TableFlags::BORDERS_OUTER | TableFlags::BORDERS_INNER_V | TableFlags::NO_HOST_EXTEND_X | TableFlags::SIZING_FIXED_FIT | TableFlags::NO_PAD_INNER_X
+                    TableFlags::BORDERS_OUTER | TableFlags::BORDERS_INNER_V | TableFlags::NO_HOST_EXTEND_X | TableFlags::SIZING_FIXED_FIT | TableFlags::NO_PAD_INNER_X,
                 );
                 outer_cell_padding.pop(&ui);
 
@@ -635,7 +635,7 @@ fn clears(
                     ui.begin_table_with_flags(
                         &im_str!("ClearsTableCompactWing{}", wing_index),
                         wing.encounters().len() as i32,
-                        TableFlags::NO_PAD_OUTER_X | TableFlags::NO_PAD_INNER_X | TableFlags::BORDERS_INNER | TableFlags::BORDERS_OUTER_V | TableFlags::BORDERS_OUTER_H
+                        TableFlags::NO_PAD_OUTER_X | TableFlags::NO_PAD_INNER_X | TableFlags::BORDERS_INNER | TableFlags::BORDERS_OUTER_V | TableFlags::BORDERS_OUTER_H,
                     );
 
                     for (encounter_index, encounter) in wing.encounters().iter().enumerate() {
@@ -722,78 +722,102 @@ fn friends(ui: &Ui, tr: &Translation) {
 }
 
 fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
-    ui.checkbox(
-        &tr.im_string("setting-short-encounter-names"),
-        &mut settings.short_names,
-    );
-    ui.same_line(0.0);
-    utils::help_marker(
-        ui,
-        tr.im_string("setting-short-encounter-names-description"),
-    );
+    if CollapsingHeader::new(&tr.im_string("settings-section-updates"))
+        .default_open(true)
+        .build(&ui) {
+        ui.checkbox(
+            &tr.im_string("setting-check-updates"),
+            &mut settings.check_updates,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
+    }
 
-    ui.checkbox(
-        &tr.im_string("setting-check-updates"),
-        &mut settings.check_updates,
-    );
-    ui.same_line(0.0);
-    utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
+    if CollapsingHeader::new(&tr.im_string("settings-section-style"))
+        .default_open(true)
+        .build(&ui) {
+        /* Clear table styles */
+        let table_styles = [
+            ClearsStyle::WingRows,
+            ClearsStyle::WingColumns,
+            ClearsStyle::SingleRow,
+        ];
 
-    ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
-        .build(&ui);
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
+        let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
 
-    ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
-        .build(&ui);
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
+        if ComboBox::new(&tr.im_string("setting-clears-style"))
+            .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
+                Cow::from(match style {
+                    ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
+                    ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
+                    ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
+                }),
+            ) {
+            settings.clears_style = table_styles[table_style_index];
+        }
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
 
-    // We currently only have two account header styles, so we use a checkbox.
-    // In the future, this may be changed into a combo box.
-    let mut show_account_headers = match settings.account_header_style {
-        AccountHeaderStyle::None => false,
-        AccountHeaderStyle::CenteredText => true
-    };
+        /* Short encounter names */
+        ui.checkbox(
+            &tr.im_string("setting-short-encounter-names"),
+            &mut settings.short_names,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(
+            ui,
+            tr.im_string("setting-short-encounter-names-description"),
+        );
 
-    if ui.checkbox(
-        &tr.im_string("setting-clears-header-style"),
-        &mut show_account_headers
-    ) {
-        settings.account_header_style = match show_account_headers {
-            true => AccountHeaderStyle::CenteredText,
-            false => AccountHeaderStyle::None
+        /* Account header styles */
+        // We currently only have two account header styles, so we use a checkbox.
+        // In the future, this may be changed into a combo box.
+        let mut show_account_headers = match settings.account_header_style {
+            AccountHeaderStyle::None => false,
+            AccountHeaderStyle::CenteredText => true
         };
-    }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
 
-    let table_styles = [
-        ClearsStyle::WingRows,
-        ClearsStyle::WingColumns,
-        ClearsStyle::SingleRow,
-    ];
-
-    let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
-
-    if ComboBox::new(&tr.im_string("setting-clears-style"))
-        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
-            Cow::from(match style {
-                ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
-                ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
-                ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
-            })
+        if ui.checkbox(
+            &tr.im_string("setting-clears-header-style"),
+            &mut show_account_headers,
         ) {
-        settings.clears_style = table_styles[table_style_index];
+            settings.account_header_style = match show_account_headers {
+                true => AccountHeaderStyle::CenteredText,
+                false => AccountHeaderStyle::None
+            };
+        }
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
+
+        /* Colors */
+        ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
+            .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+            .build(&ui);
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
+
+        ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
+            .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+            .build(&ui);
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
     }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
+
+    if CollapsingHeader::new(&tr.im_string("settings-section-keybinds"))
+        .default_open(true)
+        .build(&ui) {
+        utils::keybind_input(&ui, im_str!("##MainWindowKeybindInput"), &mut settings.main_window_keybind, tr);
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        ui.text(tr.im_string("setting-keybind-window-clears"));
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-keybind-window-clears-description"));
+    }
 
     if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.current_column_width(), 0.0]) {
         ui_state.api_key_window.shown = true;
@@ -822,5 +846,44 @@ mod utils {
                 wrap.pop(&ui);
             });
         }
+    }
+
+    pub fn keybind_input(ui: &Ui, label: &ImStr, keybind: &mut Option<usize>, tr: &Translation) {
+        let mut keybind_buffer = match keybind {
+            None => ImString::new(""),
+            Some(key) => ImString::from(key.to_string())
+        };
+        let width_token = ui.push_item_width(ui.current_font_size() * 3.0);
+        if InputText::new(&ui, label, &mut keybind_buffer)
+            .chars_decimal(true)
+            .build() {
+            if let Ok(new_keybind) = keybind_buffer.to_str().parse() {
+                *keybind = Some(new_keybind);
+            } else {
+                *keybind = None;
+            }
+        }
+        width_token.pop(&ui);
+
+        let original_style = ui.clone_style();
+        let spacing_token = ui.push_style_var(StyleVar::ItemSpacing([1.0, original_style.item_spacing[1]]));
+        ui.same_line(0.0);
+        let mut preview_buffer = if let Some(keybind) = keybind {
+            if let Some(name) = crate::input::get_key_name(*keybind) {
+                ImString::new(name)
+            } else {
+                tr.im_string("input-keybind-unknown")
+            }
+        } else {
+            tr.im_string("input-keybind-disabled")
+        };
+        let width_token = ui.push_item_width(ui.calc_text_size(&preview_buffer, true, 0.0)[0] + original_style.frame_padding[0] * 2.0);
+        let alpha_token = ui.push_style_var(StyleVar::Alpha(0.5));
+        InputText::new(&ui, &im_str!("{}##preview", label), &mut preview_buffer)
+            .read_only(true)
+            .build();
+        alpha_token.pop(&ui);
+        width_token.pop(&ui);
+        spacing_token.pop(&ui);
     }
 }

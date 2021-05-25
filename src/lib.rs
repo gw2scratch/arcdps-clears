@@ -20,6 +20,7 @@ mod settings;
 mod ui;
 mod translations;
 mod updates;
+mod input;
 
 const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
 const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
@@ -31,6 +32,7 @@ arcdps_export! {
     imgui: imgui,
     init: init,
     release: release,
+    wnd_filter: wnd_filter,
 }
 
 // This entire thing is probably overcomplicated.
@@ -131,4 +133,19 @@ fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
     }
 
     return false;
+}
+
+
+fn wnd_filter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
+    if let Some(settings) = SETTINGS.lock().unwrap().as_ref() {
+        if let Some(main_window_keybind) = settings.main_window_keybind {
+            if key_down && key == main_window_keybind {
+                let shown = UI_STATE.lock().unwrap().main_window.shown;
+                UI_STATE.lock().unwrap().main_window.shown = !shown;
+                return false;
+            }
+        }
+    }
+
+    return true;
 }
