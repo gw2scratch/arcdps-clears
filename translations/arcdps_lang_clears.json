@@ -34,7 +34,7 @@
     "setting-keybind-window-apikeys": "Open API keys window",
     "setting-keybind-window-apikeys-description": "The key for opening the API key management window, used with the modifiers configured in arcdps. The numbers are virtual key codes, you can find tables on the internet. Leave empty to disable.",
     "setting-close-window-with-escape": "Esc closes windows",
-    "setting-close-window-with-escape-description": "Close open Clears windows by perssing Escape.",
+    "setting-close-window-with-escape-description": "Close open windows by pressing Escape.",
     "not-implemented-yet": "Not implemented yet.",
     "clears-no-public-data-yet": "Data from the GW2 API is not yet available.",
     "clears-no-clears-data-yet": "Clear data is not yet available.",
