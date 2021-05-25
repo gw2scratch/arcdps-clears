@@ -1,3 +1,5 @@
+pub const KEY_ESCAPE: usize = 27;
+
 pub fn get_key_name(key: usize) -> Option<&'static str> {
     match key {
         8 => Some("BACKSPACE"),
@@ -6,6 +8,7 @@ pub fn get_key_name(key: usize) -> Option<&'static str> {
         13 => Some("ENTER"),
         19 => Some("PAUSE"),
         20 => Some("CAPS LOCK"),
+        27 => Some("ESCAPE"),
         32 => Some("SPACEBAR"),
         33 => Some("PAGE UP"),
         34 => Some("PAGE DOWN"),

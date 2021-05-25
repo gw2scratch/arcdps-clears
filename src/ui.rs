@@ -810,6 +810,8 @@ fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Trans
     if CollapsingHeader::new(&tr.im_string("settings-section-keybinds"))
         .default_open(true)
         .build(&ui) {
+
+        /* Keybind: Main window */
         utils::keybind_input(&ui, im_str!("##MainWindowKeybindInput"), &mut settings.main_window_keybind, tr);
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
@@ -817,6 +819,17 @@ fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Trans
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-keybind-window-clears-description"));
+
+        /* Close on escape */
+        ui.checkbox(
+            &tr.im_string("setting-close-window-with-escape"),
+            &mut settings.close_window_with_escape,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(
+            ui,
+            tr.im_string("setting-close-window-with-escape-description"),
+        );
     }
 
     if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.current_column_width(), 0.0]) {

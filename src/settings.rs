@@ -25,6 +25,8 @@ pub struct Settings {
     pub account_header_style: AccountHeaderStyle,
     #[serde(default = "default_main_window_keybind")]
     pub main_window_keybind: Option<usize>,
+    #[serde(default = "default_close_window_with_escape")]
+    pub close_window_with_escape: bool
 }
 
 fn default_short_name() -> bool {
@@ -54,6 +56,9 @@ fn default_main_window_keybind() -> Option<usize> {
     // As we eat the input, there should be no issue and the behavior should be obvious. The user
     // can change the conflicting keybind in our plugin or in arcdps itself if needed.
     Some(67)
+}
+fn default_close_window_with_escape() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -227,7 +232,8 @@ impl Settings {
             unfinished_clear_color: default_unfinished_clear_color(),
             clears_style: default_clears_style(),
             account_header_style: default_account_header(),
-            main_window_keybind: default_main_window_keybind()
+            main_window_keybind: default_main_window_keybind(),
+            close_window_with_escape: default_close_window_with_escape(),
         }
     }
 

@@ -33,6 +33,7 @@ arcdps_export! {
     init: init,
     release: release,
     wnd_filter: wnd_filter,
+    wnd_nofilter: wnd_nofilter,
 }
 
 // This entire thing is probably overcomplicated.
@@ -143,6 +144,28 @@ fn wnd_filter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
                 let shown = UI_STATE.lock().unwrap().main_window.shown;
                 UI_STATE.lock().unwrap().main_window.shown = !shown;
                 return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+fn wnd_nofilter(key: usize, key_down: bool, prev_key_down: bool) -> bool {
+    if let Some(settings) = SETTINGS.lock().unwrap().as_ref() {
+        if settings.close_window_with_escape {
+            if key_down && key == input::KEY_ESCAPE {
+                // We do not close the update window to avoid accidental closes.
+
+                if UI_STATE.lock().unwrap().api_key_window.shown {
+                    UI_STATE.lock().unwrap().api_key_window.shown = false;
+                    return false;
+                }
+
+                if UI_STATE.lock().unwrap().main_window.shown {
+                    UI_STATE.lock().unwrap().main_window.shown = false;
+                    return false;
+                }
             }
         }
     }
