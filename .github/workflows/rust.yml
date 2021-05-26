@@ -1,4 +1,4 @@
-name: Rust
+name: Build and test
 
 on:
   push:
@@ -11,12 +11,18 @@ env:
 
 jobs:
   build:
-
     runs-on: windows-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --release
     - name: Run tests
       run: cargo test --verbose
+    - name: Rename dll
+      run: |
+          mv target/release/clears.dll target/release/arcdps_clears.dll
+    - name: Upload arcdps_clears.dll
+      uses: actions/upload-artifact@v2.2.3
+      with:
+        name: arcdps_clears.dll
+        path: target/release/arcdps_clears.dll
