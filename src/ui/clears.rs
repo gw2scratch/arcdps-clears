@@ -32,7 +32,7 @@ pub fn clears(
             }
 
             // We remove spacing here to remove space before the period to make the small button
-
+            // look like just another word in the sentence.
             let no_spacing = ui.push_style_var(StyleVar::ItemSpacing([0.0, 0.0]));
             ui.same_line(0.0);
             ui.text(tr.im_string("clears-intro-get-started-postfix"));
