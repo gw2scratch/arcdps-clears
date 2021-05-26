@@ -84,6 +84,10 @@
     "api-key-warning-subtoken-url-missing-account-raids": "The subtoken does not have access to /v2/account/raids!",
     "api-key-show-in-my-clears-checkbox": "Show in My clears",
     "api-key-remove-key-button": "Remove key",
+    "api-key-remove-modal-title": "Remove key?",
+    "api-key-remove-modal-warning": "This key will be deleted. Are you sure?",
+    "api-key-remove-modal-confirm": "OK",
+    "api-key-remove-modal-cancel": "Cancel",
     "api-key-new-key-name": "New API key",
     "input-keybind-unknown": "unknown",
     "input-keybind-disabled": "disabled"

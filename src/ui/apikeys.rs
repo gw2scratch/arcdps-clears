@@ -1,4 +1,4 @@
-use arcdps::imgui::{im_str, Window, Condition, ChildWindow, StyleVar, TableFlags, ImString, Selectable, Ui};
+use arcdps::imgui::{im_str, Window, Condition, ChildWindow, StyleVar, TableFlags, ImString, Selectable, Ui, PopupModal};
 use crate::ui::{get_api_key_name, SelectedApiKey, UiState};
 use crate::workers::{ApiJob, BackgroundWorkers};
 use crate::settings::{TokenType, ApiKey, Settings};
@@ -231,10 +231,30 @@ pub fn api_keys_window(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundW
                         }
                     });
                 if let SelectedApiKey::Id(uuid) = ui_state.api_key_window.selected_key {
+                    let popup_label = tr.im_string("api-key-remove-modal-title");
                     if ui.button(&tr.im_string("api-key-remove-key-button"), [0., 0.]) {
-                        // TODO: Confirmation box
-                        settings.remove_key(&uuid);
+                        ui.open_popup(&popup_label);
                     }
+                    PopupModal::new(&ui, &popup_label)
+                        .save_settings(false)
+                        .build(|| {
+                            ui.text(tr.im_string("api-key-remove-modal-warning"));
+                            ui.separator();
+                            if ui.begin_table_with_flags(im_str!("DeleteConfirmationPopupTable"), 2, TableFlags::SIZING_STRETCH_SAME) {
+                                ui.table_next_row();
+                                ui.table_next_column();
+                                if ui.button(&tr.im_string("api-key-remove-modal-confirm"), [ui.current_column_width(), 0.0]) {
+                                    settings.remove_key(&uuid);
+                                    ui.close_current_popup();
+                                }
+                                ui.set_item_default_focus();
+                                ui.table_next_column();
+                                if ui.button(&tr.im_string("api-key-remove-modal-cancel"), [ui.current_column_width(), 0.0]) {
+                                    ui.close_current_popup();
+                                }
+                                ui.end_table();
+                            }
+                        });
                 }
                 group.end(&ui);
             });
