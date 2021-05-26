@@ -20,7 +20,7 @@
     "settings-section-keybinds": "Keyboard shortcuts",
     "settings-section-behavior": "Behavior",
     "setting-hide-in-loading-screens": "Hide in loading screens",
-    "setting-hide-in-loading-screens-description": "Do not show any windows in loading screen or the character selection.",
+    "setting-hide-in-loading-screens-description": "Do not show any windows in loading screens or the character selection.",
     "setting-short-encounter-names": "Short encounter names",
     "setting-short-encounter-names-description": "Show shorter names in the table instead of the official ones from the API.",
     "setting-check-updates": "Check for updates",
