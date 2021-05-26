@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
 use std::hash::{Hash, Hasher};
-use std::io::{BufReader, BufWriter, Write};
+use std::io::{BufWriter, Write, Read};
 use std::sync::Mutex;
 use uuid::Uuid;
 
@@ -270,14 +270,20 @@ impl Settings {
     }
 
     pub fn load_from_file(filename: &str) -> Result<Self, Box<dyn Error>> {
-        let file = File::open(filename)?;
-        let reader = BufReader::new(file);
-        let settings: Settings = serde_json::from_reader(reader)?;
+        let mut file = File::open(filename)?;
+        let mut settings_json = String::new();
+        file.read_to_string(&mut settings_json)?;
 
+        // Try deserialization of settings from version 0.1.0 first
+        if let Some(settings) = load_old_settings(&settings_json) {
+            return Ok(settings);
+        }
+
+        let settings = serde_json::from_str(&settings_json)?;
         Ok(settings)
     }
 
-    #[must_use]
+        #[must_use]
     pub fn save_to_file(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         // We first serialize settings into a temporary file and then move the file
         let tmp_filename = format!("{}.tmp", filename);
@@ -308,4 +314,32 @@ pub fn load_bg(
             function();
         }
     });
+}
+
+
+fn load_old_settings(json: &str) -> Option<Settings> {
+    /// Settings from version 0.1.0
+    #[derive(Serialize, Deserialize)]
+    struct OldApiKey {
+        key: String
+    }
+
+    #[derive(Serialize, Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct OldSettings {
+        main_api_key: Option<OldApiKey>,
+        short_names: bool,
+    }
+
+    let old_setting_result: serde_json::Result<OldSettings> = serde_json::from_str(&json);
+    if let Ok(old_settings) = old_setting_result {
+        let mut settings = Settings::default();
+        settings.short_names = old_settings.short_names;
+        if let Some(main_key) = old_settings.main_api_key {
+            settings.api_keys.push(ApiKey::new(&main_key.key))
+        }
+
+        return Some(settings);
+    }
+    None
 }
