@@ -283,7 +283,7 @@ impl Settings {
         Ok(settings)
     }
 
-        #[must_use]
+    #[must_use]
     pub fn save_to_file(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         // We first serialize settings into a temporary file and then move the file
         let tmp_filename = format!("{}.tmp", filename);
