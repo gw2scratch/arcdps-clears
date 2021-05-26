@@ -11,7 +11,9 @@ pub fn centered_text(ui: &Ui, text: &ImStr) {
 }
 
 pub fn help_marker<T: AsRef<str>>(ui: &Ui, text: T) {
-    ui.text_disabled("(?)");
+    let alpha = ui.push_style_var(StyleVar::Alpha(0.5));
+    ui.text("(?)");
+    alpha.pop(&ui);
     if ui.is_item_hovered() {
         ui.tooltip(|| {
             let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 35.0);
