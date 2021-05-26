@@ -88,16 +88,18 @@ fn release() {
 }
 
 fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
-    if !not_loading_or_character_selection {
-        return;
-    }
-
-    let mut ui_state = UI_STATE.lock().unwrap();
     let mut settings = SETTINGS.lock().unwrap();
     if settings.is_none() {
         // We wait for settings to get loaded first.
         return;
     }
+
+    if settings.as_ref().expect("Settings should be loaded at this point").hide_in_loading_screens
+        && !not_loading_or_character_selection {
+        return;
+    }
+
+    let mut ui_state = UI_STATE.lock().unwrap();
     let mut data = DATA.lock().unwrap();
     let translation = TRANSLATION.lock().unwrap();
     let workers = BACKGROUND_WORKERS.lock().unwrap();

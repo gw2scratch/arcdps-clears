@@ -5,11 +5,35 @@ use std::borrow::Cow;
 use crate::translations::Translation;
 
 pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
-    if CollapsingHeader::new(&tr.im_string("settings-section-keybinds"))
+    if CollapsingHeader::new(&tr.im_string("settings-section-behavior"))
         .build(&ui) {
 
+        /* Hide in loading screens */
+        ui.checkbox(
+            &tr.im_string("setting-hide-in-loading-screens"),
+            &mut settings.hide_in_loading_screens,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(ui, tr.im_string("setting-hide-in-loading-screens-description"));
+
+        /* Close on escape */
+        ui.checkbox(
+            &im_str!("{}##behavior", tr.im_string("setting-close-window-with-escape")),
+            &mut settings.close_window_with_escape,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(ui, tr.im_string("setting-close-window-with-escape-description"));
+    }
+
+    if CollapsingHeader::new(&tr.im_string("settings-section-keybinds"))
+        .build(&ui) {
         /* Keybind: Main window */
-        utils::keybind_input(&ui, im_str!("##MainWindowKeybindInput"), &mut settings.main_window_keybind, tr);
+        utils::keybind_input(
+            &ui,
+            im_str!("##MainWindowKeybindInput"),
+            &mut settings.main_window_keybind,
+            tr
+        );
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
         ui.text(tr.im_string("setting-keybind-window-clears"));
@@ -18,7 +42,12 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.im_string("setting-keybind-window-clears-description"));
 
         /* Keybind: API key window */
-        utils::keybind_input(&ui, im_str!("##APIKeyWindowKeybindInput"), &mut settings.api_window_keybind, tr);
+        utils::keybind_input(
+            &ui,
+            im_str!("##APIKeyWindowKeybindInput"),
+            &mut settings.api_window_keybind,
+            tr
+        );
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
         ui.text(tr.im_string("setting-keybind-window-apikeys"));
@@ -26,16 +55,14 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-keybind-window-apikeys-description"));
 
+        ui.separator();
         /* Close on escape */
         ui.checkbox(
-            &tr.im_string("setting-close-window-with-escape"),
+            &im_str!("{}##keybinds", tr.im_string("setting-close-window-with-escape")),
             &mut settings.close_window_with_escape,
         );
         ui.same_line(0.0);
-        utils::help_marker(
-            ui,
-            tr.im_string("setting-close-window-with-escape-description"),
-        );
+        utils::help_marker(ui, tr.im_string("setting-close-window-with-escape-description"));
     }
 
     if CollapsingHeader::new(&tr.im_string("settings-section-style"))

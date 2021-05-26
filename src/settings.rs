@@ -28,7 +28,9 @@ pub struct Settings {
     #[serde(default = "default_api_window_keybind")]
     pub api_window_keybind: Option<usize>,
     #[serde(default = "default_close_window_with_escape")]
-    pub close_window_with_escape: bool
+    pub close_window_with_escape: bool,
+    #[serde(default = "default_hide_in_loading_screens")]
+    pub hide_in_loading_screens: bool,
 }
 
 fn default_short_name() -> bool {
@@ -64,6 +66,9 @@ fn default_main_window_keybind() -> Option<usize> {
 }
 fn default_close_window_with_escape() -> bool {
     true
+}
+fn default_hide_in_loading_screens() -> bool {
+    false
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -240,6 +245,7 @@ impl Settings {
             main_window_keybind: default_main_window_keybind(),
             api_window_keybind: default_api_window_keybind(),
             close_window_with_escape: default_close_window_with_escape(),
+            hide_in_loading_screens: default_hide_in_loading_screens()
         }
     }
 
