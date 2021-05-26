@@ -22,6 +22,27 @@ pub fn clears(
             .max()
             .unwrap_or_default();
 
+        if settings.api_keys.len() == 0 {
+            utils::centered_text(ui, &tr.im_string("clears-intro-welcome"));
+            ui.text("");
+            ui.text(tr.im_string("clears-intro-get-started-prefix"));
+            ui.same_line(0.0);
+            if ui.small_button(&tr.im_string("clears-intro-get-started-button")) {
+                ui_state.api_key_window.shown = true;
+            }
+
+            // We remove spacing here to remove space before the period to make the small button
+
+            let no_spacing = ui.push_style_var(StyleVar::ItemSpacing([0.0, 0.0]));
+            ui.same_line(0.0);
+            ui.text(tr.im_string("clears-intro-get-started-postfix"));
+            no_spacing.pop(&ui);
+        } else if settings.api_keys.iter().filter(|x| x.show_key_in_clears()).count() == 0 {
+            let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 25.0);
+            ui.text_wrapped(&tr.im_string("clears-all-accounts-hidden"));
+            wrap.pop(&ui);
+        }
+
         match settings.clears_style {
             ClearsStyle::WingRows => {
                 let mut first_key = true;
