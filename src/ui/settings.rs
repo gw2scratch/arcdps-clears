@@ -67,75 +67,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
 
     if CollapsingHeader::new(&tr.im_string("settings-section-style"))
         .build(&ui) {
-        /* Clear table styles */
-        let table_styles = [
-            ClearsStyle::WingRows,
-            ClearsStyle::WingColumns,
-            ClearsStyle::SingleRow,
-        ];
-
-        let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
-
-        if ComboBox::new(&tr.im_string("setting-clears-style"))
-            .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
-                Cow::from(match style {
-                    ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
-                    ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
-                    ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
-                }),
-            ) {
-            settings.clears_style = table_styles[table_style_index];
-        }
-        ui.same_line(0.0);
-        ui.align_text_to_frame_padding();
-        utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
-
-        /* Short encounter names */
-        ui.checkbox(
-            &tr.im_string("setting-short-encounter-names"),
-            &mut settings.short_names,
-        );
-        ui.same_line(0.0);
-        utils::help_marker(
-            ui,
-            tr.im_string("setting-short-encounter-names-description"),
-        );
-
-        /* Account header styles */
-        // We currently only have two account header styles, so we use a checkbox.
-        // In the future, this may be changed into a combo box.
-        let mut show_account_headers = match settings.account_header_style {
-            AccountHeaderStyle::None => false,
-            AccountHeaderStyle::CenteredText => true
-        };
-
-        if ui.checkbox(
-            &tr.im_string("setting-clears-header-style"),
-            &mut show_account_headers,
-        ) {
-            settings.account_header_style = match show_account_headers {
-                true => AccountHeaderStyle::CenteredText,
-                false => AccountHeaderStyle::None
-            };
-        }
-        ui.same_line(0.0);
-        ui.align_text_to_frame_padding();
-        utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
-
-        /* Colors */
-        ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
-            .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
-            .build(&ui);
-        ui.same_line(0.0);
-        ui.align_text_to_frame_padding();
-        utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
-
-        ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
-            .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
-            .build(&ui);
-        ui.same_line(0.0);
-        ui.align_text_to_frame_padding();
-        utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
+        style_section(ui, settings, tr);
     }
 
     if CollapsingHeader::new(&tr.im_string("settings-section-updates"))
@@ -151,4 +83,77 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.current_column_width(), 0.0]) {
         ui_state.api_key_window.shown = true;
     }
+}
+
+pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
+    /* Clear table styles */
+    let table_styles = [
+        ClearsStyle::WingRows,
+        ClearsStyle::WingColumns,
+        ClearsStyle::SingleRow,
+    ];
+
+    let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
+
+    if ComboBox::new(&tr.im_string("setting-clears-style"))
+        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
+            Cow::from(match style {
+                ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
+                ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
+                ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
+            }),
+        ) {
+        settings.clears_style = table_styles[table_style_index];
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
+
+    /* Short encounter names */
+    ui.checkbox(
+        &tr.im_string("setting-short-encounter-names"),
+        &mut settings.short_names,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-short-encounter-names-description"),
+    );
+
+    /* Account header styles */
+    // We currently only have two account header styles, so we use a checkbox.
+    // In the future, this may be changed into a combo box.
+    let mut show_account_headers = match settings.account_header_style {
+        AccountHeaderStyle::None => false,
+        AccountHeaderStyle::CenteredText => true
+    };
+
+    if ui.checkbox(
+        &tr.im_string("setting-clears-header-style"),
+        &mut show_account_headers,
+    ) {
+        settings.account_header_style = match show_account_headers {
+            true => AccountHeaderStyle::CenteredText,
+            false => AccountHeaderStyle::None
+        };
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
+
+    /* Colors */
+    ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
+
+    ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
+
 }

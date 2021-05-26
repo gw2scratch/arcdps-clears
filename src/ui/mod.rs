@@ -3,7 +3,7 @@ use crate::translations::Translation;
 use crate::updates::Release;
 use crate::workers::BackgroundWorkers;
 use crate::Data;
-use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString};
+use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, StyleVar};
 use uuid::Uuid;
 
 mod settings;
@@ -96,6 +96,16 @@ pub fn draw_ui(
                         .build(&ui, || friends::friends(ui, tr));
                     TabItem::new(&tr.im_string("settings-tab-title"))
                         .build(&ui, || settings::settings(ui, ui_state, settings, tr));
+                });
+
+                if ui.is_mouse_released(MouseButton::Right) && ui.is_window_hovered() {
+                    ui.open_popup(im_str!("##RightClickMenu"));
+                }
+
+                ui.popup(im_str!("##RightClickMenu"), || {
+                    let small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0]));
+                    settings::style_section(&ui, settings, tr);
+                    small_frame_padding.pop(&ui);
                 });
             });
         ui_state.main_window.shown = shown;
