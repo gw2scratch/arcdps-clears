@@ -18,9 +18,9 @@ jobs:
       run: |
           mv target/release/clears.dll target/release/arcdps_clears.dll
     - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          draft: true
-          files: target/release/arcdps_clears.dll
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        files: target/release/arcdps_clears.dll
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
