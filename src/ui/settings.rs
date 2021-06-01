@@ -143,14 +143,14 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
 
     /* Colors */
     ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
         .build(&ui);
     ui.same_line(0.0);
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
 
     ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
         .build(&ui);
     ui.same_line(0.0);
     ui.align_text_to_frame_padding();
