@@ -75,6 +75,7 @@ fn default_hide_in_loading_screens() -> bool {
 pub enum AccountHeaderStyle {
     None,
     CenteredText,
+    Collapsible
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -92,6 +93,8 @@ pub struct ApiKey {
     data: ApiKeyData,
     #[serde(default = "default_show_key_in_clears")]
     show_key_in_clears: bool,
+    #[serde(default = "default_expanded_in_clears")]
+    expanded_in_clears: bool
 }
 
 fn new_api_key_id() -> Uuid {
@@ -101,6 +104,8 @@ fn new_api_key_id() -> Uuid {
 fn default_show_key_in_clears() -> bool {
     true
 }
+
+fn default_expanded_in_clears() -> bool { true }
 
 impl Hash for ApiKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
@@ -115,6 +120,7 @@ impl ApiKey {
             key: str.to_string(),
             data: ApiKeyData::empty(),
             show_key_in_clears: default_show_key_in_clears(),
+            expanded_in_clears: default_expanded_in_clears()
         }
     }
     pub fn change_key(&mut self, str: &str) {
@@ -141,6 +147,12 @@ impl ApiKey {
     }
     pub fn show_key_in_clears_mut(&mut self) -> &mut bool {
         &mut self.show_key_in_clears
+    }
+    pub fn expanded_in_clears(&self) -> bool {
+        self.expanded_in_clears
+    }
+    pub fn expanded_in_clears_mut(&mut self) -> &mut bool {
+        &mut self.expanded_in_clears
     }
 }
 

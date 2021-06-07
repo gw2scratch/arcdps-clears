@@ -1,17 +1,18 @@
-use arcdps::imgui::{im_str, Ui, ImString, TableColumnFlags, StyleColor, StyleVar, TableBgTarget, TableFlags, TableRowFlags};
+use arcdps::imgui::{im_str, Ui, ImString, TableColumnFlags, StyleColor, StyleVar, TableBgTarget, TableFlags, TableRowFlags, CollapsingHeader};
 use crate::ui::{utils, get_api_key_name, UiState};
 use std::time::Instant;
 use crate::translations::{encounter_english_name, Translation};
-use crate::settings::{ClearsStyle, AccountHeaderStyle, Settings};
+use crate::settings::{ClearsStyle, AccountHeaderStyle, Settings, ApiKey};
 use crate::workers::BackgroundWorkers;
 use crate::Data;
+use crate::input::get_key_name;
 
 pub fn clears(
     ui: &Ui,
     ui_state: &mut UiState,
     data: &Data,
     bg_workers: &BackgroundWorkers,
-    settings: &Settings,
+    settings: &mut Settings,
     tr: &Translation,
 ) {
     if let Some(raids) = data.clears.raids() {
@@ -46,147 +47,141 @@ pub fn clears(
         match settings.clears_style {
             ClearsStyle::WingRows => {
                 let mut first_key = true;
-                for key in settings.api_keys() {
+                for key in settings.api_keys.iter_mut() {
                     if !key.show_key_in_clears() {
                         continue;
                     }
 
                     if !first_key {
-                        ui.separator();
+                        account_separator(&ui, settings.account_header_style);
                     }
                     first_key = false;
 
-                    match settings.account_header_style {
-                        AccountHeaderStyle::None => {}
-                        AccountHeaderStyle::CenteredText => utils::centered_text(ui, &get_api_key_name(key, tr)),
-                    };
-
-                    if let Some(clears) = data.clears.state(key) {
-                        ui.begin_table_with_flags(
-                            &im_str!("ClearsTableRows##{}", key.id()),
-                            (max_bosses + 1) as i32,
-                            TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
-                        );
-                        ui.table_setup_column(&im_str!(""));
-                        for boss in 0..max_bosses {
-                            ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
-                        }
-                        ui.table_headers_row();
-                        for (wing_index, wing) in raids.wings().iter().enumerate() {
-                            ui.table_next_row();
-                            ui.table_next_column();
-                            ui.text(im_str!("{}{}", tr.im_string("clears-wing-prefix"), wing_index + 1));
-                            for column in 0..max_bosses {
-                                ui.table_next_column();
-                                if let Some(encounter) = wing.encounters().get(column) {
-                                    let finished = clears.is_finished(&encounter);
-
-                                    let bg_color = if finished {
-                                        settings.finished_clear_color
-                                    } else {
-                                        settings.unfinished_clear_color
-                                    };
-
-                                    if settings.short_names() {
-                                        utils::centered_text(
-                                            &ui,
-                                            &tr.encounter_short_name_im_string(encounter),
-                                        );
-                                    } else {
-                                        utils::centered_text(
-                                            &ui,
-                                            &ImString::new(encounter_english_name(encounter)),
-                                        );
-                                    }
-
-                                    ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
-                                }
-                                ui.next_column()
+                    if account_header(ui, key, settings.account_header_style, tr) {
+                        if let Some(clears) = data.clears.state(key) {
+                            ui.begin_table_with_flags(
+                                &im_str!("ClearsTableRows##{}", key.id()),
+                                (max_bosses + 1) as i32,
+                                TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
+                            );
+                            ui.table_setup_column(&im_str!(""));
+                            for boss in 0..max_bosses {
+                                ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
                             }
-                        }
-                        ui.end_table();
-                    } else {
-                        // TODO: Deduplicate
-                        utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
-                        ui.text("");
-                        // TODO: Custom prompt for missing perms
+                            ui.table_headers_row();
+                            for (wing_index, wing) in raids.wings().iter().enumerate() {
+                                ui.table_next_row();
+                                ui.table_next_column();
+                                ui.text(im_str!("{}{}", tr.im_string("clears-wing-prefix"), wing_index + 1));
+                                for column in 0..max_bosses {
+                                    ui.table_next_column();
+                                    if let Some(encounter) = wing.encounters().get(column) {
+                                        let finished = clears.is_finished(&encounter);
 
-                        let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
-                        let until_wakeup = time.saturating_duration_since(Instant::now());
-                        utils::centered_text(
-                            &ui,
-                            &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
-                        );
+                                        let bg_color = if finished {
+                                            settings.finished_clear_color
+                                        } else {
+                                            settings.unfinished_clear_color
+                                        };
+
+                                        if settings.short_names {
+                                            utils::centered_text(
+                                                ui,
+                                                &tr.encounter_short_name_im_string(encounter),
+                                            );
+                                        } else {
+                                            utils::centered_text(
+                                                ui,
+                                                &ImString::new(encounter_english_name(encounter)),
+                                            );
+                                        }
+
+                                        ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
+                                    }
+                                    ui.next_column()
+                                }
+                            }
+                            ui.end_table();
+                        } else {
+                            // TODO: Deduplicate
+                            utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
+                            ui.text("");
+                            // TODO: Custom prompt for missing perms
+
+                            let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+                            let until_wakeup = time.saturating_duration_since(Instant::now());
+                            utils::centered_text(
+                                &ui,
+                                &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
+                            );
+                        }
                     }
                 }
             }
             ClearsStyle::WingColumns => {
                 let mut first_key = true;
-                for key in settings.api_keys() {
+                for key in settings.api_keys.iter_mut() {
                     if !key.show_key_in_clears() {
                         continue;
                     }
 
                     if !first_key {
-                        ui.separator();
+                        account_separator(&ui, settings.account_header_style);
                     }
                     first_key = false;
 
-                    match settings.account_header_style {
-                        AccountHeaderStyle::None => {}
-                        AccountHeaderStyle::CenteredText => utils::centered_text(ui, &get_api_key_name(key, tr)),
-                    };
-
-                    if let Some(clears) = data.clears.state(key) {
-                        ui.begin_table_with_flags(
-                            &im_str!("ClearsTableColumns##{}", key.id()),
-                            (raids.wings().len() + 1) as i32,
-                            TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
-                        );
-                        ui.table_setup_column(&im_str!(""));
-                        for (wing_index, _wing) in raids.wings().iter().enumerate() {
-                            ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
-                        }
-                        ui.table_headers_row();
-                        for boss in 0..max_bosses {
-                            ui.table_next_row();
-                            ui.table_next_column();
-                            ui.text(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
-                            for wing in raids.wings() {
-                                ui.table_next_column();
-                                if let Some(encounter) = wing.encounters().get(boss) {
-                                    let finished = clears.is_finished(&encounter);
-
-                                    let bg_color = if finished {
-                                        settings.finished_clear_color
-                                    } else {
-                                        settings.unfinished_clear_color
-                                    };
-
-                                    if settings.short_names() {
-                                        utils::centered_text(&ui, &tr.encounter_short_name_im_string(encounter));
-                                    } else {
-                                        utils::centered_text(&ui, &ImString::new(encounter_english_name(encounter)));
-                                    }
-
-                                    ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
-                                }
-                                ui.next_column()
+                    if account_header(ui, key, settings.account_header_style, tr) {
+                        if let Some(clears) = data.clears.state(key) {
+                            ui.begin_table_with_flags(
+                                &im_str!("ClearsTableColumns##{}", key.id()),
+                                (raids.wings().len() + 1) as i32,
+                                TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
+                            );
+                            ui.table_setup_column(&im_str!(""));
+                            for (wing_index, _wing) in raids.wings().iter().enumerate() {
+                                ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
                             }
-                        }
-                        ui.end_table();
-                    } else {
-                        // TODO: Deduplicate
-                        utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
-                        ui.text("");
-                        // TODO: Custom prompt for missing perms
+                            ui.table_headers_row();
+                            for boss in 0..max_bosses {
+                                ui.table_next_row();
+                                ui.table_next_column();
+                                ui.text(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
+                                for wing in raids.wings() {
+                                    ui.table_next_column();
+                                    if let Some(encounter) = wing.encounters().get(boss) {
+                                        let finished = clears.is_finished(&encounter);
 
-                        let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
-                        let until_wakeup = time.saturating_duration_since(Instant::now());
-                        utils::centered_text(
-                            &ui,
-                            &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
-                        );
+                                        let bg_color = if finished {
+                                            settings.finished_clear_color
+                                        } else {
+                                            settings.unfinished_clear_color
+                                        };
+
+                                        if settings.short_names {
+                                            utils::centered_text(&ui, &tr.encounter_short_name_im_string(encounter));
+                                        } else {
+                                            utils::centered_text(&ui, &ImString::new(encounter_english_name(encounter)));
+                                        }
+
+                                        ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
+                                    }
+                                    ui.next_column()
+                                }
+                            }
+                            ui.end_table();
+                        } else {
+                            // TODO: Deduplicate
+                            utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
+                            ui.text("");
+                            // TODO: Custom prompt for missing perms
+
+                            let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+                            let until_wakeup = time.saturating_duration_since(Instant::now());
+                            utils::centered_text(
+                                &ui,
+                                &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
+                            );
+                        }
                     }
                 }
             }
@@ -363,4 +358,28 @@ pub fn clears(
             &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
         );
     }
+}
+
+pub fn account_separator(ui: &Ui, style: AccountHeaderStyle) {
+    match style {
+        AccountHeaderStyle::None => ui.separator(),
+        AccountHeaderStyle::CenteredText => ui.separator(),
+        AccountHeaderStyle::Collapsible => {}
+    }
+}
+
+pub fn account_header(ui: &Ui, key: &mut ApiKey, style: AccountHeaderStyle, tr: &Translation) -> bool {
+    let mut shown = true;
+    match style {
+        AccountHeaderStyle::None => {}
+        AccountHeaderStyle::CenteredText => utils::centered_text(ui, &get_api_key_name(key, tr)),
+        AccountHeaderStyle::Collapsible => {
+            let key_name = get_api_key_name(key, tr);
+            let mut key_shown = key.expanded_in_clears_mut();
+            *key_shown = CollapsingHeader::new(&key_name).default_open(*key_shown).build(&ui);
+            shown = *key_shown;
+        }
+    };
+
+    shown
 }

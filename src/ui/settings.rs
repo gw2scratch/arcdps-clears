@@ -109,6 +109,31 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
 
+    /* Account header styles */
+    let account_header_styles = [
+        AccountHeaderStyle::None,
+        AccountHeaderStyle::CenteredText,
+        AccountHeaderStyle::Collapsible
+    ];
+
+    let mut account_style_index = account_header_styles.iter()
+        .position(|x| *x == settings.account_header_style)
+        .unwrap_or_default();
+
+    if ComboBox::new(&tr.im_string("setting-clears-header-style"))
+        .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
+            Cow::from(match style {
+                AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
+                AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
+                AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
+            }),
+        ) {
+        settings.account_header_style = account_header_styles[account_style_index]
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
+
     /* Short encounter names */
     ui.checkbox(
         &tr.im_string("setting-short-encounter-names"),
@@ -120,26 +145,6 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         tr.im_string("setting-short-encounter-names-description"),
     );
 
-    /* Account header styles */
-    // We currently only have two account header styles, so we use a checkbox.
-    // In the future, this may be changed into a combo box.
-    let mut show_account_headers = match settings.account_header_style {
-        AccountHeaderStyle::None => false,
-        AccountHeaderStyle::CenteredText => true
-    };
-
-    if ui.checkbox(
-        &tr.im_string("setting-clears-header-style"),
-        &mut show_account_headers,
-    ) {
-        settings.account_header_style = match show_account_headers {
-            true => AccountHeaderStyle::CenteredText,
-            false => AccountHeaderStyle::None
-        };
-    }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
 
     /* Colors */
     ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
