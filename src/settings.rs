@@ -31,6 +31,10 @@ pub struct Settings {
     pub close_window_with_escape: bool,
     #[serde(default = "default_hide_in_loading_screens")]
     pub hide_in_loading_screens: bool,
+    #[serde(default = "default_show_clears_table_headers")]
+    pub show_clears_table_headers: bool,
+    #[serde(default = "default_show_clears_table_row_names")]
+    pub show_clears_table_row_names: bool,
 }
 
 fn default_short_name() -> bool {
@@ -69,6 +73,12 @@ fn default_close_window_with_escape() -> bool {
 }
 fn default_hide_in_loading_screens() -> bool {
     false
+}
+fn default_show_clears_table_headers() -> bool {
+    true
+}
+fn default_show_clears_table_row_names() -> bool {
+    true
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -257,7 +267,9 @@ impl Settings {
             main_window_keybind: default_main_window_keybind(),
             api_window_keybind: default_api_window_keybind(),
             close_window_with_escape: default_close_window_with_escape(),
-            hide_in_loading_screens: default_hide_in_loading_screens()
+            hide_in_loading_screens: default_hide_in_loading_screens(),
+            show_clears_table_headers: default_show_clears_table_headers(),
+            show_clears_table_row_names: default_show_clears_table_row_names()
         }
     }
 

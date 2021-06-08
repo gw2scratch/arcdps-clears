@@ -59,20 +59,31 @@ pub fn clears(
 
                     if account_header(ui, key, settings.account_header_style, tr) {
                         if let Some(clears) = data.clears.state(key) {
+                            let column_count = if settings.show_clears_table_row_names {
+                                max_bosses + 1
+                            } else {
+                                max_bosses
+                            } as i32;
                             ui.begin_table_with_flags(
                                 &im_str!("ClearsTableRows##{}", key.id()),
-                                (max_bosses + 1) as i32,
-                                TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
+                                column_count,
+                                TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X
                             );
-                            ui.table_setup_column(&im_str!(""));
+                            if settings.show_clears_table_row_names {
+                                ui.table_setup_column(&im_str!(""));
+                            }
                             for boss in 0..max_bosses {
                                 ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
                             }
-                            ui.table_headers_row();
+                            if settings.show_clears_table_headers {
+                                ui.table_headers_row();
+                            }
                             for (wing_index, wing) in raids.wings().iter().enumerate() {
                                 ui.table_next_row();
-                                ui.table_next_column();
-                                ui.text(im_str!("{}{}", tr.im_string("clears-wing-prefix"), wing_index + 1));
+                                if settings.show_clears_table_row_names {
+                                    ui.table_next_column();
+                                    ui.text(im_str!("{}{}", tr.im_string("clears-wing-prefix"), wing_index + 1));
+                                }
                                 for column in 0..max_bosses {
                                     ui.table_next_column();
                                     if let Some(encounter) = wing.encounters().get(column) {
@@ -132,20 +143,31 @@ pub fn clears(
 
                     if account_header(ui, key, settings.account_header_style, tr) {
                         if let Some(clears) = data.clears.state(key) {
+                            let column_count = if settings.show_clears_table_row_names {
+                                raids.wings().len() + 1
+                            } else {
+                                raids.wings().len()
+                            } as i32;
                             ui.begin_table_with_flags(
                                 &im_str!("ClearsTableColumns##{}", key.id()),
-                                (raids.wings().len() + 1) as i32,
+                                column_count,
                                 TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
                             );
-                            ui.table_setup_column(&im_str!(""));
+                            if settings.show_clears_table_row_names {
+                                ui.table_setup_column(&im_str!(""));
+                            }
                             for (wing_index, _wing) in raids.wings().iter().enumerate() {
                                 ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
                             }
-                            ui.table_headers_row();
+                            if settings.show_clears_table_headers {
+                                ui.table_headers_row();
+                            }
                             for boss in 0..max_bosses {
                                 ui.table_next_row();
-                                ui.table_next_column();
-                                ui.text(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
+                                if settings.show_clears_table_row_names {
+                                    ui.table_next_column();
+                                    ui.text(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
+                                }
                                 for wing in raids.wings() {
                                     ui.table_next_column();
                                     if let Some(encounter) = wing.encounters().get(boss) {
@@ -245,16 +267,17 @@ pub fn clears(
                 }
 
                 // We construct headers manually to add missing padding instead of using table_headers_row()
-                ui.table_next_row_with_flags(TableRowFlags::HEADERS);
-                for i in 0..ui.table_get_column_count() {
-                    if !ui.table_set_column_index(i) {
-                        continue;
+                if settings.show_clears_table_headers {
+                    ui.table_next_row_with_flags(TableRowFlags::HEADERS);
+                    for i in 0..ui.table_get_column_count() {
+                        if !ui.table_set_column_index(i) {
+                            continue;
+                        }
+                        ui.dummy([0.0, ui.current_font_size() + cell_padding[1]]);
+                        ui.same_line_with_spacing(0.0, 0.0);
+                        ui.set_cursor_pos([ui.cursor_pos()[0] + cell_padding[0], ui.cursor_pos()[1] + cell_padding[1]]);
+                        ui.table_header(&table_headers_names[i as usize]);
                     }
-                    //ui.push_style_var(StyleVar::)
-                    ui.dummy([0.0, ui.current_font_size() + cell_padding[1]]);
-                    ui.same_line_with_spacing(0.0, 0.0);
-                    ui.set_cursor_pos([ui.cursor_pos()[0] + cell_padding[0], ui.cursor_pos()[1] + cell_padding[1]]);
-                    ui.table_header(&table_headers_names[i as usize]);
                 }
 
                 ui.table_next_column();

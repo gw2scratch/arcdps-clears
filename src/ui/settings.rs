@@ -145,6 +145,27 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         tr.im_string("setting-short-encounter-names-description"),
     );
 
+    /* Show table headers */
+    ui.checkbox(
+        &tr.im_string("setting-clears-show-table-headers"),
+        &mut settings.show_clears_table_headers,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-clears-show-table-headers-description"),
+    );
+
+    /* Show table headers */
+    ui.checkbox(
+        &tr.im_string("setting-clears-show-table-row-names"),
+        &mut settings.show_clears_table_row_names,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-clears-show-table-row-names-description"),
+    );
 
     /* Colors */
     ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
