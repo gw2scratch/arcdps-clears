@@ -51,7 +51,7 @@ fn default_finished_clear_color() -> [f32; 4] {
     [38. / 255., 199. / 255., 29. / 255., 177. / 255.]
 }
 fn default_unfinished_clear_color() -> [f32; 4] {
-    [192. / 255., 24. / 255., 30. / 255., 0.]
+    [192. / 255., 24. / 255., 30. / 255., 136. / 255.]
 }
 fn default_clears_style() -> ClearsStyle {
     ClearsStyle::WingRows
