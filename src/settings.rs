@@ -35,6 +35,7 @@ pub struct Settings {
     pub show_clears_table_headers: bool,
     #[serde(default = "default_show_clears_table_row_names")]
     pub show_clears_table_row_names: bool,
+    // Are you adding a new style option? Make sure to add to `reset_style()`!
 }
 
 fn default_short_name() -> bool {
@@ -270,7 +271,18 @@ impl Settings {
             hide_in_loading_screens: default_hide_in_loading_screens(),
             show_clears_table_headers: default_show_clears_table_headers(),
             show_clears_table_row_names: default_show_clears_table_row_names()
+            // Are you adding a new style option? Make sure to add to `reset_style()`!
         }
+    }
+
+    pub fn reset_style(&mut self) {
+        self.short_names = default_short_name();
+        self.finished_clear_color = default_finished_clear_color();
+        self.unfinished_clear_color = default_unfinished_clear_color();
+        self.clears_style = default_clears_style();
+        self.account_header_style = default_account_header();
+        self.show_clears_table_headers = default_show_clears_table_headers();
+        self.show_clears_table_row_names = default_show_clears_table_row_names();
     }
 
     pub fn api_keys(&self) -> &Vec<ApiKey> {

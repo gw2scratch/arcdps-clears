@@ -1,5 +1,5 @@
 use crate::ui::{utils, UiState};
-use arcdps::imgui::{im_str, CollapsingHeader, ColorEditFlags, ColorEdit, ComboBox, Ui};
+use arcdps::imgui::{im_str, CollapsingHeader, ColorEditFlags, ColorEdit, ComboBox, Ui, PopupModal, TableFlags};
 use crate::settings::{AccountHeaderStyle, ClearsStyle, Settings};
 use std::borrow::Cow;
 use crate::translations::Translation;
@@ -7,7 +7,6 @@ use crate::translations::Translation;
 pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
     if CollapsingHeader::new(&tr.im_string("settings-section-behavior"))
         .build(&ui) {
-
         /* Hide in loading screens */
         ui.checkbox(
             &tr.im_string("setting-hide-in-loading-screens"),
@@ -32,7 +31,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &ui,
             im_str!("##MainWindowKeybindInput"),
             &mut settings.main_window_keybind,
-            tr
+            tr,
         );
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
@@ -46,7 +45,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &ui,
             im_str!("##APIKeyWindowKeybindInput"),
             &mut settings.api_window_keybind,
-            tr
+            tr,
         );
         ui.same_line(0.0);
         ui.align_text_to_frame_padding();
@@ -182,4 +181,28 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 
+    let reset_modal_label = tr.im_string("setting-reset-style-modal-title");
+    if ui.button(&tr.im_string("setting-reset-style-button"), [0.0, 0.0]) {
+        ui.open_popup(&reset_modal_label);
+    }
+    PopupModal::new(&ui, &reset_modal_label)
+        .save_settings(false)
+        .build(|| {
+            ui.text(tr.im_string("setting-reset-style-modal-question"));
+            ui.separator();
+            if ui.begin_table_with_flags(im_str!("ResetConfirmationPopupTable"), 2, TableFlags::SIZING_STRETCH_SAME) {
+                ui.table_next_row();
+                ui.table_next_column();
+                if ui.button(&tr.im_string("setting-reset-style-modal-confirm"), [ui.current_column_width(), 0.0]) {
+                    settings.reset_style();
+                    ui.close_current_popup();
+                }
+                ui.set_item_default_focus();
+                ui.table_next_column();
+                if ui.button(&tr.im_string("setting-reset-style-modal-cancel"), [ui.current_column_width(), 0.0]) {
+                    ui.close_current_popup();
+                }
+                ui.end_table();
+            }
+        });
 }
