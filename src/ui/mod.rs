@@ -3,7 +3,7 @@ use crate::translations::Translation;
 use crate::updates::Release;
 use crate::workers::BackgroundWorkers;
 use crate::Data;
-use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, StyleVar};
+use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, StyleVar, TabBarFlags};
 use uuid::Uuid;
 
 mod settings;
@@ -86,6 +86,8 @@ pub fn draw_ui(
             .always_auto_resize(true)
             .focus_on_appearing(false)
             .no_nav()
+            .title_bar(settings.main_window_show_title)
+            .draw_background(settings.main_window_show_bg)
             .collapsible(false)
             .opened(&mut shown)
             .build(&ui, || {

@@ -181,6 +181,33 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 
+    ui.separator();
+    /* General style */
+
+    /* Show main window title */
+    ui.checkbox(
+        &tr.im_string("setting-main-window-show-title"),
+        &mut settings.main_window_show_title,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-main-window-show-title-description"),
+    );
+
+    /* Show main window background */
+    ui.checkbox(
+        &tr.im_string("setting-main-window-show-bg"),
+        &mut settings.main_window_show_bg,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-main-window-show-bg-description"),
+    );
+
+    ui.separator();
+
     let reset_modal_label = tr.im_string("setting-reset-style-modal-title");
     if ui.button(&tr.im_string("setting-reset-style-button"), [0.0, 0.0]) {
         ui.open_popup(&reset_modal_label);

@@ -35,6 +35,10 @@ pub struct Settings {
     pub show_clears_table_headers: bool,
     #[serde(default = "default_show_clears_table_row_names")]
     pub show_clears_table_row_names: bool,
+    #[serde(default = "default_main_window_show_bg")]
+    pub main_window_show_bg: bool,
+    #[serde(default = "default_main_window_show_title")]
+    pub main_window_show_title: bool,
     // Are you adding a new style option? Make sure to add to `reset_style()`!
 }
 
@@ -79,6 +83,12 @@ fn default_show_clears_table_headers() -> bool {
     true
 }
 fn default_show_clears_table_row_names() -> bool {
+    true
+}
+fn default_main_window_show_bg() -> bool {
+    true
+}
+fn default_main_window_show_title() -> bool {
     true
 }
 
@@ -270,7 +280,9 @@ impl Settings {
             close_window_with_escape: default_close_window_with_escape(),
             hide_in_loading_screens: default_hide_in_loading_screens(),
             show_clears_table_headers: default_show_clears_table_headers(),
-            show_clears_table_row_names: default_show_clears_table_row_names()
+            show_clears_table_row_names: default_show_clears_table_row_names(),
+            main_window_show_bg: default_main_window_show_bg(),
+            main_window_show_title: default_main_window_show_title(),
             // Are you adding a new style option? Make sure to add to `reset_style()`!
         }
     }
@@ -283,6 +295,8 @@ impl Settings {
         self.account_header_style = default_account_header();
         self.show_clears_table_headers = default_show_clears_table_headers();
         self.show_clears_table_row_names = default_show_clears_table_row_names();
+        self.main_window_show_bg = default_main_window_show_bg();
+        self.main_window_show_title = default_main_window_show_title();
     }
 
     pub fn api_keys(&self) -> &Vec<ApiKey> {
