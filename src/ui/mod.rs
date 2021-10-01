@@ -95,7 +95,7 @@ pub fn draw_ui(
                     TabItem::new(&tr.im_string("clears-tab-title"))
                         .build(&ui, || clears::clears(ui, ui_state, data, bg_workers, settings, tr));
                     TabItem::new(&tr.im_string("friends-tab-title"))
-                        .build(&ui, || friends::friends(ui, tr));
+                        .build(&ui, || friends::friends(ui, ui_state, data, bg_workers, settings, tr));
                     TabItem::new(&tr.im_string("settings-tab-title"))
                         .build(&ui, || settings::settings(ui, ui_state, settings, tr));
                 });

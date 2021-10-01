@@ -9,6 +9,8 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default = "default_friends_api_url")]
+    pub friends_api_url: String,
     #[serde(default = "default_api_keys")]
     pub api_keys: Vec<ApiKey>,
     #[serde(default = "default_short_name")]
@@ -42,6 +44,9 @@ pub struct Settings {
     // Are you adding a new style option? Make sure to add to `reset_style()`!
 }
 
+fn default_friends_api_url() -> String {
+    "https://clears.gw2scratch.com/".to_string()
+}
 fn default_short_name() -> bool {
     true
 }
@@ -268,6 +273,7 @@ impl ApiKeyData {
 impl Settings {
     fn default() -> Self {
         Settings {
+            friends_api_url: default_friends_api_url(),
             api_keys: default_api_keys(),
             short_names: default_short_name(),
             check_updates: default_check_updates(),
