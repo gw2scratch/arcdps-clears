@@ -119,7 +119,7 @@ pub fn clears(
                             ui.text("");
                             // TODO: Custom prompt for missing perms
 
-                            let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+                            let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
                             let until_wakeup = time.saturating_duration_since(Instant::now());
                             utils::centered_text(
                                 &ui,
@@ -197,7 +197,7 @@ pub fn clears(
                             ui.text("");
                             // TODO: Custom prompt for missing perms
 
-                            let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+                            let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
                             let until_wakeup = time.saturating_duration_since(Instant::now());
                             utils::centered_text(
                                 &ui,
@@ -374,7 +374,7 @@ pub fn clears(
         ui.text(tr.im_string("clears-no-public-data-yet"));
         ui.text("");
 
-        let time = *bg_workers.api_worker_next_wakeup().lock().unwrap();
+        let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
         let until_wakeup = time.saturating_duration_since(Instant::now());
         utils::centered_text(
             &ui,

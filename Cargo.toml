@@ -19,6 +19,11 @@ version-compare = "0.0.11"
 open = "1.7.0"
 uuid = { version = "0.8.2", features = ["serde", "v4"] }
 chrono = { version = "0.4.19", features = ["serde"] }
+sha2 = "0.9.8"
+
+[dependencies.log]
+version = "0.4.14"
+features = ["max_level_info", "release_max_level_info"]
 
 [dependencies.arcdps]
 git = "https://github.com/greaka/arcdps_bindings.git"

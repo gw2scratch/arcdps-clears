@@ -11,8 +11,14 @@ const LIVE_GW2_API_URL: &str = "https://api.guildwars2.com/";
 pub enum ApiError {
     UnknownError,
     InvalidKey,
-    JsonDeserializationFailed,
+    JsonDeserializationFailed(serde_json::Error),
     TooManyRequests,
+}
+
+impl From<serde_json::Error> for ApiError {
+    fn from(e: serde_json::Error) -> Self {
+        ApiError::JsonDeserializationFailed(e)
+    }
 }
 
 fn parse_raids(json: &str) -> Result<RaidWings, serde_json::Error> {
@@ -82,6 +88,7 @@ pub trait Gw2Api {
     fn get_raids_state(&self, api_key: &str) -> Result<RaidClearState, ApiError>;
     fn get_account_data(&self, api_key: &str) -> Result<AccountData, ApiError>;
     fn get_token_info(&self, api_key: &str) -> Result<TokenInfo, ApiError>;
+    fn create_subtoken(&self, api_key: &str, permissions: &[&str], urls: &[&str], expiration: DateTime<Utc>) -> Result<String, ApiError>;
 }
 
 pub struct LiveApi {
@@ -106,11 +113,7 @@ impl Gw2Api for LiveApi {
         {
             Ok(response) => {
                 if let Ok(text) = response.into_string() {
-                    if let Ok(raids) = parse_raids(&text) {
-                        Ok(raids)
-                    } else {
-                        Err(ApiError::JsonDeserializationFailed)
-                    }
+                    Ok(parse_raids(&text)?)
                 } else {
                     Err(ApiError::UnknownError)
                 }
@@ -128,11 +131,7 @@ impl Gw2Api for LiveApi {
         {
             Ok(response) => {
                 if let Ok(text) = response.into_string() {
-                    if let Ok(clears) = parse_clears(&text) {
-                        Ok(clears)
-                    } else {
-                        Err(ApiError::JsonDeserializationFailed)
-                    }
+                    Ok(parse_clears(&text)?)
                 } else {
                     // TODO: Implement
                     Err(ApiError::UnknownError)
@@ -140,6 +139,7 @@ impl Gw2Api for LiveApi {
             }
             Err(err) => {
                 match err {
+                    // TODO: Make sure this is used everywhere
                     Error::Status(code, _response) => {
                         if code == 401 {
                             Err(ApiError::InvalidKey)
@@ -166,11 +166,7 @@ impl Gw2Api for LiveApi {
         {
             Ok(response) => {
                 if let Ok(text) = response.into_string() {
-                    if let Ok(data) = parse_account_data(&text) {
-                        Ok(data)
-                    } else {
-                        Err(ApiError::JsonDeserializationFailed)
-                    }
+                    Ok(parse_account_data(&text)?)
                 } else {
                     Err(ApiError::UnknownError)
                 }
@@ -188,11 +184,33 @@ impl Gw2Api for LiveApi {
         {
             Ok(response) => {
                 if let Ok(text) = response.into_string() {
-                    if let Ok(data) = parse_token_info(&text) {
-                        Ok(data)
-                    } else {
-                        Err(ApiError::JsonDeserializationFailed)
-                    }
+                    Ok(parse_token_info(&text)?)
+                } else {
+                    Err(ApiError::UnknownError)
+                }
+            }
+            Err(_) => Err(ApiError::UnknownError),
+        }
+    }
+
+    fn create_subtoken(&self, api_key: &str, permissions: &[&str], urls: &[&str], expiration: DateTime<Utc>) -> Result<String, ApiError> {
+        #[derive(Deserialize)]
+        struct SubtokenResponse {
+            subtoken: String
+        }
+
+        match ureq::get(&format!("{}v2/createsubtoken", self.url))
+            .set("User-Agent", USER_AGENT)
+            .set("X-Schema-Version", "2021-05-20T00:00:00.000Z")
+            .set("Authorization", &format!("Bearer {}", api_key))
+            .query("expire", &expiration.to_rfc3339())
+            .query("permissions", &permissions.join(","))
+            .query("urls", &urls.join(","))
+            .call()
+        {
+            Ok(response) => {
+                if let Ok(json) = response.into_string() {
+                    Ok(serde_json::from_str::<SubtokenResponse>(&json)?.subtoken)
                 } else {
                     Err(ApiError::UnknownError)
                 }
@@ -257,6 +275,10 @@ impl Gw2Api for ApiMock {
             vec!["account".to_string(), "progression".to_string()],
             TokenType::ApiKey
         ))
+    }
+
+    fn create_subtoken(&self, api_key: &str, permissions: &[&str], urls: &[&str], expiration: DateTime<Utc>) -> Result<String, ApiError> {
+        unimplemented!()
     }
 }
 

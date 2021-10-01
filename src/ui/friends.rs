@@ -1,41 +1,37 @@
-use arcdps::imgui::{Ui, CollapsingHeader, StyleColor};
+use arcdps::imgui::{im_str, Ui, CollapsingHeader, StyleColor};
 use crate::translations::Translation;
+use crate::ui::UiState;
+use crate::Data;
+use crate::workers::BackgroundWorkers;
+use crate::settings::Settings;
 
-pub fn friends(ui: &Ui, tr: &Translation) {
-    let wrap_pos = ui.push_text_wrap_pos(ui.text_line_height() * 25.0);
-    ui.text_wrapped(&tr.im_string("friends-not-implemented-yet"));
-    ui.text("");
-    ui.text("");
-    ui.text_wrapped(&tr.im_string("friends-api-key-sharing-warning"));
-    if CollapsingHeader::new(&tr.im_string("friends-api-key-sharing-section")).build(&ui) {
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-data-warning"));
-        ui.text("");
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-impersonation-warning"));
-        let warning_color = ui.push_style_color(StyleColor::Text, [1., 0., 0., 1.]);
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-not-recommended"));
-        warning_color.pop(&ui);
-        ui.text("");
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-feature-will-be-safer"));
-        ui.text("");
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-rules"));
-        ui.bullet();
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-rule-new-key"));
-        ui.bullet();
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-rule-extra-perms"));
-        ui.bullet();
-        ui.text_wrapped(&tr.im_string("friends-api-key-sharing-rule-trust"));
-        ui.text("");
-        if CollapsingHeader::new(&tr.im_string("friends-api-key-sharing-subtoken-section")).build(&ui) {
-            ui.text_wrapped(&tr.im_string("friends-api-key-sharing-subtoken-intro"));
-            ui.text_wrapped(&tr.im_string("friends-api-key-sharing-subtoken-endpoints"));
-            ui.bullet_text(&tr.im_string("friends-api-key-sharing-subtoken-tokeninfo"));
-            ui.bullet_text(&tr.im_string("friends-api-key-sharing-subtoken-account"));
-            ui.bullet_text(&tr.im_string("friends-api-key-sharing-subtoken-raids"));
-            ui.text_wrapped(&tr.im_string("friends-api-key-sharing-subtoken-perms"));
-            ui.bullet_text(&tr.im_string("api-key-details-permission-account"));
-            ui.bullet_text(&tr.im_string("api-key-details-permission-progression"));
-            ui.text_wrapped(&tr.im_string("friends-api-key-sharing-subtoken-expiration-date"));
+pub fn friends(
+    ui: &Ui,
+    ui_state: &mut UiState,
+    data: &Data,
+    bg_workers: &BackgroundWorkers,
+    settings: &mut Settings,
+    tr: &Translation,
+) {
+    if let Some(state) = data.friends.api_state() {
+        ui.text("State available");
+        ui.text(im_str!("keys: {}", state.keys().len()));
+        for key in state.keys() {
+            ui.text(im_str!("key {}", key.key_hash()));
+            ui.text(im_str!("acc {:?}", key.account()));
+            ui.text(im_str!("subtoken expires at {:?}", key.subtoken_expires_at()));
         }
+        ui.text(im_str!("friends: {}", state.friends().len()));
+        for friend in state.friends() {
+            ui.text(im_str!("friend acc {}", friend.account()));
+        }
+
     }
-    wrap_pos.pop(&ui);
+    ui.separator();
+
+    for (account, clears) in data.friends.clears_by_account() {
+        ui.text(account);
+        ui.same_line(0.0);
+        ui.text(im_str!("finished encounters {}", clears.finished_encounter_ids().join(",")));
+    }
 }

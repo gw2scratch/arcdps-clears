@@ -9,6 +9,8 @@ use crate::api::LiveApi;
 use crate::workers::BackgroundWorkers;
 use crate::ui::UiState;
 use std::ops::Deref;
+use crate::friends::{FriendState, FriendData, FriendsApiClient};
+use log::{info, warn, error};
 
 mod api;
 mod clears;
@@ -18,6 +20,7 @@ mod ui;
 mod translations;
 mod updates;
 mod input;
+mod friends;
 
 const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
 const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
@@ -45,11 +48,12 @@ lazy_static! {
 
 pub struct Data {
     clears: ClearData,
+    friends: FriendData,
 }
 
 impl Data {
     pub fn new() -> Self {
-        Data { clears: ClearData::new() }
+        Data { clears: ClearData::new(), friends: FriendData::new() }
     }
 }
 
@@ -71,7 +75,16 @@ fn init() {
                 }
             });
         }
-        *BACKGROUND_WORKERS.lock().unwrap() = Some(workers::start_workers(&DATA, &SETTINGS, LiveApi::official()));
+
+        let friends_api_url = SETTINGS.lock().unwrap().as_ref()
+            .expect("Settings should be loaded by now.").friends_api_url.to_string();
+
+        *BACKGROUND_WORKERS.lock().unwrap() = Some(workers::start_workers(
+            &DATA,
+            &SETTINGS,
+            LiveApi::official(),
+            FriendsApiClient::new(friends_api_url),
+        ));
     }));
 }
 
@@ -109,7 +122,7 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
     }
 
     #[cfg(debug_assertions)]
-    imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
+        imgui_ui.show_demo_window(&mut ui_state.main_window.shown);
 
     ui::draw_ui(imgui_ui,
                 &mut ui_state,

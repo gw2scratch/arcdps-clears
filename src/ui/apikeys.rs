@@ -3,6 +3,8 @@ use crate::ui::{get_api_key_name, SelectedApiKey, UiState};
 use crate::workers::{ApiJob, BackgroundWorkers};
 use crate::settings::{TokenType, ApiKey, Settings};
 use crate::translations::Translation;
+use crate::friends::KeyUsability;
+use crate::friends;
 
 pub fn api_keys_window(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundWorkers, settings: &mut Settings, tr: &Translation) {
     if ui_state.api_key_window.shown {
@@ -207,6 +209,22 @@ pub fn api_keys_window(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundW
                                         if !clears_access {
                                             ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account-raids"));
                                         }
+                                    }
+                                }
+
+                                // TODO: Move this close to friends share buttons etc.
+                                match friends::get_key_usability(key) {
+                                    KeyUsability::NoTokenInfo => {}
+                                    KeyUsability::Usable => {}
+                                    KeyUsability::InsufficientPermissions => {
+                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing permissions!"); // TODO: Translate
+                                    }
+                                    KeyUsability::InsufficientSubtokenUrls => {
+                                        // TODO: Add list of missing urls
+                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing subtoken urls!"); // TODO: Translate
+                                    }
+                                    KeyUsability::SubtokenExpired => {
+                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, subtoken is expired!"); // TODO: Translate
                                     }
                                 }
                             }
