@@ -1,5 +1,5 @@
 use crate::ui::{utils, UiState};
-use arcdps::imgui::{im_str, CollapsingHeader, ColorEditFlags, ColorEdit, ComboBox, Ui, PopupModal, TableFlags};
+use arcdps::imgui::{im_str, CollapsingHeader, ColorEditFlags, ColorEdit, ComboBox, Ui, PopupModal, TableFlags, ChildWindow};
 use crate::settings::{AccountHeaderStyle, ClearsStyle, Settings};
 use std::borrow::Cow;
 use crate::translations::Translation;
@@ -79,7 +79,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
     }
 
-    if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.current_column_width(), 0.0]) {
+    if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.content_region_avail()[0], 0.0]) {
         ui_state.api_key_window.shown = true;
     }
 }

@@ -23,6 +23,19 @@ pub fn help_marker<T: AsRef<str>>(ui: &Ui, text: T) {
     }
 }
 
+pub fn warning_marker<T: AsRef<str>>(ui: &Ui, text: T) {
+    let alpha = ui.push_style_var(StyleVar::Alpha(0.5));
+    ui.text("(!)");
+    alpha.pop(&ui);
+    if ui.is_item_hovered() {
+        ui.tooltip(|| {
+            let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 35.0);
+            ui.text(text);
+            wrap.pop(&ui);
+        });
+    }
+}
+
 pub fn keybind_input(ui: &Ui, label: &ImStr, keybind: &mut Option<usize>, tr: &Translation) {
     let mut keybind_buffer = match keybind {
         None => ImString::new(""),
