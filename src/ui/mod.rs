@@ -12,6 +12,7 @@ mod updates;
 mod clears;
 mod utils;
 mod friends;
+mod style;
 
 pub struct UiState {
     pub main_window: MainWindowState,
@@ -30,6 +31,7 @@ impl UiState {
             api_key_window: ApiKeyWindowState {
                 shown: false,
                 selected_key: SelectedApiKey::None,
+                new_friend_name: ImString::default()
             },
         }
     }
@@ -43,6 +45,7 @@ pub enum SelectedApiKey {
 pub struct ApiKeyWindowState {
     pub shown: bool,
     pub selected_key: SelectedApiKey,
+    pub new_friend_name: ImString,
 }
 
 pub struct MainWindowState {
@@ -115,5 +118,5 @@ pub fn draw_ui(
 
     updates::update_window(ui, ui_state, tr);
 
-    apikeys::api_keys_window(ui, ui_state, bg_workers, settings, tr);
+    apikeys::api_keys_window(ui, ui_state, data, bg_workers, settings, tr);
 }

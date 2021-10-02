@@ -11,6 +11,7 @@ use chrono::Utc;
 use crate::friends::{FriendsApiClient, FriendsApiError, State, KeyUsability};
 use log::{info, warn, error};
 use itertools::Itertools;
+use crate::settings::Friend;
 
 pub struct BackgroundWorkers {
     api_sender: Sender<ApiJob>,
@@ -38,6 +39,8 @@ pub enum ApiJob {
     UploadFriendApiSubtoken { key_hash: String },
     UpdateFriendState,
     UpdateFriendClears { account_name: String, subtoken: String },
+    ShareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
+    UnshareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
 }
 
 pub fn start_workers(
@@ -88,7 +91,6 @@ pub fn start_workers(
             loop {
                 // Note that we often copy strings from settings here to avoid locking settings
                 // for the duration of API requests.
-
                 match api_rx.recv().unwrap() {
                     ApiJob::UpdateRaids => {
                         if let Ok(raids) = api.get_raids() {
@@ -125,6 +127,10 @@ pub fn start_workers(
                                 // TODO: Handle invalid API key explicitly
                                 if let Some(key) = settings_mutex.lock().unwrap().as_mut().unwrap().get_key_mut(&key_uuid) {
                                     key.set_token_info(Some(info));
+                                    // We do request a friend state update in here and not in
+                                    // account data as this is requested after account data
+                                    // and we need both.
+                                    self_api_tx.send(ApiJob::UpdateFriendState);
                                 }
                             }
                         }
@@ -142,6 +148,18 @@ pub fn start_workers(
                                             subtoken: friend.subtoken().to_string(),
                                         });
                                     }
+
+                                    if let Some(mut settings) = settings_mutex.lock().unwrap().as_mut() {
+                                        // Add newly discovered friends to stored friend list.
+                                        for friend in state.friends() {
+                                            if !settings.friend_list.iter().any(|f| f.account_name() == friend.account()) {
+                                                settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state))
+                                            }
+                                        }
+                                    } else {
+                                        error!("Friends - settings not loaded yet when received state; not creating new entries.");
+                                    }
+
                                     data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                 }
                                 Err(FriendsApiError::UnknownError) => {
@@ -212,6 +230,54 @@ pub fn start_workers(
                             }
                             Err(ApiError::TooManyRequests) => {
                                 warn!("Failed to get clears for friend {} - too many requests, rate limited.", account_name);
+                            }
+                        }
+                    }
+                    ApiJob::ShareKeyWithFriend { key_uuid, friend_account_name } => {
+                        let keys = copy_friend_capable_api_keys(settings_mutex);
+                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                        if let Some(keys) = keys {
+                            if let Some(key) = key {
+                                match friends_api.share(keys, &key, friend_account_name) {
+                                    Ok(state) => {
+                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                    }
+                                    // TODO: deduplicate this logging
+                                    Err(FriendsApiError::UnknownError) => {
+                                        warn!("Friends - failed to share key - unknown error.")
+                                    }
+                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                        warn!("Friends - failed to share key - json deserialization failed.")
+                                    }
+                                    Err(FriendsApiError::UreqError(e)) => {
+                                        warn!("Friends - failed to share key: {}", e)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ApiJob::UnshareKeyWithFriend { key_uuid, friend_account_name } => {
+                        let keys = copy_friend_capable_api_keys(settings_mutex);
+                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                        if let Some(keys) = keys {
+                            if let Some(key) = key {
+                                match friends_api.unshare(keys, &key, friend_account_name) {
+                                    Ok(state) => {
+                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                    }
+                                    // TODO: deduplicate this logging
+                                    Err(FriendsApiError::UnknownError) => {
+                                        warn!("Friends - failed to share key - unknown error.")
+                                    }
+                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                        warn!("Friends - failed to share key - json deserialization failed.")
+                                    }
+                                    Err(FriendsApiError::UreqError(e)) => {
+                                        warn!("Friends - failed to share key: {}", e)
+                                    }
+                                }
                             }
                         }
                     }

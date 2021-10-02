@@ -223,7 +223,7 @@ pub fn clears(
                 the outer table. Without that, the window had to be shaken for the inner tables
                 to properly unfold to full size. Do not ask me why.
 
-                Instead, we compute the width of or inner tables, accounting for borders and use
+                Instead, we compute the width of inner tables, accounting for borders and use
                 fixed width columns.
 
                 Another issue is that we had some extra cell padding added due to the extra layer

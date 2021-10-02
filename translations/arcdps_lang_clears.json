@@ -98,6 +98,7 @@
     "api-key-details-subtoken-expires-at": "Expires at:",
     "api-key-warning-permission-account-missing": "The API key is missing the account permission!",
     "api-key-warning-permission-progression-missing": "The API key is missing the progression permission!",
+    "api-key-warning-subtoken-expired": "The subtoken is expired!",
     "api-key-warning-subtoken-url-missing-account": "The subtoken does not have access to /v2/account!",
     "api-key-warning-subtoken-url-missing-account-raids": "The subtoken does not have access to /v2/account/raids!",
     "api-key-show-in-my-clears-checkbox": "Show in My clears",

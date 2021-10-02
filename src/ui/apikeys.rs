@@ -1,12 +1,22 @@
-use arcdps::imgui::{im_str, Window, Condition, ChildWindow, StyleVar, TableFlags, ImString, Selectable, Ui, PopupModal};
-use crate::ui::{get_api_key_name, SelectedApiKey, UiState};
-use crate::workers::{ApiJob, BackgroundWorkers};
-use crate::settings::{TokenType, ApiKey, Settings};
-use crate::translations::Translation;
-use crate::friends::KeyUsability;
-use crate::friends;
+use arcdps::imgui::{ChildWindow, Condition, FocusedWidget, im_str, ImGuiInputTextFlags, ImString, PopupModal, Selectable, StyleVar, TabBar, TabItem, TableFlags, Ui, Window};
+use chrono::Utc;
 
-pub fn api_keys_window(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundWorkers, settings: &mut Settings, tr: &Translation) {
+use crate::{Data, friends};
+use crate::friends::KeyUsability;
+use crate::settings::{ApiKey, Settings, TokenType};
+use crate::translations::Translation;
+use crate::ui::{get_api_key_name, SelectedApiKey, UiState, utils};
+use crate::ui::style::WARNING_RED;
+use crate::workers::{ApiJob, BackgroundWorkers};
+
+pub fn api_keys_window(
+    ui: &Ui,
+    ui_state: &mut UiState,
+    data: &Data,
+    bg_workers: &BackgroundWorkers,
+    settings: &mut Settings,
+    tr: &Translation,
+) {
     if ui_state.api_key_window.shown {
         let mut shown = ui_state.api_key_window.shown;
         Window::new(&tr.im_string("api-key-window-title"))
@@ -86,160 +96,235 @@ pub fn api_keys_window(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundW
                                 ui.text_wrapped(&tr.im_string("api-key-guide-step4"));
                                 ui.text_wrapped(&tr.im_string("api-key-guide-step5"));
                             }
-                            if key.data().account_data().is_some() || key.data().token_info().is_some() {
-                                ui.separator();
-                                if ui.begin_table_with_flags(im_str!("ApiKeyData"), 2, TableFlags::SIZING_FIXED_FIT) {
-                                    ui.table_next_row();
-                                    ui.table_next_column();
-                                    ui.text(tr.im_string("api-key-details-account-name"));
-                                    ui.table_next_column();
-                                    if let Some(name) = key.data().account_data().as_ref().map(|x| x.name()) {
-                                        ui.text(name);
-                                    } else {
-                                        ui.text(tr.im_string("api-key-details-unknown-value"));
-                                    }
-                                    ui.table_next_row();
-                                    ui.table_next_column();
-                                    ui.text(tr.im_string("api-key-details-key-name"));
-                                    ui.table_next_column();
-                                    if let Some(name) = key.data().token_info().as_ref().map(|x| x.name()) {
-                                        ui.text(name);
-                                    } else {
-                                        ui.text(tr.im_string("api-key-details-unknown-value"));
-                                    }
-                                    ui.table_next_row();
-                                    ui.table_next_column();
-                                    ui.text(tr.im_string("api-key-details-permissions"));
-                                    ui.table_next_column();
-                                    if let Some(token_info) = key.data().token_info() {
-                                        let mut account = token_info.has_permission("account");
-                                        let mut progression = token_info.has_permission("progression");
-
-                                        let extra_perms: Vec<_> = token_info.permissions().iter()
-                                            .filter(|x| *x != "account" && *x != "progression")
-                                            .collect();
-
-                                        // Account permission checkmark
-                                        let disabled_style = ui.push_style_var(StyleVar::Alpha(0.75));
-                                        let width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                                        ui.checkbox(im_str!("##Account"), &mut account);
-                                        width.pop(&ui);
-                                        disabled_style.pop(&ui);
-                                        if ui.is_item_hovered() {
-                                            ui.tooltip(|| {
-                                                ui.text(tr.im_string("api-key-details-permission-account"))
-                                            });
-                                        }
-                                        ui.same_line(0.0);
-
-                                        // Progression permission checkmark
-                                        let disabled_style = ui.push_style_var(StyleVar::Alpha(0.75));
-                                        let width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                                        ui.checkbox(im_str!("##Progression"), &mut progression);
-                                        width.pop(&ui);
-                                        disabled_style.pop(&ui);
-                                        if ui.is_item_hovered() {
-                                            ui.tooltip(|| {
-                                                ui.text(tr.im_string("api-key-details-permission-progression"))
-                                            });
-                                        }
-
-                                        // Extra permission indicator
-                                        if extra_perms.len() > 0 {
-                                            ui.same_line(0.0);
-                                            ui.text(format!("{}{}{}",
-                                                            tr.im_string("api-key-details-permissions-extra-prefix"),
-                                                            extra_perms.len(),
-                                                            tr.im_string("api-key-details-permissions-extra-suffix")));
-                                            if ui.is_item_hovered() {
-                                                ui.tooltip(|| {
-                                                    for extra_perm in extra_perms {
-                                                        ui.text(extra_perm);
-                                                    }
-                                                });
-                                            }
-                                        }
-                                    } else {
-                                        ui.text(tr.im_string("api-key-details-unknown-value"));
-                                    }
-                                    ui.table_next_row();
-                                    ui.table_next_column();
-                                    ui.text(tr.im_string("api-key-details-key-type"));
-                                    ui.table_next_column();
-                                    let key_type = key.data().token_info().as_ref().map(|x| x.token_type());
-                                    if let Some(TokenType::ApiKey) = key_type {
-                                        ui.text(tr.im_string("api-key-details-key-type-apikey"));
-                                    } else if let Some(TokenType::Subtoken { expires_at, issued_at, .. }) = key_type {
-                                        ui.text(tr.im_string("api-key-details-key-type-subtoken"));
-                                        ui.table_next_row();
-                                        ui.table_next_column();
-                                        ui.text(tr.im_string("api-key-details-subtoken-issued-at"));
-                                        ui.table_next_column();
-                                        ui.text(issued_at.to_rfc2822());
-                                        ui.table_next_row();
-                                        ui.table_next_column();
-                                        ui.text(tr.im_string("api-key-details-subtoken-expires-at"));
-                                        ui.table_next_column();
-                                        ui.text(expires_at.to_rfc2822());
-                                    } else {
-                                        ui.text(tr.im_string("api-key-details-unknown-value"));
-                                    }
-                                    ui.end_table();
-                                }
-                            }
-
-                            // Missing permission/access warnings
-                            if let Some(token_info) = key.data().token_info() {
-                                const WARNING_RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-
-                                if !token_info.has_permission("account") {
-                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-account-missing"));
-                                }
-                                if !token_info.has_permission("progression") {
-                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-progression-missing"));
-                                }
-
-                                if let TokenType::Subtoken { urls, .. } = token_info.token_type() {
-                                    if let Some(urls) = urls {
-                                        let account_access = urls.iter().any(|x| x == "/v2/account");
-                                        let clears_access = urls.iter().any(|x| x == "/v2/account/raids");
-                                        if !account_access {
-                                            ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account"));
-                                        }
-                                        if !clears_access {
-                                            ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account-raids"));
-                                        }
-                                    }
-                                }
-
-                                // TODO: Move this close to friends share buttons etc.
-                                match friends::get_key_usability(key) {
-                                    KeyUsability::NoTokenInfo => {}
-                                    KeyUsability::Usable => {}
-                                    KeyUsability::InsufficientPermissions => {
-                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing permissions!"); // TODO: Translate
-                                    }
-                                    KeyUsability::InsufficientSubtokenUrls => {
-                                        // TODO: Add list of missing urls
-                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing subtoken urls!"); // TODO: Translate
-                                    }
-                                    KeyUsability::SubtokenExpired => {
-                                        ui.text_colored(WARNING_RED, "Cannot be shared with friends, subtoken is expired!"); // TODO: Translate
-                                    }
-                                }
-                            }
-
 
                             ui.separator();
-                            if ui.checkbox(&tr.im_string("api-key-show-in-my-clears-checkbox"), key.show_key_in_clears_mut()) {
-                                if key.show_key_in_clears() {
-                                    bg_workers.api_sender().send(ApiJob::UpdateClears(*key.id()));
-                                }
-                            }
+                            TabBar::new(im_str!("api_key_tabs")).build(&ui, || {
+                                TabItem::new(im_str!("Details")) // TODO: Translate
+                                    .build(&ui, || {
+                                        if key.data().account_data().is_some() || key.data().token_info().is_some() {
+                                            if ui.begin_table_with_flags(im_str!("ApiKeyData"), 2, TableFlags::SIZING_FIXED_FIT) {
+                                                ui.table_next_row();
+                                                ui.table_next_column();
+                                                ui.text(tr.im_string("api-key-details-account-name"));
+                                                ui.table_next_column();
+                                                if let Some(name) = key.data().account_data().as_ref().map(|x| x.name()) {
+                                                    ui.text(name);
+                                                } else {
+                                                    ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                }
+                                                ui.table_next_row();
+                                                ui.table_next_column();
+                                                ui.text(tr.im_string("api-key-details-key-name"));
+                                                ui.table_next_column();
+                                                if let Some(name) = key.data().token_info().as_ref().map(|x| x.name()) {
+                                                    ui.text(name);
+                                                } else {
+                                                    ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                }
+                                                ui.table_next_row();
+                                                ui.table_next_column();
+                                                ui.text(tr.im_string("api-key-details-permissions"));
+                                                ui.table_next_column();
+                                                if let Some(token_info) = key.data().token_info() {
+                                                    let mut account = token_info.has_permission("account");
+                                                    let mut progression = token_info.has_permission("progression");
 
-                            if key_changed {
-                                key.change_key(key_text.to_str());
-                            }
+                                                    let extra_perms: Vec<_> = token_info.permissions().iter()
+                                                        .filter(|x| *x != "account" && *x != "progression")
+                                                        .collect();
+
+                                                    // Account permission checkmark
+                                                    let disabled_style = ui.push_style_var(StyleVar::Alpha(0.75));
+                                                    let width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                                    ui.checkbox(im_str!("##Account"), &mut account);
+                                                    width.pop(&ui);
+                                                    disabled_style.pop(&ui);
+                                                    if ui.is_item_hovered() {
+                                                        ui.tooltip(|| {
+                                                            ui.text(tr.im_string("api-key-details-permission-account"))
+                                                        });
+                                                    }
+                                                    ui.same_line(0.0);
+
+                                                    // Progression permission checkmark
+                                                    let disabled_style = ui.push_style_var(StyleVar::Alpha(0.75));
+                                                    let width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                                    ui.checkbox(im_str!("##Progression"), &mut progression);
+                                                    width.pop(&ui);
+                                                    disabled_style.pop(&ui);
+                                                    if ui.is_item_hovered() {
+                                                        ui.tooltip(|| {
+                                                            ui.text(tr.im_string("api-key-details-permission-progression"))
+                                                        });
+                                                    }
+
+                                                    // Extra permission indicator
+                                                    if extra_perms.len() > 0 {
+                                                        ui.same_line(0.0);
+                                                        ui.text(format!("{}{}{}",
+                                                                        tr.im_string("api-key-details-permissions-extra-prefix"),
+                                                                        extra_perms.len(),
+                                                                        tr.im_string("api-key-details-permissions-extra-suffix")));
+                                                        if ui.is_item_hovered() {
+                                                            ui.tooltip(|| {
+                                                                for extra_perm in extra_perms {
+                                                                    ui.text(extra_perm);
+                                                                }
+                                                            });
+                                                        }
+                                                    }
+                                                } else {
+                                                    ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                }
+                                                ui.table_next_row();
+                                                ui.table_next_column();
+                                                ui.text(tr.im_string("api-key-details-key-type"));
+                                                ui.table_next_column();
+                                                let key_type = key.data().token_info().as_ref().map(|x| x.token_type());
+                                                if let Some(TokenType::ApiKey) = key_type {
+                                                    ui.text(tr.im_string("api-key-details-key-type-apikey"));
+                                                } else if let Some(TokenType::Subtoken { expires_at, issued_at, .. }) = key_type {
+                                                    ui.text(tr.im_string("api-key-details-key-type-subtoken"));
+                                                    ui.table_next_row();
+                                                    ui.table_next_column();
+                                                    ui.text(tr.im_string("api-key-details-subtoken-issued-at"));
+                                                    ui.table_next_column();
+                                                    ui.text(issued_at.to_rfc2822());
+                                                    ui.table_next_row();
+                                                    ui.table_next_column();
+                                                    ui.text(tr.im_string("api-key-details-subtoken-expires-at"));
+                                                    ui.table_next_column();
+                                                    ui.text(expires_at.to_rfc2822());
+                                                } else {
+                                                    ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                }
+                                                ui.end_table();
+                                            }
+                                        }
+
+                                        // Missing permission/access warnings
+                                        if let Some(token_info) = key.data().token_info() {
+                                            if !token_info.has_permission("account") {
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-account-missing"));
+                                            }
+                                            if !token_info.has_permission("progression") {
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-progression-missing"));
+                                            }
+
+                                            if let TokenType::Subtoken { urls, expires_at, .. } = token_info.token_type() {
+                                                if *expires_at < Utc::now() {
+                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-expired"));
+                                                }
+                                                if let Some(urls) = urls {
+                                                    let account_access = urls.iter().any(|x| x == "/v2/account");
+                                                    let clears_access = urls.iter().any(|x| x == "/v2/account/raids");
+                                                    if !account_access {
+                                                        ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account"));
+                                                    }
+                                                    if !clears_access {
+                                                        ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account-raids"));
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        ui.separator();
+                                        if ui.checkbox(&tr.im_string("api-key-show-in-my-clears-checkbox"), key.show_key_in_clears_mut()) {
+                                            if key.show_key_in_clears() {
+                                                bg_workers.api_sender().send(ApiJob::UpdateClears(*key.id()));
+                                            }
+                                        }
+
+                                        if key_changed {
+                                            key.change_key(key_text.to_str());
+                                        }
+                                    });
+                                TabItem::new(im_str!("Friends")) // TODO: Translate
+                                    .build(&ui, || {
+                                        let key_usable = match friends::get_key_usability(key) {
+                                            KeyUsability::NoTokenInfo => {
+                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, no data about key!"); // TODO: Translate
+                                                false
+                                            }
+                                            KeyUsability::Usable => true,
+                                            KeyUsability::InsufficientPermissions => {
+                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing permissions!"); // TODO: Translate
+                                                false
+                                            }
+                                            KeyUsability::InsufficientSubtokenUrls => {
+                                                // TODO: Add list of missing urls
+                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing subtoken urls!"); // TODO: Translate
+                                                false
+                                            }
+                                            KeyUsability::SubtokenExpired => {
+                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, subtoken is expired!"); // TODO: Translate
+                                                false
+                                            }
+                                        };
+
+                                        if !key_usable {
+                                            return;
+                                        }
+
+                                        if data.friends.api_state().is_none() {
+                                            ui.text_colored(WARNING_RED, "No connection to the friend server."); // TODO: Translate
+                                            if ui.button(im_str!("Refresh"), [0.0, 0.0]) {
+                                                bg_workers.api_sender().send(ApiJob::UpdateFriendState);
+                                            }
+                                        }
+
+                                        if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
+                                            if state.shared_to().len() == 0 {
+                                                // TODO: Translate
+                                                ui.text_wrapped(im_str!("Here, you can share your clears with friends who also use this addon. To do so, input their account name and click Share."));
+                                            }
+
+                                            if ui.begin_table_with_flags(im_str!("ApiKeyFriendsTable"), 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
+                                                for share in state.shared_to() {
+                                                    ui.table_next_row();
+                                                    ui.table_next_column();
+                                                    ui.text(share.account());
+                                                    if !share.account_available() {
+                                                        utils::warning_marker(&ui, "Unknown user"); // TODO: Translate
+                                                    }
+                                                    ui.table_next_column();
+                                                    if ui.small_button(&im_str!("Unshare##{}", share.account())) {
+                                                        bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                            key_uuid: *key.id(),
+                                                            friend_account_name: share.account().to_string(),
+                                                        });
+                                                    }
+                                                }
+
+                                                ui.table_next_row();
+                                                ui.table_next_column();
+
+                                                let width = ui.push_item_width(ui.text_line_height() * 20.0);
+                                                let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                                let mut add = ui.input_text(im_str!("##add_new_friend_name"), &mut ui_state.api_key_window.new_friend_name)
+                                                    .hint(im_str!("Account Name.1234")) // TODO: Test ingame to see if it's visible, might need a tooltip
+                                                    .enter_returns_true(true)
+                                                    .resize_buffer(true)
+                                                    .build();
+                                                padding.pop(&ui);
+                                                width.pop(&ui);
+
+                                                ui.table_next_column();
+                                                add = add || ui.small_button(im_str!("Share")); // TODO: Translate
+
+                                                if add {
+                                                    bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
+                                                        key_uuid: *key.id(),
+                                                        friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
+                                                    });
+                                                    ui_state.api_key_window.new_friend_name.clear();
+                                                }
+
+                                                ui.end_table();
+                                            }
+                                        }
+                                    });
+                            });
                         } else {
                             if settings.api_keys.len() == 0 {
                                 ui.text_wrapped(&tr.im_string("api-key-window-intro-first-key"));

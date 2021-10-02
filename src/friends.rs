@@ -63,6 +63,9 @@ impl State {
     pub fn friends(&self) -> &Vec<FriendState> {
         &self.friends
     }
+    pub fn key_state(&self, api_key: &ApiKey) -> Option<&KeyState> {
+        self.keys().iter().filter(|x| x.key_hash == key_hash(api_key.key())).next()
+    }
 }
 
 impl ShareState {
@@ -120,8 +123,15 @@ impl FriendData {
     pub fn new() -> Self {
         FriendData { api_state: None, clears_by_account: HashMap::new(), subtokens_by_account: HashMap::new() }
     }
-    pub fn api_state(&self) -> &Option<State> {
-        &self.api_state
+    pub fn api_state(&self) -> Option<&State> {
+        self.api_state.as_ref()
+    }
+    pub fn state_available(&self, account_name: &str) -> bool {
+        if let Some(state) = &self.api_state {
+            state.friends.iter().any(|x| x.account == account_name)
+        } else {
+            false
+        }
     }
     pub fn clears_by_account(&self) -> &HashMap<String, RaidClearState> {
         &self.clears_by_account
@@ -200,12 +210,12 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn share(&self, api_keys: Vec<String>, api_key: &ApiKey, friend_account: String) -> Result<State, FriendsApiError> {
+    pub fn share(&self, api_keys: Vec<String>, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/share", self.url))
             .set("User-Agent", USER_AGENT)
             .set("x-auth-keys", &Self::auth_keys(&api_keys))
             .send_form(&[
-                ("key_hash", &key_hash(api_key.key())),
+                ("key_hash", &key_hash(api_key)),
                 ("account", &friend_account)
             ])?;
 
@@ -216,12 +226,12 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn unshare(&self, api_keys: Vec<String>, api_key: &ApiKey, friend_account: String) -> Result<State, FriendsApiError> {
+    pub fn unshare(&self, api_keys: Vec<String>, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/unshare", self.url))
             .set("User-Agent", USER_AGENT)
             .set("x-auth-keys", &Self::auth_keys(&api_keys))
             .send_form(&[
-                ("key_hash", &key_hash(api_key.key())),
+                ("key_hash", &key_hash(api_key)),
                 ("account", &friend_account)
             ])?;
 
@@ -262,6 +272,13 @@ impl KeyUsability {
 
 pub fn get_key_usability(key: &ApiKey) -> KeyUsability {
     if let Some(info) = key.data().token_info() {
+        // We want to check expiration first
+        if let TokenType::Subtoken { expires_at, .. } = info.token_type() {
+            if *expires_at < Utc::now() {
+                return KeyUsability::SubtokenExpired;
+            }
+        }
+
         if !SUBTOKEN_PERMISSIONS.iter().all(|permission| info.has_permission(permission)) {
             return KeyUsability::InsufficientPermissions;
         }
@@ -271,13 +288,10 @@ pub fn get_key_usability(key: &ApiKey) -> KeyUsability {
             TokenType::ApiKey => {
                 KeyUsability::Usable
             }
-            TokenType::Subtoken { expires_at, urls, .. } => {
+            TokenType::Subtoken { urls, .. } => {
                 if let Some(urls) = urls {
                     if !SUBTOKEN_URLS.iter().all(|url| urls.iter().any(|x| x == url)) {
                         return KeyUsability::InsufficientSubtokenUrls;
-                    }
-                    if *expires_at < Utc::now() {
-                        return KeyUsability::SubtokenExpired;
                     }
                 }
                 KeyUsability::Usable

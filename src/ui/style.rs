@@ -1,0 +1,1 @@
+pub const WARNING_RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];

@@ -13,6 +13,10 @@ pub struct Settings {
     pub friends_api_url: String,
     #[serde(default = "default_api_keys")]
     pub api_keys: Vec<ApiKey>,
+    #[serde(default = "default_friends")]
+    pub friend_list: Vec<Friend>,
+    #[serde(default = "default_friend_default_show_state")]
+    pub friend_default_show_state: bool,
     #[serde(default = "default_short_name")]
     pub short_names: bool,
     #[serde(default = "default_check_updates")]
@@ -55,6 +59,12 @@ fn default_check_updates() -> bool {
 }
 fn default_api_keys() -> Vec<ApiKey> {
     Vec::new()
+}
+fn default_friends() -> Vec<Friend> {
+    Vec::new()
+}
+fn default_friend_default_show_state() -> bool {
+    true
 }
 fn default_finished_clear_color() -> [f32; 4] {
     [38. / 255., 199. / 255., 29. / 255., 177. / 255.]
@@ -270,11 +280,34 @@ impl ApiKeyData {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Friend {
+    account_name: String,
+    show_in_friends: bool,
+}
+
+impl Friend {
+    pub fn new(account_name: String, show_in_friends: bool) -> Self {
+        Friend { account_name, show_in_friends }
+    }
+    pub fn account_name(&self) -> &str {
+        &self.account_name
+    }
+    pub fn show_in_friends(&self) -> bool {
+        self.show_in_friends
+    }
+    pub fn show_in_friends_mut(&mut self) -> &mut bool {
+        &mut self.show_in_friends
+    }
+}
+
 impl Settings {
     fn default() -> Self {
         Settings {
             friends_api_url: default_friends_api_url(),
             api_keys: default_api_keys(),
+            friend_list: default_friends(),
+            friend_default_show_state: default_friend_default_show_state(),
             short_names: default_short_name(),
             check_updates: default_check_updates(),
             finished_clear_color: default_finished_clear_color(),
