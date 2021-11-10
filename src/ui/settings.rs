@@ -1,8 +1,10 @@
-use crate::ui::{utils, UiState};
-use arcdps::imgui::{im_str, CollapsingHeader, ColorEditFlags, ColorEdit, ComboBox, Ui, PopupModal, TableFlags, ChildWindow};
-use crate::settings::{AccountHeaderStyle, ClearsStyle, Settings};
 use std::borrow::Cow;
+
+use arcdps::imgui::{ChildWindow, CollapsingHeader, ColorEdit, ColorEditFlags, ComboBox, im_str, PopupModal, TableFlags, Ui};
+
+use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
 use crate::translations::Translation;
+use crate::ui::{UiState, utils};
 
 pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
     if CollapsingHeader::new(&tr.im_string("settings-section-behavior"))
@@ -64,9 +66,19 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.im_string("setting-close-window-with-escape-description"));
     }
 
-    if CollapsingHeader::new(&tr.im_string("settings-section-style"))
+    if CollapsingHeader::new(&tr.im_string("settings-section-common-style"))
         .build(&ui) {
-        style_section(ui, settings, tr);
+        common_style_section(ui, settings, tr);
+    }
+
+    if CollapsingHeader::new(&tr.im_string("settings-section-my-clears-style"))
+        .build(&ui) {
+        style_section(ui, "myclears-style", &mut settings.my_clears_style, tr);
+    }
+
+    if CollapsingHeader::new(&tr.im_string("settings-section-friends-clears-style"))
+        .build(&ui) {
+        style_section(ui, "friends-style", &mut settings.friends_clears_style, tr);
     }
 
     if CollapsingHeader::new(&tr.im_string("settings-section-updates"))
@@ -84,55 +96,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     }
 }
 
-pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
-    /* Clear table styles */
-    let table_styles = [
-        ClearsStyle::WingRows,
-        ClearsStyle::WingColumns,
-        ClearsStyle::SingleRow,
-    ];
-
-    let mut table_style_index = table_styles.iter().position(|x| *x == settings.clears_style).unwrap_or_default();
-
-    if ComboBox::new(&tr.im_string("setting-clears-style"))
-        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
-            Cow::from(match style {
-                ClearsStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
-                ClearsStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
-                ClearsStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
-            }),
-        ) {
-        settings.clears_style = table_styles[table_style_index];
-    }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
-
-    /* Account header styles */
-    let account_header_styles = [
-        AccountHeaderStyle::None,
-        AccountHeaderStyle::CenteredText,
-        AccountHeaderStyle::Collapsible
-    ];
-
-    let mut account_style_index = account_header_styles.iter()
-        .position(|x| *x == settings.account_header_style)
-        .unwrap_or_default();
-
-    if ComboBox::new(&tr.im_string("setting-clears-header-style"))
-        .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
-            Cow::from(match style {
-                AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
-                AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
-                AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
-            }),
-        ) {
-        settings.account_header_style = account_header_styles[account_style_index]
-    }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
-
+pub fn common_style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
     /* Short encounter names */
     ui.checkbox(
         &tr.im_string("setting-short-encounter-names"),
@@ -143,46 +107,6 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         ui,
         tr.im_string("setting-short-encounter-names-description"),
     );
-
-    /* Show table headers */
-    ui.checkbox(
-        &tr.im_string("setting-clears-show-table-headers"),
-        &mut settings.show_clears_table_headers,
-    );
-    ui.same_line(0.0);
-    utils::help_marker(
-        ui,
-        tr.im_string("setting-clears-show-table-headers-description"),
-    );
-
-    /* Show table headers */
-    ui.checkbox(
-        &tr.im_string("setting-clears-show-table-row-names"),
-        &mut settings.show_clears_table_row_names,
-    );
-    ui.same_line(0.0);
-    utils::help_marker(
-        ui,
-        tr.im_string("setting-clears-show-table-row-names-description"),
-    );
-
-    /* Colors */
-    ColorEdit::new(&tr.im_string("setting-finished-clear-color"), &mut settings.finished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
-        .build(&ui);
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
-
-    ColorEdit::new(&tr.im_string("setting-unfinished-clear-color"), &mut settings.unfinished_clear_color)
-        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
-        .build(&ui);
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
-
-    ui.separator();
-    /* General style */
 
     /* Show main window title */
     ui.checkbox(
@@ -205,8 +129,6 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
         ui,
         tr.im_string("setting-main-window-show-bg-description"),
     );
-
-    ui.separator();
 
     let reset_modal_label = tr.im_string("setting-reset-style-modal-title");
     if ui.button(&tr.im_string("setting-reset-style-button"), [0.0, 0.0]) {
@@ -232,4 +154,93 @@ pub fn style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) {
                 ui.end_table();
             }
         });
+}
+
+pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr: &Translation) {
+    /* Clear table styles */
+    let table_styles = [
+        ClearsTableStyle::WingRows,
+        ClearsTableStyle::WingColumns,
+        ClearsTableStyle::SingleRow,
+    ];
+
+    let mut table_style_index = table_styles.iter().position(|x| *x == style.table_style).unwrap_or_default();
+
+    if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-style"), imgui_id_label))
+        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
+            Cow::from(match style {
+                ClearsTableStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
+                ClearsTableStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
+                ClearsTableStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
+            }),
+        ) {
+        style.table_style = table_styles[table_style_index];
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
+
+    /* Account header styles */
+    let account_header_styles = [
+        AccountHeaderStyle::None,
+        AccountHeaderStyle::CenteredText,
+        AccountHeaderStyle::Collapsible
+    ];
+
+    let mut account_style_index = account_header_styles.iter()
+        .position(|x| *x == style.account_header_style)
+        .unwrap_or_default();
+
+    if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-header-style"), imgui_id_label))
+        .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
+            Cow::from(match style {
+                AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
+                AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
+                AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
+            }),
+        ) {
+        style.account_header_style = account_header_styles[account_style_index]
+    }
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
+
+    /* Show table headers */
+    ui.checkbox(
+        &im_str!("{}##{}", tr.im_string("setting-clears-show-table-headers"), imgui_id_label),
+        &mut style.show_clears_table_headers,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-clears-show-table-headers-description"),
+    );
+
+    /* Show table headers */
+    ui.checkbox(
+        &im_str!("{}##{}", tr.im_string("setting-clears-show-table-row-names"), imgui_id_label),
+        &mut style.show_clears_table_row_names,
+    );
+    ui.same_line(0.0);
+    utils::help_marker(
+        ui,
+        tr.im_string("setting-clears-show-table-row-names-description"),
+    );
+
+    /* Colors */
+    ColorEdit::new(&im_str!("{}##{}", tr.im_string("setting-finished-clear-color"), imgui_id_label),
+                   &mut style.finished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
+
+    ColorEdit::new(&im_str!("{}##{}", tr.im_string("setting-unfinished-clear-color"), imgui_id_label),
+                   &mut style.unfinished_clear_color)
+        .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
+        .build(&ui);
+    ui.same_line(0.0);
+    ui.align_text_to_frame_padding();
+    utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 }

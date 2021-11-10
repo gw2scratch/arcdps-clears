@@ -10,7 +10,7 @@ use itertools::Itertools;
 #[derive(Serialize, Deserialize)]
 pub struct Translation {
     strings: HashMap<String, String>,
-    encounter_short_names: HashMap<String, String>
+    encounter_short_names: HashMap<String, String>,
 }
 
 impl Translation {
