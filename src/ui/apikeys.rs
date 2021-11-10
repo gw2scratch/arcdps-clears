@@ -6,6 +6,7 @@ use crate::friends::KeyUsability;
 use crate::settings::{ApiKey, Settings, TokenType};
 use crate::translations::Translation;
 use crate::ui::{get_api_key_name, SelectedApiKey, UiState, utils};
+use crate::ui::friends::refresh_button;
 use crate::ui::style::WARNING_RED;
 use crate::workers::{ApiJob, BackgroundWorkers};
 
@@ -99,7 +100,7 @@ pub fn api_keys_window(
 
                             ui.separator();
                             TabBar::new(im_str!("api_key_tabs")).build(&ui, || {
-                                TabItem::new(im_str!("Details")) // TODO: Translate
+                                TabItem::new(&tr.im_string("api-key-details-tab-details"))
                                     .build(&ui, || {
                                         if key.data().account_data().is_some() || key.data().token_info().is_some() {
                                             if ui.begin_table_with_flags(im_str!("ApiKeyData"), 2, TableFlags::SIZING_FIXED_FIT) {
@@ -239,25 +240,27 @@ pub fn api_keys_window(
                                             key.change_key(key_text.to_str());
                                         }
                                     });
-                                TabItem::new(im_str!("Friends")) // TODO: Translate
+                                TabItem::new(&tr.im_string("api-key-details-tab-friends"))
                                     .build(&ui, || {
                                         let key_usable = match friends::get_key_usability(key) {
                                             KeyUsability::NoTokenInfo => {
-                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, no data about key!"); // TODO: Translate
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-no-token-info"));
                                                 false
                                             }
                                             KeyUsability::Usable => true,
                                             KeyUsability::InsufficientPermissions => {
-                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing permissions!"); // TODO: Translate
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-no-permissions"));
                                                 false
                                             }
-                                            KeyUsability::InsufficientSubtokenUrls => {
-                                                // TODO: Add list of missing urls
-                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, missing subtoken urls!"); // TODO: Translate
+                                            KeyUsability::InsufficientSubtokenUrls(urls) => {
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-subtoken-missing-urls"));
+                                                for url in urls {
+                                                    ui.text_colored(WARNING_RED, im_str!("\t{}", url));
+                                                }
                                                 false
                                             }
                                             KeyUsability::SubtokenExpired => {
-                                                ui.text_colored(WARNING_RED, "Cannot be shared with friends, subtoken is expired!"); // TODO: Translate
+                                                ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-subtoken-expired"));
                                                 false
                                             }
                                         };
@@ -267,16 +270,13 @@ pub fn api_keys_window(
                                         }
 
                                         if data.friends.api_state().is_none() {
-                                            ui.text_colored(WARNING_RED, "No connection to the friend server."); // TODO: Translate
-                                            if ui.button(im_str!("Refresh"), [0.0, 0.0]) {
-                                                bg_workers.api_sender().send(ApiJob::UpdateFriendState);
-                                            }
+                                            ui.text_colored(WARNING_RED, tr.im_string("friends-no-connection-to-server"));
+                                            refresh_button(ui, ui_state, bg_workers, tr);
                                         }
 
                                         if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
                                             if state.shared_to().len() == 0 {
-                                                // TODO: Translate
-                                                ui.text_wrapped(im_str!("Here, you can share your clears with friends who also use this addon. To do so, input their account name and click Share."));
+                                                ui.text_wrapped(&tr.im_string("api-key-friends-intro"));
                                             }
 
                                             if ui.begin_table_with_flags(im_str!("ApiKeyFriendsTable"), 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
@@ -285,7 +285,7 @@ pub fn api_keys_window(
                                                     ui.table_next_column();
                                                     ui.text(share.account());
                                                     if !share.account_available() {
-                                                        utils::warning_marker(&ui, "Unknown user"); // TODO: Translate
+                                                        utils::warning_marker(&ui, tr.im_string("api-key-friends-warning-unknown-user"));
                                                     }
                                                     ui.table_next_column();
                                                     if ui.small_button(&im_str!("Unshare##{}", share.account())) {
@@ -299,7 +299,7 @@ pub fn api_keys_window(
                                                 ui.table_next_row();
                                                 ui.table_next_column();
 
-                                                let width = ui.push_item_width(ui.text_line_height() * 20.0);
+                                                let width = ui.push_item_width(ui.current_font_size() * 20.0);
                                                 let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
                                                 let mut add = ui.input_text(im_str!("##add_new_friend_name"), &mut ui_state.api_key_window.new_friend_name)
                                                     .hint(im_str!("Account Name.1234")) // TODO: Test ingame to see if it's visible, might need a tooltip
@@ -310,7 +310,7 @@ pub fn api_keys_window(
                                                 width.pop(&ui);
 
                                                 ui.table_next_column();
-                                                add = add || ui.small_button(im_str!("Share")); // TODO: Translate
+                                                add = add || ui.small_button(&tr.im_string("api-key-friends-share-button"));
 
                                                 if add {
                                                     bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {

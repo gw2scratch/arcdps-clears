@@ -5,6 +5,7 @@ use crate::workers::BackgroundWorkers;
 use crate::Data;
 use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, StyleVar, TabBarFlags};
 use uuid::Uuid;
+use std::time::Instant;
 
 mod settings;
 mod apikeys;
@@ -18,12 +19,15 @@ pub struct UiState {
     pub main_window: MainWindowState,
     pub update_window: UpdateWindowState,
     pub api_key_window: ApiKeyWindowState,
+    pub friends_window: FriendsWindowState,
 }
 
 impl UiState {
     pub fn new() -> Self {
         UiState {
-            main_window: MainWindowState { shown: false },
+            main_window: MainWindowState {
+                shown: false
+            },
             update_window: UpdateWindowState {
                 shown: false,
                 release: None,
@@ -31,8 +35,12 @@ impl UiState {
             api_key_window: ApiKeyWindowState {
                 shown: false,
                 selected_key: SelectedApiKey::None,
-                new_friend_name: ImString::default()
+                new_friend_name: ImString::default(),
             },
+            friends_window: FriendsWindowState {
+                shown: false,
+                last_refresh_use: Instant::now(),
+            }
         }
     }
 }
@@ -55,6 +63,11 @@ pub struct MainWindowState {
 pub struct UpdateWindowState {
     pub shown: bool,
     pub release: Option<Release>,
+}
+
+pub struct FriendsWindowState {
+    pub shown: bool,
+    pub last_refresh_use: Instant,
 }
 
 impl ApiKeyWindowState {
@@ -96,25 +109,20 @@ pub fn draw_ui(
             .build(&ui, || {
                 TabBar::new(im_str!("main_tabs")).build(&ui, || {
                     TabItem::new(&tr.im_string("clears-tab-title"))
-                        .build(&ui, || clears::clears(ui, ui_state, data, bg_workers, settings, tr));
+                        .build(&ui, || {
+                            clears::my_clears(ui, ui_state, data, bg_workers, settings, tr);
+                        });
                     TabItem::new(&tr.im_string("friends-tab-title"))
                         .build(&ui, || friends::friends(ui, ui_state, data, bg_workers, settings, tr));
                     TabItem::new(&tr.im_string("settings-tab-title"))
                         .build(&ui, || settings::settings(ui, ui_state, settings, tr));
                 });
-
-                if ui.is_mouse_released(MouseButton::Right) && ui.is_window_hovered() {
-                    ui.open_popup(im_str!("##RightClickMenu"));
-                }
-
-                ui.popup(im_str!("##RightClickMenu"), || {
-                    let small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0]));
-                    settings::style_section(&ui, settings, tr);
-                    small_frame_padding.pop(&ui);
-                });
             });
         ui_state.main_window.shown = shown;
     }
+
+
+    friends::friends_window(ui, ui_state, data, bg_workers, settings, tr);
 
     updates::update_window(ui, ui_state, tr);
 

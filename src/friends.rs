@@ -1,11 +1,13 @@
-use chrono::{DateTime, Utc};
-use serde::Deserialize;
-use sha2::{Sha256, Digest};
-use std::fmt::Write;
-use crate::settings::{ApiKey, TokenType};
-use itertools::Itertools;
 use std::collections::HashMap;
+use std::fmt::Write;
+
+use chrono::{DateTime, Utc};
+use itertools::Itertools;
+use serde::Deserialize;
+use sha2::{Digest, Sha256};
+
 use crate::clears::{ClearData, RaidClearState};
+use crate::settings::{ApiKey, TokenType};
 
 const USER_AGENT: &str = concat!("arcdps-clears/", env!("CARGO_PKG_VERSION"));
 
@@ -139,13 +141,16 @@ impl FriendData {
     pub fn set_api_state(&mut self, api_state: Option<State>) {
         self.api_state = api_state;
     }
+    pub fn clears(&self, account: &str) -> Option<&RaidClearState> {
+        self.clears_by_account.get(account)
+    }
     pub fn set_clears(&mut self, account: String, clear_data: RaidClearState) {
         self.clears_by_account.insert(account, clear_data);
     }
     pub fn set_subtoken(&mut self, account: String, subtoken: String) {
         self.subtokens_by_account.insert(account, subtoken);
     }
-    pub fn get_subtoken(&self, account: &str) -> Option<&String> {
+    pub fn subtoken(&self, account: &str) -> Option<&String> {
         self.subtokens_by_account.get(account)
     }
 }
@@ -257,7 +262,7 @@ pub enum KeyUsability {
     NoTokenInfo,
     Usable,
     InsufficientPermissions,
-    InsufficientSubtokenUrls,
+    InsufficientSubtokenUrls(Vec<&'static str>),
     SubtokenExpired,
 }
 
@@ -291,7 +296,10 @@ pub fn get_key_usability(key: &ApiKey) -> KeyUsability {
             TokenType::Subtoken { urls, .. } => {
                 if let Some(urls) = urls {
                     if !SUBTOKEN_URLS.iter().all(|url| urls.iter().any(|x| x == url)) {
-                        return KeyUsability::InsufficientSubtokenUrls;
+                        let missing_urls = SUBTOKEN_URLS.iter().cloned()
+                            .filter(|url| !urls.iter().any(|x| x == url))
+                            .collect();
+                        return KeyUsability::InsufficientSubtokenUrls(missing_urls);
                     }
                 }
                 KeyUsability::Usable

@@ -17,18 +17,14 @@ pub struct Settings {
     pub friend_list: Vec<Friend>,
     #[serde(default = "default_friend_default_show_state")]
     pub friend_default_show_state: bool,
-    #[serde(default = "default_short_name")]
-    pub short_names: bool,
     #[serde(default = "default_check_updates")]
     pub check_updates: bool,
-    #[serde(default = "default_finished_clear_color")]
-    pub finished_clear_color: [f32; 4],
-    #[serde(default = "default_unfinished_clear_color")]
-    pub unfinished_clear_color: [f32; 4],
-    #[serde(default = "default_clears_style")]
-    pub clears_style: ClearsStyle,
-    #[serde(default = "default_account_header")]
-    pub account_header_style: AccountHeaderStyle,
+    #[serde(default = "default_short_names")]
+    pub short_names: bool,
+    #[serde(default = "default_my_clears_style")]
+    pub my_clears_style: ClearsStyle,
+    #[serde(default = "default_friends_clears_style")]
+    pub friends_clears_style: ClearsStyle,
     #[serde(default = "default_main_window_keybind")]
     pub main_window_keybind: Option<usize>,
     #[serde(default = "default_api_window_keybind")]
@@ -37,10 +33,6 @@ pub struct Settings {
     pub close_window_with_escape: bool,
     #[serde(default = "default_hide_in_loading_screens")]
     pub hide_in_loading_screens: bool,
-    #[serde(default = "default_show_clears_table_headers")]
-    pub show_clears_table_headers: bool,
-    #[serde(default = "default_show_clears_table_row_names")]
-    pub show_clears_table_row_names: bool,
     #[serde(default = "default_main_window_show_bg")]
     pub main_window_show_bg: bool,
     #[serde(default = "default_main_window_show_title")]
@@ -48,11 +40,40 @@ pub struct Settings {
     // Are you adding a new style option? Make sure to add to `reset_style()`!
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct ClearsStyle {
+    pub table_style: ClearsTableStyle,
+    pub account_header_style: AccountHeaderStyle,
+    pub show_clears_table_headers: bool,
+    pub show_clears_table_row_names: bool,
+    pub finished_clear_color: [f32; 4],
+    pub unfinished_clear_color: [f32; 4],
+}
+
+fn default_my_clears_style() -> ClearsStyle {
+    ClearsStyle {
+        table_style: ClearsTableStyle::WingRows,
+        account_header_style: AccountHeaderStyle::CenteredText,
+        show_clears_table_headers: true,
+        show_clears_table_row_names: true,
+        finished_clear_color: [38. / 255., 199. / 255., 29. / 255., 177. / 255.],
+        unfinished_clear_color: [192. / 255., 24. / 255., 30. / 255., 136. / 255.],
+    }
+}
+
+fn default_friends_clears_style() -> ClearsStyle {
+    ClearsStyle {
+        table_style: ClearsTableStyle::SingleRow,
+        account_header_style: AccountHeaderStyle::CenteredText,
+        show_clears_table_headers: true,
+        show_clears_table_row_names: true,
+        finished_clear_color: [38. / 255., 199. / 255., 29. / 255., 177. / 255.],
+        unfinished_clear_color: [192. / 255., 24. / 255., 30. / 255., 136. / 255.],
+    }
+}
+
 fn default_friends_api_url() -> String {
     "https://clears.gw2scratch.com/".to_string()
-}
-fn default_short_name() -> bool {
-    true
 }
 fn default_check_updates() -> bool {
     true
@@ -66,17 +87,8 @@ fn default_friends() -> Vec<Friend> {
 fn default_friend_default_show_state() -> bool {
     true
 }
-fn default_finished_clear_color() -> [f32; 4] {
-    [38. / 255., 199. / 255., 29. / 255., 177. / 255.]
-}
-fn default_unfinished_clear_color() -> [f32; 4] {
-    [192. / 255., 24. / 255., 30. / 255., 136. / 255.]
-}
-fn default_clears_style() -> ClearsStyle {
-    ClearsStyle::WingRows
-}
-fn default_account_header() -> AccountHeaderStyle {
-    AccountHeaderStyle::CenteredText
+fn default_short_names() -> bool {
+    true
 }
 fn default_api_window_keybind() -> Option<usize> {
     None
@@ -94,12 +106,6 @@ fn default_close_window_with_escape() -> bool {
 fn default_hide_in_loading_screens() -> bool {
     false
 }
-fn default_show_clears_table_headers() -> bool {
-    true
-}
-fn default_show_clears_table_row_names() -> bool {
-    true
-}
 fn default_main_window_show_bg() -> bool {
     true
 }
@@ -115,7 +121,7 @@ pub enum AccountHeaderStyle {
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
-pub enum ClearsStyle {
+pub enum ClearsTableStyle {
     WingColumns,
     WingRows,
     SingleRow,
@@ -284,11 +290,12 @@ impl ApiKeyData {
 pub struct Friend {
     account_name: String,
     show_in_friends: bool,
+    expanded_in_friends: bool
 }
 
 impl Friend {
     pub fn new(account_name: String, show_in_friends: bool) -> Self {
-        Friend { account_name, show_in_friends }
+        Friend { account_name, show_in_friends, expanded_in_friends: true }
     }
     pub fn account_name(&self) -> &str {
         &self.account_name
@@ -299,6 +306,12 @@ impl Friend {
     pub fn show_in_friends_mut(&mut self) -> &mut bool {
         &mut self.show_in_friends
     }
+    pub fn expanded_in_friends(&self) -> bool {
+        self.expanded_in_friends
+    }
+    pub fn expanded_in_friends_mut(&mut self) -> &mut bool {
+        &mut self.expanded_in_friends
+    }
 }
 
 impl Settings {
@@ -308,18 +321,14 @@ impl Settings {
             api_keys: default_api_keys(),
             friend_list: default_friends(),
             friend_default_show_state: default_friend_default_show_state(),
-            short_names: default_short_name(),
             check_updates: default_check_updates(),
-            finished_clear_color: default_finished_clear_color(),
-            unfinished_clear_color: default_unfinished_clear_color(),
-            clears_style: default_clears_style(),
-            account_header_style: default_account_header(),
+            short_names: default_short_names(),
+            my_clears_style: default_my_clears_style(),
+            friends_clears_style: default_friends_clears_style(),
             main_window_keybind: default_main_window_keybind(),
             api_window_keybind: default_api_window_keybind(),
             close_window_with_escape: default_close_window_with_escape(),
             hide_in_loading_screens: default_hide_in_loading_screens(),
-            show_clears_table_headers: default_show_clears_table_headers(),
-            show_clears_table_row_names: default_show_clears_table_row_names(),
             main_window_show_bg: default_main_window_show_bg(),
             main_window_show_title: default_main_window_show_title(),
             // Are you adding a new style option? Make sure to add to `reset_style()`!
@@ -327,13 +336,9 @@ impl Settings {
     }
 
     pub fn reset_style(&mut self) {
-        self.short_names = default_short_name();
-        self.finished_clear_color = default_finished_clear_color();
-        self.unfinished_clear_color = default_unfinished_clear_color();
-        self.clears_style = default_clears_style();
-        self.account_header_style = default_account_header();
-        self.show_clears_table_headers = default_show_clears_table_headers();
-        self.show_clears_table_row_names = default_show_clears_table_row_names();
+        self.short_names = default_short_names();
+        self.my_clears_style = default_my_clears_style();
+        self.friends_clears_style = default_friends_clears_style();
         self.main_window_show_bg = default_main_window_show_bg();
         self.main_window_show_title = default_main_window_show_title();
     }
