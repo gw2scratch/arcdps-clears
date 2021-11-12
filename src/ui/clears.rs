@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use arcdps::imgui::{CollapsingHeader, im_str, ImStr, ImString, MouseButton, StyleColor, StyleVar, TableBgTarget, TableColumnFlags, TableFlags, TableRowFlags, Ui};
+use arcdps::imgui::{CollapsingHeader, im_str, ImStr, ImString, MenuItem, MouseButton, StyleColor, StyleVar, TableBgTarget, TableColumnFlags, TableFlags, TableRowFlags, Ui};
 
 use crate::clears::{RaidClearState, RaidWings};
 use crate::Data;
@@ -79,6 +79,20 @@ pub fn my_clears(
 
     ui.popup(im_str!("##RightClickMenuMyClears"), || {
         let small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0]));
+        ui.menu(&tr.im_string("clears-contextmenu-account-list"), true, || {
+            let mut entries: Vec<_> = settings.api_keys.iter_mut()
+                .map(|key| (get_api_key_name(key, tr), key.show_key_in_clears_mut()))
+                .collect();
+
+            for (name, mut shown) in entries {
+                if MenuItem::new(&im_str!("{}##ClearsContextCheckbox", name))
+                    .selected(*shown)
+                    .build(ui) {
+                    *shown = !*shown;
+                }
+            }
+        });
+        ui.separator();
         settings::style_section(&ui, "my-clears-style-tooltip", &mut settings.my_clears_style, tr);
         small_frame_padding.pop(&ui);
     })
