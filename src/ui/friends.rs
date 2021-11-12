@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use arcdps::imgui::{CollapsingHeader, Direction, DragDropFlags, DragDropSource, DragDropTarget, im_str, ImStr, ImString, MouseButton, Selectable, StyleColor, StyleVar, TableFlags, Ui, Window};
+use arcdps::imgui::{CollapsingHeader, Direction, DragDropFlags, DragDropSource, DragDropTarget, im_str, ImStr, ImString, MenuItem, MouseButton, Selectable, StyleColor, StyleVar, TableFlags, Ui, Window};
 use log::warn;
 
 use crate::Data;
@@ -80,6 +80,20 @@ pub fn friends(
 
     ui.popup(im_str!("##RightClickMenuFriendsClears"), || {
         let small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0]));
+        ui.menu(&tr.im_string("friends-contextmenu-friend-list"), true, || {
+            let mut entries: Vec<_> = settings.friend_list.iter_mut()
+                .filter(|friend| data.friends.state_available(friend.account_name()))
+                .collect();
+
+            for friend in entries {
+                if MenuItem::new(&im_str!("{}##FriendsContextCheckbox", friend.account_name()))
+                    .selected(friend.show_in_friends())
+                    .build(ui) {
+                    *friend.show_in_friends_mut() = !friend.show_in_friends();
+                }
+            }
+        });
+        ui.separator();
         settings::style_section(ui, "friends-style-tooltip", &mut settings.friends_clears_style, tr);
         small_frame_padding.pop(ui);
     })
