@@ -29,6 +29,7 @@ arcdps_export! {
     name: "Clears",
     sig: 0xC1EA55u32,
     options_windows: options,
+    options_end: options_end,
     imgui: imgui,
     init: init,
     release: release,
@@ -137,15 +138,26 @@ fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
     if window_name.is_none() {
         let tr = TRANSLATION.lock().unwrap();
         let mut ui_state = UI_STATE.lock().unwrap();
-        /*
-        if ui.button(im_str!("Clears"), [ui.current_column_width(), ui.current_font_size() + 8.0]) {
-            ui_state.main_window.shown = true;
-        }
-        */
         ui.checkbox(&tr.im_string("arcdps-menu-name"), &mut ui_state.main_window.shown);
     }
 
     return false;
+}
+
+fn options_end(ui: &imgui::Ui) {
+    let mut ui_state = UI_STATE.lock().unwrap();
+    let mut settings = SETTINGS.lock().unwrap();
+    let tr = TRANSLATION.lock().unwrap();
+
+    if settings.is_none() {
+        // We wait for settings to get loaded first.
+        return;
+    }
+    ui::settings::settings(ui,
+                           &mut ui_state,
+                           settings.as_mut().expect("Settings should be loaded at this point."),
+                           &tr,
+    );
 }
 
 

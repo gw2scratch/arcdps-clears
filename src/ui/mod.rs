@@ -7,7 +7,7 @@ use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, 
 use uuid::Uuid;
 use std::time::Instant;
 
-mod settings;
+pub mod settings;
 mod apikeys;
 mod updates;
 mod clears;
