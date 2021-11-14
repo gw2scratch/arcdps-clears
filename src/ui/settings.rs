@@ -181,29 +181,32 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
     utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
 
     /* Account header styles */
-    let account_header_styles = [
-        AccountHeaderStyle::None,
-        AccountHeaderStyle::CenteredText,
-        AccountHeaderStyle::Collapsible
-    ];
+    // Hidden for single row layout as it's not affected.
+    if !matches!(style.table_style, ClearsTableStyle::SingleRow) {
+        let account_header_styles = [
+            AccountHeaderStyle::None,
+            AccountHeaderStyle::CenteredText,
+            AccountHeaderStyle::Collapsible
+        ];
 
-    let mut account_style_index = account_header_styles.iter()
-        .position(|x| *x == style.account_header_style)
-        .unwrap_or_default();
+        let mut account_style_index = account_header_styles.iter()
+            .position(|x| *x == style.account_header_style)
+            .unwrap_or_default();
 
-    if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-header-style"), imgui_id_label))
-        .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
-            Cow::from(match style {
-                AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
-                AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
-                AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
-            }),
-        ) {
-        style.account_header_style = account_header_styles[account_style_index]
+        if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-header-style"), imgui_id_label))
+            .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
+                Cow::from(match style {
+                    AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
+                    AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
+                    AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
+                }),
+            ) {
+            style.account_header_style = account_header_styles[account_style_index]
+        }
+        ui.same_line(0.0);
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
     }
-    ui.same_line(0.0);
-    ui.align_text_to_frame_padding();
-    utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
 
     /* Show table headers */
     ui.checkbox(
@@ -217,15 +220,18 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
     );
 
     /* Show table headers */
-    ui.checkbox(
-        &im_str!("{}##{}", tr.im_string("setting-clears-show-table-row-names"), imgui_id_label),
-        &mut style.show_clears_table_row_names,
-    );
-    ui.same_line(0.0);
-    utils::help_marker(
-        ui,
-        tr.im_string("setting-clears-show-table-row-names-description"),
-    );
+    // Hidden for single row layout as it's not affected.
+    if !matches!(style.table_style, ClearsTableStyle::SingleRow) {
+        ui.checkbox(
+            &im_str!("{}##{}", tr.im_string("setting-clears-show-table-row-names"), imgui_id_label),
+            &mut style.show_clears_table_row_names,
+        );
+        ui.same_line(0.0);
+        utils::help_marker(
+            ui,
+            tr.im_string("setting-clears-show-table-row-names-description"),
+        );
+    }
 
     /* Colors */
     ColorEdit::new(&im_str!("{}##{}", tr.im_string("setting-finished-clear-color"), imgui_id_label),
