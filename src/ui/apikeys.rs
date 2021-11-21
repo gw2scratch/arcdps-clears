@@ -279,48 +279,66 @@ pub fn api_keys_window(
                                                 ui.text_wrapped(&tr.im_string("api-key-friends-intro"));
                                             }
 
-                                            if ui.begin_table_with_flags(im_str!("ApiKeyFriendsTable"), 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
-                                                for share in state.shared_to() {
+                                            let original_public = state.public();
+                                            let mut public = state.public();
+                                            // TODO: Translate
+                                            let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                            ui.radio_button(im_str!("Public"), &mut public, true);
+                                            ui.radio_button(im_str!("Friends only"), &mut public, false);
+                                            padding.pop(ui);
+
+                                            if public != original_public {
+                                                bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
+                                                    key_uuid: *key.id(),
+                                                    public
+                                                });
+                                            }
+
+
+                                            if !state.public() {
+                                                if ui.begin_table_with_flags(im_str!("ApiKeyFriendsTable"), 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
+                                                    for share in state.shared_to() {
+                                                        ui.table_next_row();
+                                                        ui.table_next_column();
+                                                        ui.text(share.account());
+                                                        if !share.account_available() {
+                                                            utils::warning_marker(&ui, tr.im_string("api-key-friends-warning-unknown-user"));
+                                                        }
+                                                        ui.table_next_column();
+                                                        if ui.small_button(&im_str!("Unshare##{}", share.account())) {
+                                                            bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                                key_uuid: *key.id(),
+                                                                friend_account_name: share.account().to_string(),
+                                                            });
+                                                        }
+                                                    }
+
                                                     ui.table_next_row();
                                                     ui.table_next_column();
-                                                    ui.text(share.account());
-                                                    if !share.account_available() {
-                                                        utils::warning_marker(&ui, tr.im_string("api-key-friends-warning-unknown-user"));
-                                                    }
+
+                                                    let width = ui.push_item_width(ui.current_font_size() * 20.0);
+                                                    let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                                    let mut add = ui.input_text(im_str!("##add_new_friend_name"), &mut ui_state.api_key_window.new_friend_name)
+                                                        .hint(im_str!("Account Name.1234")) // TODO: Test ingame to see if it's visible, might need a tooltip
+                                                        .enter_returns_true(true)
+                                                        .resize_buffer(true)
+                                                        .build();
+                                                    padding.pop(&ui);
+                                                    width.pop(&ui);
+
                                                     ui.table_next_column();
-                                                    if ui.small_button(&im_str!("Unshare##{}", share.account())) {
-                                                        bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                    add = add || ui.small_button(&tr.im_string("api-key-friends-share-button"));
+
+                                                    if add {
+                                                        bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
                                                             key_uuid: *key.id(),
-                                                            friend_account_name: share.account().to_string(),
+                                                            friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
                                                         });
+                                                        ui_state.api_key_window.new_friend_name.clear();
                                                     }
+
+                                                    ui.end_table();
                                                 }
-
-                                                ui.table_next_row();
-                                                ui.table_next_column();
-
-                                                let width = ui.push_item_width(ui.current_font_size() * 20.0);
-                                                let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                                                let mut add = ui.input_text(im_str!("##add_new_friend_name"), &mut ui_state.api_key_window.new_friend_name)
-                                                    .hint(im_str!("Account Name.1234")) // TODO: Test ingame to see if it's visible, might need a tooltip
-                                                    .enter_returns_true(true)
-                                                    .resize_buffer(true)
-                                                    .build();
-                                                padding.pop(&ui);
-                                                width.pop(&ui);
-
-                                                ui.table_next_column();
-                                                add = add || ui.small_button(&tr.im_string("api-key-friends-share-button"));
-
-                                                if add {
-                                                    bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
-                                                        key_uuid: *key.id(),
-                                                        friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
-                                                    });
-                                                    ui_state.api_key_window.new_friend_name.clear();
-                                                }
-
-                                                ui.end_table();
                                             }
                                         }
                                     });

@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use arcdps::imgui::{CollapsingHeader, Direction, DragDropFlags, DragDropSource, DragDropTarget, im_str, ImStr, ImString, MenuItem, MouseButton, Selectable, StyleColor, StyleVar, TableFlags, Ui, Window};
+use arcdps::imgui::{CollapsingHeader, Direction, DragDropFlags, DragDropSource, DragDropTarget, im_str, ImStr, ImString, MenuItem, MouseButton, PopupModal, Selectable, StyleColor, StyleVar, TableFlags, Ui, Window, WindowFlags};
 use log::warn;
 
 use crate::Data;
@@ -117,10 +117,11 @@ pub fn friends_window(
             .opened(&mut shown)
             .build(ui, || {
                 if settings.friend_list.iter_mut().any(|friend| data.friends.state_available(friend.account_name())) {
-                    if ui.begin_table_with_flags(im_str!("FriendsTable"), 3, TableFlags::BORDERS) {
+                    if ui.begin_table_with_flags(im_str!("FriendsTable"), 4, TableFlags::BORDERS) {
                         ui.table_setup_column(im_str!("##updown"));
                         ui.table_setup_column(&tr.im_string("friends-friendlist-account-name"));
                         ui.table_setup_column(&tr.im_string("friends-friendlist-shown"));
+                        ui.table_setup_column(im_str!("##remove"));
                         ui.table_headers_row();
 
                         let mut swap = None;
@@ -160,8 +161,10 @@ pub fn friends_window(
                                 ui.invisible_button(&im_str!("##friend_down_{}", friend.account_name()), [ui.frame_height(), ui.frame_height()]);
                             }
                             padding.pop(ui);
+
                             ui.table_next_column();
                             ui.text(friend.account_name());
+
                             ui.table_next_column();
                             let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
 
@@ -172,6 +175,14 @@ pub fn friends_window(
 
                             ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
                             ui.checkbox(&im_str!("##friend_show_{}", friend.account_name()), friend.show_in_friends_mut());
+
+                            ui.table_next_column();
+                            if friend.public() {
+                                ui.button(im_str!("Remove"), [0., 0.]); // TODO: Translate
+                            } else {
+                                utils::help_marker(ui, "This friend shared their clears with you."); // TODO: Translate
+                            }
+
                             padding.pop(ui);
                         }
 
@@ -188,7 +199,11 @@ pub fn friends_window(
                     ui.new_line();
                 }
 
-                refresh_button(ui, ui_state, bg_workers, tr)
+                refresh_button(ui, ui_state, bg_workers, tr);
+
+                // TODO: Translate
+                // TODO: Implement
+                ui.button(im_str!("Add friend"), [0., 0.]);
             });
 
         ui_state.friends_window.shown = shown;
