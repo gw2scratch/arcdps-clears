@@ -5,6 +5,7 @@ use chrono::{DateTime, Utc};
 use itertools::Itertools;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
+use ureq::Request;
 
 use crate::clears::{ClearData, RaidClearState};
 use crate::settings::{ApiKey, TokenType};
@@ -48,14 +49,22 @@ pub struct KeyState {
     subtoken_added_at: Option<DateTime<Utc>>,
     subtoken_expires_at: Option<DateTime<Utc>>,
     account: Option<String>,
+    public: bool,
 }
 
 #[derive(Deserialize)]
 pub struct FriendState {
     account: String,
+    subtoken: Option<SubtokenState>,
+    shared_with: Vec<String>,
+    known: bool,
+    public: bool,
+}
+
+#[derive(Deserialize)]
+pub struct SubtokenState {
     subtoken: String,
     expires_at: DateTime<Utc>,
-    shared_with: Vec<String>,
 }
 
 impl State {
@@ -98,20 +107,35 @@ impl KeyState {
     pub fn account(&self) -> &Option<String> {
         &self.account
     }
+    pub fn public(&self) -> bool {
+        self.public
+    }
 }
 
 impl FriendState {
     pub fn account(&self) -> &str {
         &self.account
     }
+    pub fn subtoken(&self) -> Option<&SubtokenState> {
+        self.subtoken.as_ref()
+    }
+    pub fn shared_with(&self) -> &Vec<String> {
+        &self.shared_with
+    }
+    pub fn known(&self) -> bool {
+        self.known
+    }
+    pub fn public(&self) -> bool {
+        self.public
+    }
+}
+
+impl SubtokenState {
     pub fn subtoken(&self) -> &str {
         &self.subtoken
     }
     pub fn expires_at(&self) -> DateTime<Utc> {
         self.expires_at
-    }
-    pub fn shared_with(&self) -> &Vec<String> {
-        &self.shared_with
     }
 }
 
@@ -177,6 +201,11 @@ impl From<ureq::Error> for FriendsApiError {
     }
 }
 
+pub struct FriendRequestMetadata {
+    pub api_keys: Vec<String>,
+    pub public_friends: Vec<String>,
+}
+
 pub struct FriendsApiClient {
     url: String,
 }
@@ -186,10 +215,9 @@ impl FriendsApiClient {
         FriendsApiClient { url }
     }
 
-    pub fn get_state(&self, api_keys: Vec<String>) -> Result<State, FriendsApiError> {
+    pub fn get_state(&self, metadata: FriendRequestMetadata) -> Result<State, FriendsApiError> {
         let response = ureq::get(&format!("{}state", self.url))
-            .set("User-Agent", USER_AGENT)
-            .set("x-auth-keys", &Self::auth_keys(&api_keys))
+            .apply_metadata(metadata)
             .call()?;
 
         if let Ok(text) = response.into_string() {
@@ -199,10 +227,9 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn add_subtoken(&self, api_keys: Vec<String>, api_key: &str, subtoken: String) -> Result<State, FriendsApiError> {
+    pub fn add_subtoken(&self, metadata: FriendRequestMetadata, api_key: &str, subtoken: String) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/add", self.url))
-            .set("User-Agent", USER_AGENT)
-            .set("x-auth-keys", &Self::auth_keys(&api_keys))
+            .apply_metadata(metadata)
             .send_form(&[
                 ("key_hash", &key_hash(api_key)),
                 ("subtoken", &subtoken)
@@ -215,10 +242,9 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn share(&self, api_keys: Vec<String>, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
+    pub fn share(&self, metadata: FriendRequestMetadata, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/share", self.url))
-            .set("User-Agent", USER_AGENT)
-            .set("x-auth-keys", &Self::auth_keys(&api_keys))
+            .apply_metadata(metadata)
             .send_form(&[
                 ("key_hash", &key_hash(api_key)),
                 ("account", &friend_account)
@@ -231,10 +257,9 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn unshare(&self, api_keys: Vec<String>, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
+    pub fn unshare(&self, metadata: FriendRequestMetadata, api_key: &str, friend_account: String) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/unshare", self.url))
-            .set("User-Agent", USER_AGENT)
-            .set("x-auth-keys", &Self::auth_keys(&api_keys))
+            .apply_metadata(metadata)
             .send_form(&[
                 ("key_hash", &key_hash(api_key)),
                 ("account", &friend_account)
@@ -247,8 +272,31 @@ impl FriendsApiClient {
         }
     }
 
-    fn auth_keys(api_keys: &[String]) -> String {
-        api_keys.iter().map(|key| key_hash(key)).join(",")
+    pub fn set_public(&self, metadata: FriendRequestMetadata, api_key: &str, public: bool) -> Result<State, FriendsApiError> {
+        let response = ureq::post(&format!("{}key/public", self.url))
+            .apply_metadata(metadata)
+            .send_form(&[
+                ("key_hash", &key_hash(api_key)),
+                ("public", &public.to_string())
+            ])?;
+
+        if let Ok(text) = response.into_string() {
+            Ok(parse_state(&text)?)
+        } else {
+            Err(FriendsApiError::UnknownError)
+        }
+    }
+}
+
+trait RequestExt {
+    fn apply_metadata(self, metadata: FriendRequestMetadata) -> Self;
+}
+
+impl RequestExt for Request {
+    fn apply_metadata(self, metadata: FriendRequestMetadata) -> Self {
+        self.set("User-Agent", USER_AGENT)
+            .set("x-auth-keys", &metadata.api_keys.iter().map(|key| key_hash(key)).join(","))
+            .set("x-public-keys", &metadata.public_friends.join(","))
     }
 }
 
@@ -325,14 +373,16 @@ mod tests {
       "shared_to": [],
       "subtoken_added_at": null,
       "subtoken_expires_at": null,
-      "account": null
+      "account": null,
+      "public": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
       "shared_to": [],
       "subtoken_added_at": null,
       "subtoken_expires_at": null,
-      "account": null
+      "account": null,
+      "public": false
     }
   ],
   "friends": []
@@ -373,14 +423,16 @@ mod tests {
       ],
       "subtoken_added_at": "2020-03-28T16:29:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:29:04.644008111Z",
-      "account": "OurAccount.1234"
+      "account": "OurAccount.1234",
+      "public": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
       "shared_to": [],
       "subtoken_added_at": "2020-03-28T16:30:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:30:04.644008111Z",
-      "account": "OurAccount.5678"
+      "account": "OurAccount.5678",
+      "public": false
     }
   ],
   "friends": []
@@ -419,33 +471,60 @@ mod tests {
       "shared_to": [],
       "subtoken_added_at": "2020-03-28T16:29:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:29:04.644008111Z",
-      "account": "OurAccount.1234"
+      "account": "OurAccount.1234",
+      "public": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
       "shared_to": [],
       "subtoken_added_at": "2020-03-28T16:30:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:30:04.644008111Z",
-      "account": "OurAccount.5678"
+      "account": "OurAccount.5678",
+      "public": false
     }
   ],
   "friends": [
     {
       "account": "Friend.1234",
-      "subtoken": "long.jwt.token.here",
-      "expires_at": "2021-04-28T17:25:00.181828132Z",
+      "subtoken": {
+        "subtoken": "long.jwt.token.here",
+        "expires_at": "2021-04-28T17:25:00.181828132Z"
+      },
+      "public": false,
+      "known": true,
       "shared_with": [
         "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
       ]
     },
     {
       "account": "Friend.5678",
-      "subtoken": "another.long.jwt.token.here",
-      "expires_at": "2021-04-28T17:45:00.000000000Z",
+      "subtoken": {
+        "subtoken": "another.long.jwt.token.here",
+        "expires_at": "2021-04-28T17:45:00.000000000Z"
+      },
+      "public": false,
+      "known": true,
       "shared_with": [
         "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b",
         "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865"
       ]
+    },
+    {
+      "account": "Friend.9876",
+      "subtoken": {
+        "subtoken": "yet.another.long.jwt.token.here",
+        "expires_at": "2021-04-28T17:55:00.000000000Z"
+      },
+      "known": true,
+      "public": true,
+      "shared_with": []
+    },
+    {
+      "account": "FriendWithTypo.1234",
+      "subtoken": null,
+      "public": true,
+      "known": false,
+      "shared_with": []
     }
   ]
 }"#;
@@ -454,13 +533,24 @@ mod tests {
         assert_eq!(parsed.keys[0].key_hash, "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b");
         assert_eq!(parsed.keys[1].key_hash, "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865");
 
-        assert_eq!(parsed.friends.len(), 2);
+        assert_eq!(parsed.friends.len(), 4);
         assert_eq!(parsed.friends[0].account, "Friend.1234");
         assert_eq!(parsed.friends[1].account, "Friend.5678");
-        assert_eq!(parsed.friends[0].subtoken, "long.jwt.token.here");
-        assert_eq!(parsed.friends[1].subtoken, "another.long.jwt.token.here");
+        assert_eq!(parsed.friends[0].subtoken.as_ref().unwrap().subtoken, "long.jwt.token.here");
+        assert_eq!(parsed.friends[1].subtoken.as_ref().unwrap().subtoken, "another.long.jwt.token.here");
+        assert_eq!(parsed.friends[2].subtoken.as_ref().unwrap().subtoken, "yet.another.long.jwt.token.here");
+        assert!(parsed.friends[3].subtoken.is_none());
         assert_eq!(parsed.friends[0].shared_with.len(), 1);
         assert_eq!(parsed.friends[1].shared_with.len(), 2);
+        assert_eq!(parsed.friends[2].shared_with.len(), 0);
+        assert_eq!(parsed.friends[0].public, false);
+        assert_eq!(parsed.friends[1].public, false);
+        assert_eq!(parsed.friends[2].public, true);
+        assert_eq!(parsed.friends[3].public, true);
+        assert_eq!(parsed.friends[0].known, true);
+        assert_eq!(parsed.friends[1].known, true);
+        assert_eq!(parsed.friends[2].known, true);
+        assert_eq!(parsed.friends[3].known, false);
     }
 
     #[test]

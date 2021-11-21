@@ -8,7 +8,7 @@ use uuid::Uuid;
 use std::sync::mpsc::{Sender, Receiver};
 use std::sync::mpsc;
 use chrono::Utc;
-use crate::friends::{FriendsApiClient, FriendsApiError, State, KeyUsability};
+use crate::friends::{FriendsApiClient, FriendsApiError, FriendRequestMetadata};
 use log::{info, warn, error};
 use itertools::Itertools;
 use crate::settings::Friend;
@@ -41,6 +41,7 @@ pub enum ApiJob {
     UpdateFriendClears { account_name: String, subtoken: String },
     ShareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
     UnshareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
+    SetKeyPublicFriend { key_uuid: Uuid, public: bool },
 }
 
 pub fn start_workers(
@@ -77,7 +78,15 @@ pub fn start_workers(
                         }
                     }
 
-                    if state.friends().iter().any(|friend| friend.expires_at() - Utc::now() < chrono::Duration::hours(1)) {
+                    let token_about_to_expire = state.friends().iter()
+                        .any(|friend| {
+                            if let Some(subtoken) = friend.subtoken() {
+                                subtoken.expires_at() - Utc::now() < chrono::Duration::hours(1)
+                            } else {
+                                false
+                            }
+                        });
+                    if token_about_to_expire {
                         // A subtoken for a friend is about to expire,
                         // the friend server already has a new one available.
                         friends_refresher_api_tx.send(ApiJob::UpdateFriendState);
@@ -136,24 +145,26 @@ pub fn start_workers(
                         }
                     }
                     ApiJob::UpdateFriendState => {
-                        let keys = copy_friend_capable_api_keys(settings_mutex);
-                        if let Some(keys) = keys {
-                            match friends_api.get_state(keys) {
+                        let metadata = copy_friends_metadata(settings_mutex);
+                        if let Some(metadata) = metadata {
+                            match friends_api.get_state(metadata) {
                                 Ok(state) => {
                                     // TODO: Deduplicate this fragment:
                                     for friend in state.friends() {
-                                        // TODO: are accounts deduplicated?
-                                        self_api_tx.send(ApiJob::UpdateFriendClears {
-                                            account_name: friend.account().to_string(),
-                                            subtoken: friend.subtoken().to_string(),
-                                        });
+                                        if let Some(subtoken) = friend.subtoken() {
+                                            // TODO: are accounts deduplicated?
+                                            self_api_tx.send(ApiJob::UpdateFriendClears {
+                                                account_name: friend.account().to_string(),
+                                                subtoken: subtoken.subtoken().to_string(),
+                                            });
+                                        }
                                     }
 
                                     if let Some(mut settings) = settings_mutex.lock().unwrap().as_mut() {
                                         // Add newly discovered friends to stored friend list.
                                         for friend in state.friends() {
                                             if !settings.friend_list.iter().any(|f| f.account_name() == friend.account()) {
-                                                settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state))
+                                                settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
                                             }
                                         }
                                     } else {
@@ -188,8 +199,8 @@ pub fn start_workers(
                         if let Some(key) = matching_key {
                             match api.create_subtoken(&key, &friends::SUBTOKEN_PERMISSIONS, &friends::SUBTOKEN_URLS, Utc::now() + chrono::Duration::days(365)) {
                                 Ok(subtoken) => {
-                                    if let Some(keys) = copy_friend_capable_api_keys(settings_mutex) {
-                                        friends_api.add_subtoken(keys, &key, subtoken);
+                                    if let Some(metadata) = copy_friends_metadata(settings_mutex) {
+                                        friends_api.add_subtoken(metadata, &key, subtoken);
                                     } else {
                                         // Should not happen, failed to get keys from settings
                                         error!("Friends - Failed to get keys from settings after we generated a friend subtoken.");
@@ -234,12 +245,12 @@ pub fn start_workers(
                         }
                     }
                     ApiJob::ShareKeyWithFriend { key_uuid, friend_account_name } => {
-                        let keys = copy_friend_capable_api_keys(settings_mutex);
+                        let metadata = copy_friends_metadata(settings_mutex);
                         let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
-                        if let Some(keys) = keys {
+                        if let Some(metadata) = metadata {
                             if let Some(key) = key {
-                                match friends_api.share(keys, &key, friend_account_name) {
+                                match friends_api.share(metadata, &key, friend_account_name) {
                                     Ok(state) => {
                                         data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                     }
@@ -258,12 +269,12 @@ pub fn start_workers(
                         }
                     }
                     ApiJob::UnshareKeyWithFriend { key_uuid, friend_account_name } => {
-                        let keys = copy_friend_capable_api_keys(settings_mutex);
+                        let metadata = copy_friends_metadata(settings_mutex);
                         let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
-                        if let Some(keys) = keys {
+                        if let Some(metadata) = metadata {
                             if let Some(key) = key {
-                                match friends_api.unshare(keys, &key, friend_account_name) {
+                                match friends_api.unshare(metadata, &key, friend_account_name) {
                                     Ok(state) => {
                                         data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                     }
@@ -280,6 +291,31 @@ pub fn start_workers(
                                 }
                             }
                         }
+                    }
+                    ApiJob::SetKeyPublicFriend { key_uuid, public } => {
+                        let metadata = copy_friends_metadata(settings_mutex);
+                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                        if let Some(metadata) = metadata {
+                            if let Some(key) = key {
+                                match friends_api.set_public(metadata, &key, public) {
+                                    Ok(state) => {
+                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                    }
+                                    // TODO: deduplicate this logging
+                                    Err(FriendsApiError::UnknownError) => {
+                                        warn!("Friends - failed to set key public status - unknown error.")
+                                    }
+                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                        warn!("Friends - failed to set key public status - json deserialization failed.")
+                                    }
+                                    Err(FriendsApiError::UreqError(e)) => {
+                                        warn!("Friends - failed to set key public status: {}", e)
+                                    }
+                                }
+                            }
+                        }
+
                     }
                 }
             }
@@ -308,11 +344,13 @@ pub fn start_workers(
 
                 if let Some(state) = data_mutex.lock().unwrap().friends.api_state() {
                     for friend in state.friends() {
-                        // TODO: are accounts deduplicated?
-                        refresher_api_tx.send(ApiJob::UpdateFriendClears {
-                            account_name: friend.account().to_string(),
-                            subtoken: friend.subtoken().to_string(),
-                        });
+                        if let Some(subtoken) = friend.subtoken() {
+                            // TODO: are accounts deduplicated?
+                            refresher_api_tx.send(ApiJob::UpdateFriendClears {
+                                account_name: friend.account().to_string(),
+                                subtoken: subtoken.subtoken().to_string(),
+                            });
+                        }
                     }
                 }
 
@@ -331,15 +369,31 @@ fn copy_api_key(settings_mutex: &Mutex<Option<Settings>>, key_uuid: Uuid) -> Opt
         .map(|x| x.key().to_string())
 }
 
-fn copy_friend_capable_api_keys(settings_mutex: &Mutex<Option<Settings>>) -> Option<Vec<String>> {
+fn copy_friends_metadata(settings_mutex: &Mutex<Option<Settings>>) -> Option<FriendRequestMetadata> {
     // Get api keys that are usable with friends, ignore others.
     // Also does deduplication.
-
-    settings_mutex.lock().unwrap().as_ref()
+    let api_keys = settings_mutex.lock().unwrap().as_ref()
         .map(|x| x.api_keys().iter()
             .filter(|x| friends::get_key_usability(x).is_usable())
             .map(|x| x.key().to_string())
             .unique()
             .collect()
-        )
+        );
+
+    let public_friends = settings_mutex.lock().unwrap().as_ref()
+        .map(|x| x.friend_list.iter()
+            .filter(|x| x.public())
+            .map(|x| x.account_name().to_string())
+            .collect()
+        );
+
+    if api_keys.is_none() || public_friends.is_none() {
+        None
+    } else {
+        Some(FriendRequestMetadata {
+            api_keys: api_keys.unwrap(),
+            public_friends: public_friends.unwrap()
+        })
+    }
+
 }

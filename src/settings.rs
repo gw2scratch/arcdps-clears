@@ -290,12 +290,13 @@ impl ApiKeyData {
 pub struct Friend {
     account_name: String,
     show_in_friends: bool,
-    expanded_in_friends: bool
+    expanded_in_friends: bool,
+    public: bool,
 }
 
 impl Friend {
-    pub fn new(account_name: String, show_in_friends: bool) -> Self {
-        Friend { account_name, show_in_friends, expanded_in_friends: true }
+    pub fn new(account_name: String, show_in_friends: bool, public: bool) -> Self {
+        Friend { account_name, show_in_friends, public, expanded_in_friends: true }
     }
     pub fn account_name(&self) -> &str {
         &self.account_name
@@ -311,6 +312,9 @@ impl Friend {
     }
     pub fn expanded_in_friends_mut(&mut self) -> &mut bool {
         &mut self.expanded_in_friends
+    }
+    pub fn public(&self) -> bool {
+        self.public
     }
 }
 
