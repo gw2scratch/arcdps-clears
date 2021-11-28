@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::error::Error;
-use arcdps::imgui::{ImString};
 use serde::{Serialize, Deserialize};
 use crate::clears::RaidEncounter;
 use itertools::Itertools;
@@ -28,7 +27,7 @@ impl Translation {
         Ok(translation)
     }
 
-    pub fn im_string(&self, key: &str) -> String {
+    pub fn translate(&self, key: &str) -> String {
         if let Some(translation) = self.strings.get(key) {
             translation.to_string()
         } else {
@@ -36,13 +35,13 @@ impl Translation {
         }
     }
 
-    pub fn encounter_short_name_im_string(&self, encounter: &RaidEncounter) -> ImString {
+    pub fn encounter_short_name_im_string(&self, encounter: &RaidEncounter) -> String {
         if let Some(translation) = self.encounter_short_names.get(encounter.id()) {
-            ImString::new(translation)
+            translation.to_string()
         } else {
             // We fall back to an English name from the API if there is no short name
             // defined in the translation.
-            ImString::new(encounter_english_name(encounter))
+            encounter_english_name(encounter)
         }
     }
 

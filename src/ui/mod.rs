@@ -3,7 +3,7 @@ use crate::translations::Translation;
 use crate::updates::Release;
 use crate::workers::BackgroundWorkers;
 use crate::Data;
-use arcdps::imgui::{im_str, TabItem, TabBar, Window, Ui, ImString, MouseButton, StyleVar, TabBarFlags};
+use arcdps::imgui::{TabItem, TabBar, Window, Ui, MouseButton, StyleVar, TabBarFlags};
 use uuid::Uuid;
 use std::time::Instant;
 
@@ -84,7 +84,7 @@ fn get_api_key_name(api_key: &ApiKey, tr: &Translation) -> String {
     if let Some(name) = api_key.data().account_data().as_ref().map(|x| x.name()) {
         name.to_string()
     } else {
-        tr.im_string("api-key-new-key-name")
+        tr.translate("api-key-new-key-name")
     }
 }
 
@@ -98,7 +98,7 @@ pub fn draw_ui(
 ) {
     if ui_state.main_window.shown {
         let mut shown = ui_state.main_window.shown;
-        Window::new(&tr.im_string("window-title"))
+        Window::new(&tr.translate("window-title"))
             .always_auto_resize(true)
             .focus_on_appearing(false)
             .no_nav()
@@ -107,14 +107,14 @@ pub fn draw_ui(
             .collapsible(false)
             .opened(&mut shown)
             .build(&ui, || {
-                TabBar::new(im_str!("main_tabs")).build(&ui, || {
-                    TabItem::new(&tr.im_string("clears-tab-title"))
+                TabBar::new("main_tabs").build(&ui, || {
+                    TabItem::new(&tr.translate("clears-tab-title"))
                         .build(&ui, || {
                             clears::my_clears(ui, ui_state, data, bg_workers, settings, tr);
                         });
-                    TabItem::new(&tr.im_string("friends-tab-title"))
+                    TabItem::new(&tr.translate("friends-tab-title"))
                         .build(&ui, || friends::friends(ui, ui_state, data, bg_workers, settings, tr));
-                    TabItem::new(&tr.im_string("settings-tab-title"))
+                    TabItem::new(&tr.translate("settings-tab-title"))
                         .build(&ui, || settings::settings(ui, ui_state, settings, tr));
                 });
             });

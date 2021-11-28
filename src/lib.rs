@@ -138,7 +138,7 @@ fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
     if window_name.is_none() {
         let tr = TRANSLATION.lock().unwrap();
         let mut ui_state = UI_STATE.lock().unwrap();
-        ui.checkbox(&tr.im_string("arcdps-menu-name"), &mut ui_state.main_window.shown);
+        ui.checkbox(&tr.translate("arcdps-menu-name"), &mut ui_state.main_window.shown);
     }
 
     return false;

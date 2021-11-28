@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use arcdps::imgui::{im_str, ImStr, InputText, StyleVar, ImString, Ui};
+use arcdps::imgui::{InputText, StyleVar, Ui};
 use crate::translations::Translation;
 
 pub fn centered_text<T: AsRef<str>>(ui: &Ui, text: T) {
@@ -63,10 +63,10 @@ pub fn keybind_input<T: AsRef<str> + Display + Copy>(ui: &Ui, label: T, keybind:
             if let Some(name) = crate::input::get_key_name(*keybind) {
                 name.to_string()
             } else {
-                tr.im_string("input-keybind-unknown")
+                tr.translate("input-keybind-unknown")
             }
         } else {
-            tr.im_string("input-keybind-disabled")
+            tr.translate("input-keybind-disabled")
         };
         if let _width = ui.push_item_width(ui.calc_text_size(&preview_buffer)[0] + original_style.frame_padding[0] * 2.0) {
             if let _alpha = ui.push_style_var(StyleVar::Alpha(0.5)) {

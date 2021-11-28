@@ -1,4 +1,4 @@
-use arcdps::imgui::{ChildWindow, Condition, im_str, PopupModal, Selectable, StyleVar, TabBar, TabItem, TableFlags, Ui, Window};
+use arcdps::imgui::{ChildWindow, Condition, PopupModal, Selectable, StyleVar, TabBar, TabItem, TableFlags, Ui, Window};
 use chrono::Utc;
 
 use crate::{Data, friends};
@@ -20,7 +20,7 @@ pub fn api_keys_window(
 ) {
     if ui_state.api_key_window.shown {
         let mut shown = ui_state.api_key_window.shown;
-        Window::new(&tr.im_string("api-key-window-title"))
+        Window::new(tr.translate("api-key-window-title"))
             .size([ui.current_font_size() * 40.0, ui.current_font_size() * 25.0], Condition::FirstUseEver)
             .resizable(true)
             .focus_on_appearing(false)
@@ -42,14 +42,14 @@ pub fn api_keys_window(
                         .build(&ui, || {
                             for api_key in settings.api_keys.iter() {
                                 let name = get_api_key_name(api_key, tr);
-                                if Selectable::new(&im_str!("{}##{}", name, api_key.id().to_string()))
+                                if Selectable::new(format!("{}##{}", name, api_key.id().to_string()))
                                     .selected(ui_state.api_key_window.is_key_selected(api_key))
                                     .build(&ui) {
                                     ui_state.api_key_window.selected_key = SelectedApiKey::Id(*api_key.id());
                                 }
                             }
                         });
-                    if ui.button(&tr.im_string("api-key-add-new-button")) {
+                    if ui.button(&tr.translate("api-key-add-new-button")) {
                         let new_key = ApiKey::new("");
                         ui_state.api_key_window.selected_key = SelectedApiKey::Id(*new_key.id());
                         settings.api_keys.push(new_key);
@@ -71,59 +71,59 @@ pub fn api_keys_window(
 
                                 // This has to be a password box to protect streamers and users
                                 // who may have others watching them.
-                                if ui.input_text(&tr.im_string("api-key-key-label"), &mut key_text)
+                                if ui.input_text(&tr.translate("api-key-key-label"), &mut key_text)
                                     .password(true)
                                     .build() {
                                     key_changed = true;
                                 }
                                 if key.data().account_data().is_none() && key.data().token_info().is_none() {
-                                    if ui.button(&tr.im_string("api-key-check-api-key-button")) {
+                                    if ui.button(&tr.translate("api-key-check-api-key-button")) {
                                         let sender = bg_workers.api_sender();
                                         sender.send(ApiJob::UpdateAccountData(*key.id()));
                                         sender.send(ApiJob::UpdateTokenInfo(*key.id()));
                                         sender.send(ApiJob::UpdateClears(*key.id()));
                                     }
                                     ui.separator();
-                                    ui.text_wrapped(&tr.im_string("api-key-guide-step1-prefix"));
+                                    ui.text_wrapped(&tr.translate("api-key-guide-step1-prefix"));
                                     ui.same_line();
-                                    if ui.small_button(&tr.im_string("api-key-guide-step1-open")) {
+                                    if ui.small_button(&tr.translate("api-key-guide-step1-open")) {
                                         open::that("https://account.arena.net/applications/create");
                                     }
                                     ui.same_line();
-                                    ui.text(tr.im_string("api-key-guide-step1-url"));
-                                    ui.text_wrapped(&tr.im_string("api-key-guide-step2"));
-                                    ui.text_wrapped(&tr.im_string("api-key-guide-step3"));
-                                    ui.text_wrapped(&tr.im_string("api-key-guide-step4"));
-                                    ui.text_wrapped(&tr.im_string("api-key-guide-step5"));
+                                    ui.text(tr.translate("api-key-guide-step1-url"));
+                                    ui.text_wrapped(&tr.translate("api-key-guide-step2"));
+                                    ui.text_wrapped(&tr.translate("api-key-guide-step3"));
+                                    ui.text_wrapped(&tr.translate("api-key-guide-step4"));
+                                    ui.text_wrapped(&tr.translate("api-key-guide-step5"));
                                 }
 
                                 ui.separator();
-                                TabBar::new(im_str!("api_key_tabs")).build(&ui, || {
-                                    TabItem::new(&tr.im_string("api-key-details-tab-details"))
+                                TabBar::new("api_key_tabs").build(&ui, || {
+                                    TabItem::new(&tr.translate("api-key-details-tab-details"))
                                         .build(&ui, || {
                                             if key.data().account_data().is_some() || key.data().token_info().is_some() {
-                                                if let Some(_t) = ui.begin_table_with_flags(im_str!("ApiKeyData"), 2, TableFlags::SIZING_FIXED_FIT) {
+                                                if let Some(_t) = ui.begin_table_with_flags("ApiKeyData", 2, TableFlags::SIZING_FIXED_FIT) {
                                                     ui.table_next_row();
                                                     ui.table_next_column();
-                                                    ui.text(tr.im_string("api-key-details-account-name"));
+                                                    ui.text(tr.translate("api-key-details-account-name"));
                                                     ui.table_next_column();
                                                     if let Some(name) = key.data().account_data().as_ref().map(|x| x.name()) {
                                                         ui.text(name);
                                                     } else {
-                                                        ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                        ui.text(tr.translate("api-key-details-unknown-value"));
                                                     }
                                                     ui.table_next_row();
                                                     ui.table_next_column();
-                                                    ui.text(tr.im_string("api-key-details-key-name"));
+                                                    ui.text(tr.translate("api-key-details-key-name"));
                                                     ui.table_next_column();
                                                     if let Some(name) = key.data().token_info().as_ref().map(|x| x.name()) {
                                                         ui.text(name);
                                                     } else {
-                                                        ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                        ui.text(tr.translate("api-key-details-unknown-value"));
                                                     }
                                                     ui.table_next_row();
                                                     ui.table_next_column();
-                                                    ui.text(tr.im_string("api-key-details-permissions"));
+                                                    ui.text(tr.translate("api-key-details-permissions"));
                                                     ui.table_next_column();
                                                     if let Some(token_info) = key.data().token_info() {
                                                         let mut account = token_info.has_permission("account");
@@ -136,12 +136,12 @@ pub fn api_keys_window(
                                                         // Account permission checkmark
                                                         if let _disabled = ui.push_style_var(StyleVar::Alpha(0.75)) {
                                                             if let _width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                                ui.checkbox(im_str!("##Account"), &mut account);
+                                                                ui.checkbox("##Account", &mut account);
                                                             }
                                                         }
                                                         if ui.is_item_hovered() {
                                                             ui.tooltip(|| {
-                                                                ui.text(tr.im_string("api-key-details-permission-account"))
+                                                                ui.text(tr.translate("api-key-details-permission-account"))
                                                             });
                                                         }
                                                         ui.same_line();
@@ -149,12 +149,12 @@ pub fn api_keys_window(
                                                         // Progression permission checkmark
                                                         if let _disabled = ui.push_style_var(StyleVar::Alpha(0.75)) {
                                                             if let _width = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                                ui.checkbox(im_str!("##Progression"), &mut progression);
+                                                                ui.checkbox("##Progression", &mut progression);
                                                             }
                                                         }
                                                         if ui.is_item_hovered() {
                                                             ui.tooltip(|| {
-                                                                ui.text(tr.im_string("api-key-details-permission-progression"))
+                                                                ui.text(tr.translate("api-key-details-permission-progression"))
                                                             });
                                                         }
 
@@ -162,9 +162,9 @@ pub fn api_keys_window(
                                                         if extra_perms.len() > 0 {
                                                             ui.same_line();
                                                             ui.text(format!("{}{}{}",
-                                                                            tr.im_string("api-key-details-permissions-extra-prefix"),
+                                                                            tr.translate("api-key-details-permissions-extra-prefix"),
                                                                             extra_perms.len(),
-                                                                            tr.im_string("api-key-details-permissions-extra-suffix")));
+                                                                            tr.translate("api-key-details-permissions-extra-suffix")));
                                                             if ui.is_item_hovered() {
                                                                 ui.tooltip(|| {
                                                                     for extra_perm in extra_perms {
@@ -174,29 +174,29 @@ pub fn api_keys_window(
                                                             }
                                                         }
                                                     } else {
-                                                        ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                        ui.text(tr.translate("api-key-details-unknown-value"));
                                                     }
                                                     ui.table_next_row();
                                                     ui.table_next_column();
-                                                    ui.text(tr.im_string("api-key-details-key-type"));
+                                                    ui.text(tr.translate("api-key-details-key-type"));
                                                     ui.table_next_column();
                                                     let key_type = key.data().token_info().as_ref().map(|x| x.token_type());
                                                     if let Some(TokenType::ApiKey) = key_type {
-                                                        ui.text(tr.im_string("api-key-details-key-type-apikey"));
+                                                        ui.text(tr.translate("api-key-details-key-type-apikey"));
                                                     } else if let Some(TokenType::Subtoken { expires_at, issued_at, .. }) = key_type {
-                                                        ui.text(tr.im_string("api-key-details-key-type-subtoken"));
+                                                        ui.text(tr.translate("api-key-details-key-type-subtoken"));
                                                         ui.table_next_row();
                                                         ui.table_next_column();
-                                                        ui.text(tr.im_string("api-key-details-subtoken-issued-at"));
+                                                        ui.text(tr.translate("api-key-details-subtoken-issued-at"));
                                                         ui.table_next_column();
                                                         ui.text(issued_at.to_rfc2822());
                                                         ui.table_next_row();
                                                         ui.table_next_column();
-                                                        ui.text(tr.im_string("api-key-details-subtoken-expires-at"));
+                                                        ui.text(tr.translate("api-key-details-subtoken-expires-at"));
                                                         ui.table_next_column();
                                                         ui.text(expires_at.to_rfc2822());
                                                     } else {
-                                                        ui.text(tr.im_string("api-key-details-unknown-value"));
+                                                        ui.text(tr.translate("api-key-details-unknown-value"));
                                                     }
                                                 }
                                             }
@@ -204,31 +204,31 @@ pub fn api_keys_window(
                                             // Missing permission/access warnings
                                             if let Some(token_info) = key.data().token_info() {
                                                 if !token_info.has_permission("account") {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-account-missing"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-warning-permission-account-missing"));
                                                 }
                                                 if !token_info.has_permission("progression") {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-permission-progression-missing"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-warning-permission-progression-missing"));
                                                 }
 
                                                 if let TokenType::Subtoken { urls, expires_at, .. } = token_info.token_type() {
                                                     if *expires_at < Utc::now() {
-                                                        ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-expired"));
+                                                        ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-expired"));
                                                     }
                                                     if let Some(urls) = urls {
                                                         let account_access = urls.iter().any(|x| x == "/v2/account");
                                                         let clears_access = urls.iter().any(|x| x == "/v2/account/raids");
                                                         if !account_access {
-                                                            ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account"));
+                                                            ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-url-missing-account"));
                                                         }
                                                         if !clears_access {
-                                                            ui.text_colored(WARNING_RED, tr.im_string("api-key-warning-subtoken-url-missing-account-raids"));
+                                                            ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-url-missing-account-raids"));
                                                         }
                                                     }
                                                 }
                                             }
 
                                             ui.separator();
-                                            if ui.checkbox(&tr.im_string("api-key-show-in-my-clears-checkbox"), key.show_key_in_clears_mut()) {
+                                            if ui.checkbox(&tr.translate("api-key-show-in-my-clears-checkbox"), key.show_key_in_clears_mut()) {
                                                 if key.show_key_in_clears() {
                                                     bg_workers.api_sender().send(ApiJob::UpdateClears(*key.id()));
                                                 }
@@ -238,27 +238,27 @@ pub fn api_keys_window(
                                                 key.change_key(&key_text);
                                             }
                                         });
-                                    TabItem::new(&tr.im_string("api-key-details-tab-friends"))
+                                    TabItem::new(&tr.translate("api-key-details-tab-friends"))
                                         .build(&ui, || {
                                             let key_usable = match friends::get_key_usability(key) {
                                                 KeyUsability::NoTokenInfo => {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-no-token-info"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-token-info"));
                                                     false
                                                 }
                                                 KeyUsability::Usable => true,
                                                 KeyUsability::InsufficientPermissions => {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-no-permissions"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-permissions"));
                                                     false
                                                 }
                                                 KeyUsability::InsufficientSubtokenUrls(urls) => {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-subtoken-missing-urls"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-missing-urls"));
                                                     for url in urls {
-                                                        ui.text_colored(WARNING_RED, im_str!("\t{}", url));
+                                                        ui.text_colored(WARNING_RED, format!("\t{}", url));
                                                     }
                                                     false
                                                 }
                                                 KeyUsability::SubtokenExpired => {
-                                                    ui.text_colored(WARNING_RED, tr.im_string("api-key-friends-warning-subtoken-expired"));
+                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-expired"));
                                                     false
                                                 }
                                             };
@@ -268,21 +268,21 @@ pub fn api_keys_window(
                                             }
 
                                             if data.friends.api_state().is_none() {
-                                                ui.text_colored(WARNING_RED, tr.im_string("friends-no-connection-to-server"));
+                                                ui.text_colored(WARNING_RED, tr.translate("friends-no-connection-to-server"));
                                                 refresh_button(ui, ui_state, bg_workers, tr);
                                             }
 
                                             if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
                                                 if state.shared_to().len() == 0 {
-                                                    ui.text_wrapped(&tr.im_string("api-key-friends-intro"));
+                                                    ui.text_wrapped(&tr.translate("api-key-friends-intro"));
                                                 }
 
                                                 let original_public = state.public();
                                                 let mut public = state.public();
                                                 // TODO: Translate
                                                 if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                    ui.radio_button(im_str!("Public"), &mut public, true);
-                                                    ui.radio_button(im_str!("Friends only"), &mut public, false);
+                                                    ui.radio_button("Public", &mut public, true);
+                                                    ui.radio_button("Friends only", &mut public, false);
                                                 }
 
                                                 if public != original_public {
@@ -294,16 +294,16 @@ pub fn api_keys_window(
 
 
                                                 if !state.public() {
-                                                    if let Some(_t) = ui.begin_table_with_flags(im_str!("ApiKeyFriendsTable"), 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
+                                                    if let Some(_t) = ui.begin_table_with_flags("ApiKeyFriendsTable", 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
                                                         for share in state.shared_to() {
                                                             ui.table_next_row();
                                                             ui.table_next_column();
                                                             ui.text(share.account());
                                                             if !share.account_available() {
-                                                                utils::warning_marker(&ui, tr.im_string("api-key-friends-warning-unknown-user"));
+                                                                utils::warning_marker(&ui, tr.translate("api-key-friends-warning-unknown-user"));
                                                             }
                                                             ui.table_next_column();
-                                                            if ui.small_button(&im_str!("Unshare##{}", share.account())) {
+                                                            if ui.small_button(format!("Unshare##{}", share.account())) {
                                                                 bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
                                                                     key_uuid: *key.id(),
                                                                     friend_account_name: share.account().to_string(),
@@ -316,15 +316,15 @@ pub fn api_keys_window(
 
                                                         let width = ui.push_item_width(ui.current_font_size() * 20.0);
                                                         let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                                                        let mut add = ui.input_text(im_str!("##add_new_friend_name"), &mut ui_state.api_key_window.new_friend_name)
-                                                            .hint(im_str!("Account Name.1234")) // TODO: Test ingame to see if it's visible, might need a tooltip
+                                                        let mut add = ui.input_text("##add_new_friend_name", &mut ui_state.api_key_window.new_friend_name)
+                                                            .hint("Account Name.1234") // TODO: Test ingame to see if it's visible, might need a tooltip
                                                             .enter_returns_true(true)
                                                             .build();
                                                         width.pop(ui);
                                                         padding.pop();
 
                                                         ui.table_next_column();
-                                                        add = add || ui.small_button(&tr.im_string("api-key-friends-share-button"));
+                                                        add = add || ui.small_button(&tr.translate("api-key-friends-share-button"));
 
                                                         if add {
                                                             bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
@@ -340,32 +340,32 @@ pub fn api_keys_window(
                                 });
                             } else {
                                 if settings.api_keys.len() == 0 {
-                                    ui.text_wrapped(&tr.im_string("api-key-window-intro-first-key"));
+                                    ui.text_wrapped(&tr.translate("api-key-window-intro-first-key"));
                                 } else {
-                                    ui.text_wrapped(&tr.im_string("api-key-window-intro"));
+                                    ui.text_wrapped(&tr.translate("api-key-window-intro"));
                                 }
                             }
                         });
                     if let SelectedApiKey::Id(uuid) = ui_state.api_key_window.selected_key {
-                        let popup_label = tr.im_string("api-key-remove-modal-title");
-                        if ui.button(&tr.im_string("api-key-remove-key-button")) {
+                        let popup_label = tr.translate("api-key-remove-modal-title");
+                        if ui.button(&tr.translate("api-key-remove-key-button")) {
                             ui.open_popup(&popup_label);
                         }
                         PopupModal::new(&popup_label)
                             .save_settings(false)
                             .build(ui, || {
-                                ui.text(tr.im_string("api-key-remove-modal-warning"));
+                                ui.text(tr.translate("api-key-remove-modal-warning"));
                                 ui.separator();
-                                if let Some(_t) = ui.begin_table_with_flags(im_str!("DeleteConfirmationPopupTable"), 2, TableFlags::SIZING_STRETCH_SAME) {
+                                if let Some(_t) = ui.begin_table_with_flags("DeleteConfirmationPopupTable", 2, TableFlags::SIZING_STRETCH_SAME) {
                                     ui.table_next_row();
                                     ui.table_next_column();
-                                    if ui.button_with_size(&tr.im_string("api-key-remove-modal-confirm"), [ui.current_column_width(), 0.0]) {
+                                    if ui.button_with_size(&tr.translate("api-key-remove-modal-confirm"), [ui.current_column_width(), 0.0]) {
                                         settings.remove_key(&uuid);
                                         ui.close_current_popup();
                                     }
                                     ui.set_item_default_focus();
                                     ui.table_next_column();
-                                    if ui.button_with_size(&tr.im_string("api-key-remove-modal-cancel"), [ui.current_column_width(), 0.0]) {
+                                    if ui.button_with_size(&tr.translate("api-key-remove-modal-cancel"), [ui.current_column_width(), 0.0]) {
                                         ui.close_current_popup();
                                     }
                                 }
