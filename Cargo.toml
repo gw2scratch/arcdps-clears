@@ -26,4 +26,4 @@ version = "0.4.14"
 features = ["max_level_info", "release_max_level_info"]
 
 [dependencies.arcdps]
-git = "https://github.com/greaka/arcdps_bindings.git"
+git = "https://github.com/gw2scratch/arcdps_bindings.git"

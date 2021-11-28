@@ -16,7 +16,7 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
                 if let Some(release) = release {
                     ui.text(tr.im_string("update-available"));
                     ui.separator();
-                    if ui.begin_table_with_flags(im_str!("UpdateVersionColumns"), 2, TableFlags::SIZING_FIXED_FIT) {
+                    if let Some(_t) = ui.begin_table_with_flags(im_str!("UpdateVersionColumns"), 2, TableFlags::SIZING_FIXED_FIT) {
                         ui.table_next_row();
                         ui.table_next_column();
                         ui.text(tr.im_string("update-current-version-prefix"));
@@ -27,14 +27,13 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
                         ui.text(tr.im_string("update-new-version-prefix"));
                         ui.table_next_column();
                         ui.text(release.version());
-                        ui.end_table();
                     }
                     ui.separator();
-                    if ui.button(&tr.im_string("update-button-changelog"), [0.0, 0.0]) {
+                    if ui.button(&tr.im_string("update-button-changelog")) {
                         open::that(release.changelog_url());
                     }
-                    ui.same_line(0.0);
-                    if ui.button(&tr.im_string("update-button-download"), [0.0, 0.0]) {
+                    ui.same_line();
+                    if ui.button(&tr.im_string("update-button-download")) {
                         open::that(release.tool_site_url());
                     }
                 } else {

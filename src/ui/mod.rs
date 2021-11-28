@@ -35,7 +35,7 @@ impl UiState {
             api_key_window: ApiKeyWindowState {
                 shown: false,
                 selected_key: SelectedApiKey::None,
-                new_friend_name: ImString::default(),
+                new_friend_name: String::new(),
             },
             friends_window: FriendsWindowState {
                 shown: false,
@@ -53,7 +53,7 @@ pub enum SelectedApiKey {
 pub struct ApiKeyWindowState {
     pub shown: bool,
     pub selected_key: SelectedApiKey,
-    pub new_friend_name: ImString,
+    pub new_friend_name: String,
 }
 
 pub struct MainWindowState {
@@ -80,9 +80,9 @@ impl ApiKeyWindowState {
     }
 }
 
-fn get_api_key_name(api_key: &ApiKey, tr: &Translation) -> ImString {
+fn get_api_key_name(api_key: &ApiKey, tr: &Translation) -> String {
     if let Some(name) = api_key.data().account_data().as_ref().map(|x| x.name()) {
-        ImString::new(name)
+        name.to_string()
     } else {
         tr.im_string("api-key-new-key-name")
     }
