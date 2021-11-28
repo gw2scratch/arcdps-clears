@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use arcdps::imgui::{CollapsingHeader, im_str, ImStr, ImString, MenuItem, MouseButton, StyleColor, StyleVar, TableBgTarget, TableColumnFlags, TableColumnSetup, TableFlags, TableRowFlags, Ui};
+use arcdps::imgui::{CollapsingHeader, MenuItem, MouseButton, StyleColor, StyleVar, TableBgTarget, TableColumnFlags, TableColumnSetup, TableFlags, TableRowFlags, Ui};
 
 use crate::clears::{RaidClearState, RaidWings};
 use crate::Data;
@@ -20,11 +20,11 @@ pub fn my_clears(
 ) {
     if let Some(raids) = data.clears.raids() {
         if settings.api_keys.len() == 0 {
-            utils::centered_text(ui, &tr.im_string("clears-intro-welcome"));
+            utils::centered_text(ui, &tr.translate("clears-intro-welcome"));
             ui.text("");
-            ui.text(tr.im_string("clears-intro-get-started-prefix"));
+            ui.text(tr.translate("clears-intro-get-started-prefix"));
             ui.same_line();
-            if ui.small_button(&tr.im_string("clears-intro-get-started-button")) {
+            if ui.small_button(&tr.translate("clears-intro-get-started-button")) {
                 ui_state.api_key_window.shown = true;
             }
 
@@ -32,11 +32,11 @@ pub fn my_clears(
             // look like just another word in the sentence.
             if let _no_spacing = ui.push_style_var(StyleVar::ItemSpacing([0.0, 0.0])) {
                 ui.same_line();
-                ui.text(tr.im_string("clears-intro-get-started-postfix"));
+                ui.text(tr.translate("clears-intro-get-started-postfix"));
             }
         } else if settings.api_keys.iter().filter(|x| x.show_key_in_clears()).count() == 0 {
             if let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 25.0) {
-                ui.text_wrapped(&tr.im_string("clears-all-accounts-hidden"));
+                ui.text_wrapped(&tr.translate("clears-all-accounts-hidden"));
             }
         }
 
@@ -50,7 +50,7 @@ pub fn my_clears(
             .collect();
 
         clears_table(ui, raids, &mut entries, &settings.my_clears_style, settings.short_names, tr, || {
-            utils::centered_text(&ui, &tr.im_string("clears-no-clears-data-yet"));
+            utils::centered_text(&ui, &tr.translate("clears-no-clears-data-yet"));
             ui.text("");
             // TODO: Custom prompt for missing perms
 
@@ -58,34 +58,34 @@ pub fn my_clears(
             let until_wakeup = time.saturating_duration_since(Instant::now());
             utils::centered_text(
                 &ui,
-                &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
+                format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
             );
         });
     } else {
-        ui.text(tr.im_string("clears-no-public-data-yet"));
+        ui.text(tr.translate("clears-no-public-data-yet"));
         ui.text("");
 
         let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
         let until_wakeup = time.saturating_duration_since(Instant::now());
         utils::centered_text(
             &ui,
-            &im_str!("{}{}{}", tr.im_string("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.im_string("next-refresh-secs-suffix")),
+            format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
         );
     }
 
     if ui.is_mouse_released(MouseButton::Right) && ui.is_window_hovered() {
-        ui.open_popup(im_str!("##RightClickMenuMyClears"));
+        ui.open_popup("##RightClickMenuMyClears");
     }
 
-    ui.popup(im_str!("##RightClickMenuMyClears"), || {
+    ui.popup("##RightClickMenuMyClears", || {
         if let _small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0])) {
-            ui.menu(&tr.im_string("clears-contextmenu-account-list"), || {
+            ui.menu(&tr.translate("clears-contextmenu-account-list"), || {
                 let mut entries: Vec<_> = settings.api_keys.iter_mut()
                     .map(|key| (get_api_key_name(key, tr), key.show_key_in_clears_mut()))
                     .collect();
 
                 for (name, mut shown) in entries {
-                    if MenuItem::new(&im_str!("{}##ClearsContextCheckbox", name))
+                    if MenuItem::new(format!("{}##ClearsContextCheckbox", name))
                         .selected(*shown)
                         .build(ui) {
                         *shown = !*shown;
@@ -137,15 +137,15 @@ pub fn clears_table<F: Fn()>(
                             max_bosses
                         };
                         if let Some(_t) = ui.begin_table_with_flags(
-                            &im_str!("ClearsTableRows##{}", i),
+                            format!("ClearsTableRows##{}", i),
                             column_count,
                             TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
                         ) {
                             if style.show_clears_table_row_names {
-                                ui.table_setup_column(&im_str!(""));
+                                ui.table_setup_column("");
                             }
                             for boss in 0..max_bosses {
-                                ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
+                                ui.table_setup_column(format!("{} {}", tr.translate("clears-header-boss"), boss + 1 ));
                             }
                             if style.show_clears_table_headers {
                                 ui.table_headers_row();
@@ -154,7 +154,7 @@ pub fn clears_table<F: Fn()>(
                                 ui.table_next_row();
                                 if style.show_clears_table_row_names {
                                     ui.table_next_column();
-                                    ui.text(im_str!("{}{}", tr.im_string("clears-wing-prefix"), wing_index + 1));
+                                    ui.text(format!("{}{}", tr.translate("clears-wing-prefix"), wing_index + 1));
                                 }
                                 for column in 0..max_bosses {
                                     ui.table_next_column();
@@ -170,12 +170,12 @@ pub fn clears_table<F: Fn()>(
                                         if short_names {
                                             utils::centered_text(
                                                 ui,
-                                                &tr.encounter_short_name_im_string(encounter),
+                                                tr.encounter_short_name_im_string(encounter),
                                             );
                                         } else {
                                             utils::centered_text(
                                                 ui,
-                                                &ImString::new(encounter_english_name(encounter)),
+                                                encounter_english_name(encounter),
                                             );
                                         }
 
@@ -208,15 +208,15 @@ pub fn clears_table<F: Fn()>(
                             raids.wings().len()
                         };
                         if let Some(_t) = ui.begin_table_with_flags(
-                            &im_str!("ClearsTableColumns##{}", i),
+                            format!("ClearsTableColumns##{}", i),
                             column_count,
                             TableFlags::BORDERS | TableFlags::NO_HOST_EXTEND_X,
                         ) {
                             if style.show_clears_table_row_names {
-                                ui.table_setup_column(&im_str!(""));
+                                ui.table_setup_column("");
                             }
                             for (wing_index, _wing) in raids.wings().iter().enumerate() {
-                                ui.table_setup_column(&im_str!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
+                                ui.table_setup_column(format!("{} {}", tr.translate("clears-wing-prefix-full"), wing_index + 1));
                             }
                             if style.show_clears_table_headers {
                                 ui.table_headers_row();
@@ -225,7 +225,7 @@ pub fn clears_table<F: Fn()>(
                                 ui.table_next_row();
                                 if style.show_clears_table_row_names {
                                     ui.table_next_column();
-                                    ui.text(&im_str!("{} {}", tr.im_string("clears-header-boss"), boss + 1 ));
+                                    ui.text(format!("{} {}", tr.translate("clears-header-boss"), boss + 1));
                                 }
                                 for wing in raids.wings() {
                                     ui.table_next_column();
@@ -239,9 +239,9 @@ pub fn clears_table<F: Fn()>(
                                         };
 
                                         if short_names {
-                                            utils::centered_text(&ui, &tr.encounter_short_name_im_string(encounter));
+                                            utils::centered_text(&ui, tr.encounter_short_name_im_string(encounter));
                                         } else {
-                                            utils::centered_text(&ui, &ImString::new(encounter_english_name(encounter)));
+                                            utils::centered_text(&ui, encounter_english_name(encounter));
                                         }
 
                                         ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
@@ -296,14 +296,14 @@ pub fn clears_table<F: Fn()>(
             // selectively apply it only to relevant parts.
             let outer_cell_padding = ui.push_style_var(StyleVar::CellPadding([0.0, 0.0]));
             if let Some(_outer_table) = ui.begin_table_with_flags(
-                &im_str!("ClearsTableCompactOuter"),
+                "ClearsTableCompactOuter",
                 (raids.wings().len() + 1),
                 TableFlags::BORDERS_OUTER | TableFlags::BORDERS_INNER_V | TableFlags::NO_HOST_EXTEND_X | TableFlags::SIZING_FIXED_FIT | TableFlags::NO_PAD_INNER_X,
             ) {
                 outer_cell_padding.pop();
 
                 let mut table_headers_names = Vec::new();
-                table_headers_names.push(tr.im_string("clears-account-column-header"));
+                table_headers_names.push(tr.translate("clears-account-column-header"));
                 ui.table_setup_column_with(TableColumnSetup {
                     name: table_headers_names.last().unwrap(),
                     flags: TableColumnFlags::WIDTH_FIXED,
@@ -316,7 +316,7 @@ pub fn clears_table<F: Fn()>(
                     let inner_width = (ui.current_font_size() * 1.5).ceil() * wing.encounters().len() as f32
                         + (wing.encounters().len() - 1) as f32 // Inner borders
                         + 2.0; // Outer borders
-                    table_headers_names.push(format!("{} {}", tr.im_string("clears-wing-prefix-full"), wing_index + 1));
+                    table_headers_names.push(format!("{} {}", tr.translate("clears-wing-prefix-full"), wing_index + 1));
                     ui.table_setup_column_with(TableColumnSetup {
                         name: table_headers_names.last().unwrap(),
                         flags: TableColumnFlags::WIDTH_FIXED,
@@ -343,7 +343,7 @@ pub fn clears_table<F: Fn()>(
 
                 // Account table
                 if let Some(_account_table) = ui.begin_table_with_flags(
-                    &im_str!("ClearsTableCompactAccounts"),
+                    "ClearsTableCompactAccounts",
                     1,
                     TableFlags::BORDERS_INNER_H | TableFlags::PAD_OUTER_X,
                 ) {
@@ -357,13 +357,13 @@ pub fn clears_table<F: Fn()>(
                 for (wing_index, wing) in raids.wings().iter().enumerate() {
                     ui.table_next_column();
                     if let Some(_wing_table) = ui.begin_table_with_flags(
-                        &im_str!("ClearsTableCompactWing{}", wing_index),
+                        format!("ClearsTableCompactWing{}", wing_index),
                         wing.encounters().len(),
                         TableFlags::NO_PAD_OUTER_X | TableFlags::NO_PAD_INNER_X | TableFlags::BORDERS_INNER | TableFlags::BORDERS_OUTER_V | TableFlags::BORDERS_OUTER_H,
                     ) {
                         for (encounter_index, _encounter) in wing.encounters().iter().enumerate() {
                             ui.table_setup_column_with(TableColumnSetup {
-                                name: im_str!("W{}B{}", wing_index, encounter_index),
+                                name: format!("W{}B{}", wing_index, encounter_index),
                                 flags: TableColumnFlags::WIDTH_FIXED,
                                 init_width_or_weight: (ui.current_font_size() * 1.5).ceil(),
                                 user_id: Default::default()
@@ -397,13 +397,13 @@ pub fn clears_table<F: Fn()>(
                                     ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
 
                                     let mut finished_checkbox_copy = finished;
-                                    ui.checkbox(im_str!(""), &mut finished_checkbox_copy);
+                                    ui.checkbox("", &mut finished_checkbox_copy);
                                     active_style.pop();
                                     hover_style.pop();
                                     standard_style.pop();
                                     padding_style.pop();
                                 } else {
-                                    utils::centered_text(&ui, &tr.im_string("clears-compressed-layout-short-unknown"));
+                                    utils::centered_text(&ui, &tr.translate("clears-compressed-layout-short-unknown"));
                                 }
                             }
                         }
@@ -413,9 +413,9 @@ pub fn clears_table<F: Fn()>(
                             if ui.table_column_flags_with_column(i).contains(TableColumnFlags::IS_HOVERED) {
                                 ui.tooltip(|| {
                                     if short_names {
-                                        utils::centered_text(&ui, &tr.encounter_short_name_im_string(encounter));
+                                        utils::centered_text(&ui, tr.encounter_short_name_im_string(encounter));
                                     } else {
-                                        utils::centered_text(&ui, &ImString::new(encounter_english_name(encounter)));
+                                        utils::centered_text(&ui, encounter_english_name(encounter));
                                     }
                                 });
                             }
