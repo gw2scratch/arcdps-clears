@@ -28,11 +28,11 @@ impl Translation {
         Ok(translation)
     }
 
-    pub fn im_string(&self, key: &str) -> ImString {
+    pub fn im_string(&self, key: &str) -> String {
         if let Some(translation) = self.strings.get(key) {
-            ImString::new(translation)
+            translation.to_string()
         } else {
-            ImString::new(format!("(({}))", key))
+            format!("(({}))", key)
         }
     }
 

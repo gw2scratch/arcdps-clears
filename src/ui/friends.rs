@@ -28,14 +28,14 @@ pub fn friends(
                 .filter(|friend| friend.show_in_friends())
                 .filter(|friend| data.friends.state_available(friend.account_name()))
                 .map(|friend| ClearTableEntry {
-                    account_name: ImString::new(friend.account_name()),
+                    account_name: friend.account_name().to_string(),
                     state: data.friends.clears(friend.account_name()),
                     expanded: friend.expanded_in_friends_mut(),
                 })
                 .collect();
 
             if entries.is_empty() {
-                let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 25.0);
+                let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 25.0);
                 ui.text_wrapped(&tr.im_string("friends-intro"));
                 ui.text("");
                 wrap.pop(ui);
@@ -65,11 +65,11 @@ pub fn friends(
             );
         }
 
-        if ui.button(&tr.im_string("friends-friendlist-button"), [0.0, 0.0]) {
+        if ui.button(&tr.im_string("friends-friendlist-button")) {
             ui_state.friends_window.shown = true;
         }
-        ui.same_line(0.0);
-        if ui.button(&tr.im_string("friends-share-button"), [0.0, 0.0]) {
+        ui.same_line();
+        if ui.button(&tr.im_string("friends-share-button")) {
             ui_state.api_key_window.shown = true;
         }
     }
@@ -79,23 +79,23 @@ pub fn friends(
     }
 
     ui.popup(im_str!("##RightClickMenuFriendsClears"), || {
-        let small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0]));
-        ui.menu(&tr.im_string("friends-contextmenu-friend-list"), true, || {
-            let mut entries: Vec<_> = settings.friend_list.iter_mut()
-                .filter(|friend| data.friends.state_available(friend.account_name()))
-                .collect();
+        if let _small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0])) {
+            ui.menu(&tr.im_string("friends-contextmenu-friend-list"), || {
+                let mut entries: Vec<_> = settings.friend_list.iter_mut()
+                    .filter(|friend| data.friends.state_available(friend.account_name()))
+                    .collect();
 
-            for friend in entries {
-                if MenuItem::new(&im_str!("{}##FriendsContextCheckbox", friend.account_name()))
-                    .selected(friend.show_in_friends())
-                    .build(ui) {
-                    *friend.show_in_friends_mut() = !friend.show_in_friends();
+                for friend in entries {
+                    if MenuItem::new(&im_str!("{}##FriendsContextCheckbox", friend.account_name()))
+                        .selected(friend.show_in_friends())
+                        .build(ui) {
+                        *friend.show_in_friends_mut() = !friend.show_in_friends();
+                    }
                 }
-            }
-        });
-        ui.separator();
-        settings::style_section(ui, "friends-style-tooltip", &mut settings.friends_clears_style, tr);
-        small_frame_padding.pop(ui);
+            });
+            ui.separator();
+            settings::style_section(ui, "friends-style-tooltip", &mut settings.friends_clears_style, tr);
+        }
     })
 }
 
@@ -117,7 +117,7 @@ pub fn friends_window(
             .opened(&mut shown)
             .build(ui, || {
                 if settings.friend_list.iter_mut().any(|friend| data.friends.state_available(friend.account_name())) {
-                    if ui.begin_table_with_flags(im_str!("FriendsTable"), 4, TableFlags::BORDERS) {
+                    if let Some(_t) = ui.begin_table_with_flags(im_str!("FriendsTable"), 4, TableFlags::BORDERS) {
                         ui.table_setup_column(im_str!("##updown"));
                         ui.table_setup_column(&tr.im_string("friends-friendlist-account-name"));
                         ui.table_setup_column(&tr.im_string("friends-friendlist-shown"));
@@ -144,56 +144,53 @@ pub fn friends_window(
                             let prev = (0..i).rev().filter(|prev_i| states_available[*prev_i]).next();
                             let next = (i + 1..states_available.len()).filter(|next_i| states_available[*next_i]).next();
 
-                            let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                            if let Some(prev_i) = prev {
-                                if ui.arrow_button(&im_str!("##friend_up_{}", friend.account_name()), Direction::Up) {
-                                    swap = Some((prev_i, i));
-                                };
-                            } else {
-                                ui.invisible_button(&im_str!("##friend_up_{}", friend.account_name()), [ui.frame_height(), ui.frame_height()]);
-                            }
-                            ui.same_line(0.0);
-                            if let Some(next_i) = next {
-                                if ui.arrow_button(&im_str!("##friend_down_{}", friend.account_name()), Direction::Down) {
-                                    swap = Some((next_i, i));
+                            if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
+                                if let Some(prev_i) = prev {
+                                    if ui.arrow_button(&im_str!("##friend_up_{}", friend.account_name()), Direction::Up) {
+                                        swap = Some((prev_i, i));
+                                    };
+                                } else {
+                                    ui.invisible_button(&im_str!("##friend_up_{}", friend.account_name()), [ui.frame_height(), ui.frame_height()]);
                                 }
-                            } else {
-                                ui.invisible_button(&im_str!("##friend_down_{}", friend.account_name()), [ui.frame_height(), ui.frame_height()]);
+                                ui.same_line();
+                                if let Some(next_i) = next {
+                                    if ui.arrow_button(&im_str!("##friend_down_{}", friend.account_name()), Direction::Down) {
+                                        swap = Some((next_i, i));
+                                    }
+                                } else {
+                                    ui.invisible_button(&im_str!("##friend_down_{}", friend.account_name()), [ui.frame_height(), ui.frame_height()]);
+                                }
                             }
-                            padding.pop(ui);
 
                             ui.table_next_column();
                             ui.text(friend.account_name());
 
                             ui.table_next_column();
-                            let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                            if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
+                                let current_x = ui.cursor_pos()[0];
+                                let checkbox_width = ui.frame_height();
+                                let column_width = ui.current_column_width();
+                                let new_x = (current_x + column_width / 2. - checkbox_width / 2.).max(current_x);
 
-                            let current_x = ui.cursor_pos()[0];
-                            let checkbox_width = ui.frame_height();
-                            let column_width = ui.current_column_width();
-                            let new_x = (current_x + column_width / 2. - checkbox_width / 2.).max(current_x);
+                                ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
+                                ui.checkbox(&im_str!("##friend_show_{}", friend.account_name()), friend.show_in_friends_mut());
 
-                            ui.set_cursor_pos([new_x, ui.cursor_pos()[1]]);
-                            ui.checkbox(&im_str!("##friend_show_{}", friend.account_name()), friend.show_in_friends_mut());
-
-                            ui.table_next_column();
-                            if friend.public() {
-                                ui.button(im_str!("Remove"), [0., 0.]); // TODO: Translate
-                            } else {
-                                utils::help_marker(ui, "This friend shared their clears with you."); // TODO: Translate
+                                ui.table_next_column();
+                                if friend.public() {
+                                    ui.button(im_str!("Remove")); // TODO: Translate
+                                } else {
+                                    utils::help_marker(ui, "This friend shared their clears with you."); // TODO: Translate
+                                }
                             }
-
-                            padding.pop(ui);
                         }
 
                         if let Some((index1, index2)) = swap {
                             settings.friend_list.swap(index1, index2);
                         }
 
-                        ui.end_table();
                     }
                 } else {
-                    let wrap = ui.push_text_wrap_pos(ui.current_font_size() * 30.0);
+                    let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 30.0);
                     ui.text_wrapped(&tr.im_string("friends-friendlist-intro"));
                     wrap.pop(ui);
                     ui.new_line();
@@ -203,7 +200,7 @@ pub fn friends_window(
 
                 // TODO: Translate
                 // TODO: Implement
-                ui.button(im_str!("Add friend"), [0., 0.]);
+                ui.button(im_str!("Add friend"));
             });
 
         ui_state.friends_window.shown = shown;
@@ -214,13 +211,13 @@ pub fn refresh_button(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundWo
     // We have a cooldown here to avoid spamming the request too much
     // and to make it feel like the button is doing something.
     if Instant::now().saturating_duration_since(ui_state.friends_window.last_refresh_use) > Duration::from_secs(2) {
-        if ui.button(&tr.im_string("friends-refresh-button"), [0.0, 0.0]) {
+        if ui.button(&tr.im_string("friends-refresh-button")) {
             bg_workers.api_sender().send(ApiJob::UpdateFriendState);
             ui_state.friends_window.last_refresh_use = Instant::now();
         }
     } else {
-        let disabled_style = ui.push_style_var(StyleVar::Alpha(0.6));
-        ui.button(&tr.im_string("friends-refresh-button"), [0.0, 0.0]);
-        disabled_style.pop(ui);
+        if let _disabled = ui.push_style_var(StyleVar::Alpha(0.6)) {
+            ui.button(&tr.im_string("friends-refresh-button"));
+        }
     }
 }

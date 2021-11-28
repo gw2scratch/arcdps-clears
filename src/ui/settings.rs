@@ -14,7 +14,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &tr.im_string("setting-hide-in-loading-screens"),
             &mut settings.hide_in_loading_screens,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         utils::help_marker(ui, tr.im_string("setting-hide-in-loading-screens-description"));
 
         /* Close on escape */
@@ -22,7 +22,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &im_str!("{}##behavior", tr.im_string("setting-close-window-with-escape")),
             &mut settings.close_window_with_escape,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         utils::help_marker(ui, tr.im_string("setting-close-window-with-escape-description"));
     }
 
@@ -35,10 +35,10 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &mut settings.main_window_keybind,
             tr,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         ui.align_text_to_frame_padding();
         ui.text(tr.im_string("setting-keybind-window-clears"));
-        ui.same_line(0.0);
+        ui.same_line();
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-keybind-window-clears-description"));
 
@@ -49,10 +49,10 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &mut settings.api_window_keybind,
             tr,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         ui.align_text_to_frame_padding();
         ui.text(tr.im_string("setting-keybind-window-apikeys"));
-        ui.same_line(0.0);
+        ui.same_line();
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-keybind-window-apikeys-description"));
 
@@ -62,7 +62,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &im_str!("{}##keybinds", tr.im_string("setting-close-window-with-escape")),
             &mut settings.close_window_with_escape,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         utils::help_marker(ui, tr.im_string("setting-close-window-with-escape-description"));
     }
 
@@ -87,11 +87,11 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
             &tr.im_string("setting-check-updates"),
             &mut settings.check_updates,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         utils::help_marker(ui, tr.im_string("setting-check-updates-description"));
     }
 
-    if ui.button(&tr.im_string("setting-button-manage-api-keys"), [ui.content_region_avail()[0], 0.0]) {
+    if ui.button_with_size(&tr.im_string("setting-button-manage-api-keys"), [ui.content_region_avail()[0], 0.0]) {
         ui_state.api_key_window.shown = true;
     }
 }
@@ -102,7 +102,7 @@ pub fn common_style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) 
         &tr.im_string("setting-short-encounter-names"),
         &mut settings.short_names,
     );
-    ui.same_line(0.0);
+    ui.same_line();
     utils::help_marker(
         ui,
         tr.im_string("setting-short-encounter-names-description"),
@@ -113,7 +113,7 @@ pub fn common_style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) 
         &tr.im_string("setting-main-window-show-title"),
         &mut settings.main_window_show_title,
     );
-    ui.same_line(0.0);
+    ui.same_line();
     utils::help_marker(
         ui,
         tr.im_string("setting-main-window-show-title-description"),
@@ -124,34 +124,33 @@ pub fn common_style_section(ui: &Ui, settings: &mut Settings, tr: &Translation) 
         &tr.im_string("setting-main-window-show-bg"),
         &mut settings.main_window_show_bg,
     );
-    ui.same_line(0.0);
+    ui.same_line();
     utils::help_marker(
         ui,
         tr.im_string("setting-main-window-show-bg-description"),
     );
 
     let reset_modal_label = tr.im_string("setting-reset-style-modal-title");
-    if ui.button(&tr.im_string("setting-reset-style-button"), [0.0, 0.0]) {
+    if ui.button(&tr.im_string("setting-reset-style-button")) {
         ui.open_popup(&reset_modal_label);
     }
-    PopupModal::new(&ui, &reset_modal_label)
+    PopupModal::new(&reset_modal_label)
         .save_settings(false)
-        .build(|| {
+        .build(ui, || {
             ui.text(tr.im_string("setting-reset-style-modal-question"));
             ui.separator();
-            if ui.begin_table_with_flags(im_str!("ResetConfirmationPopupTable"), 2, TableFlags::SIZING_STRETCH_SAME) {
+            if let Some(_t) = ui.begin_table_with_flags(im_str!("ResetConfirmationPopupTable"), 2, TableFlags::SIZING_STRETCH_SAME) {
                 ui.table_next_row();
                 ui.table_next_column();
-                if ui.button(&tr.im_string("setting-reset-style-modal-confirm"), [ui.current_column_width(), 0.0]) {
+                if ui.button_with_size(&tr.im_string("setting-reset-style-modal-confirm"), [ui.current_column_width(), 0.0]) {
                     settings.reset_style();
                     ui.close_current_popup();
                 }
                 ui.set_item_default_focus();
                 ui.table_next_column();
-                if ui.button(&tr.im_string("setting-reset-style-modal-cancel"), [ui.current_column_width(), 0.0]) {
+                if ui.button_with_size(&tr.im_string("setting-reset-style-modal-cancel"), [ui.current_column_width(), 0.0]) {
                     ui.close_current_popup();
                 }
-                ui.end_table();
             }
         });
 }
@@ -166,17 +165,16 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
 
     let mut table_style_index = table_styles.iter().position(|x| *x == style.table_style).unwrap_or_default();
 
-    if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-style"), imgui_id_label))
-        .build_simple(&ui, &mut table_style_index, &table_styles, &|style|
-            Cow::from(match style {
-                ClearsTableStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
-                ClearsTableStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
-                ClearsTableStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
-            }),
-        ) {
+    if ui.combo(&im_str!("{}##{}", tr.im_string("setting-clears-style"), imgui_id_label), &mut table_style_index, &table_styles, |style|
+        Cow::from(match style {
+            ClearsTableStyle::WingRows => tr.im_string("setting-clears-style-option-rows"),
+            ClearsTableStyle::WingColumns => tr.im_string("setting-clears-style-option-columns"),
+            ClearsTableStyle::SingleRow => tr.im_string("setting-clears-style-option-single-row"),
+        }),
+    ) {
         style.table_style = table_styles[table_style_index];
     }
-    ui.same_line(0.0);
+    ui.same_line();
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-clears-style-description"));
 
@@ -193,17 +191,16 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
             .position(|x| *x == style.account_header_style)
             .unwrap_or_default();
 
-        if ComboBox::new(&im_str!("{}##{}", tr.im_string("setting-clears-header-style"), imgui_id_label))
-            .build_simple(&ui, &mut account_style_index, &account_header_styles, &|style|
-                Cow::from(match style {
-                    AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
-                    AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
-                    AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
-                }),
-            ) {
+        if ui.combo(&im_str!("{}##{}", tr.im_string("setting-clears-header-style"), imgui_id_label), &mut account_style_index, &account_header_styles, |style|
+            Cow::from(match style {
+                AccountHeaderStyle::None => tr.im_string("setting-clears-header-style-none"),
+                AccountHeaderStyle::CenteredText => tr.im_string("setting-clears-header-style-centered"),
+                AccountHeaderStyle::Collapsible => tr.im_string("setting-clears-header-style-collapsible"),
+            }),
+        ) {
             style.account_header_style = account_header_styles[account_style_index]
         }
-        ui.same_line(0.0);
+        ui.same_line();
         ui.align_text_to_frame_padding();
         utils::help_marker(ui, tr.im_string("setting-clears-header-style-description"));
     }
@@ -213,7 +210,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
         &im_str!("{}##{}", tr.im_string("setting-clears-show-table-headers"), imgui_id_label),
         &mut style.show_clears_table_headers,
     );
-    ui.same_line(0.0);
+    ui.same_line();
     utils::help_marker(
         ui,
         tr.im_string("setting-clears-show-table-headers-description"),
@@ -226,7 +223,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
             &im_str!("{}##{}", tr.im_string("setting-clears-show-table-row-names"), imgui_id_label),
             &mut style.show_clears_table_row_names,
         );
-        ui.same_line(0.0);
+        ui.same_line();
         utils::help_marker(
             ui,
             tr.im_string("setting-clears-show-table-row-names-description"),
@@ -238,7 +235,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
                    &mut style.finished_clear_color)
         .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
         .build(&ui);
-    ui.same_line(0.0);
+    ui.same_line();
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-finished-clear-color-description"));
 
@@ -246,7 +243,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
                    &mut style.unfinished_clear_color)
         .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
         .build(&ui);
-    ui.same_line(0.0);
+    ui.same_line();
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.im_string("setting-unfinished-clear-color-description"));
 }
