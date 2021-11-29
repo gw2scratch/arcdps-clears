@@ -25,7 +25,7 @@ pub fn friends(
         refresh_button(ui, ui_state, bg_workers, tr);
     } else {
         if let Some(raids) = data.clears.raids() {
-            let mut entries: Vec<_> = settings.friend_list.iter_mut()
+            let mut entries: Vec<_> = settings.friend_list.friends_mut().iter_mut()
                 .filter(|friend| friend.show_in_friends())
                 .filter(|friend| data.friends.state_available(friend.account_name()))
                 .map(|friend| ClearTableEntry {
@@ -82,7 +82,7 @@ pub fn friends(
     ui.popup("##RightClickMenuFriendsClears", || {
         if let _small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0])) {
             ui.menu(&tr.translate("friends-contextmenu-friend-list"), || {
-                let entries: Vec<_> = settings.friend_list.iter_mut()
+                let entries: Vec<_> = settings.friend_list.friends_mut().iter_mut()
                     .filter(|friend| data.friends.state_available(friend.account_name()))
                     .collect();
 
@@ -117,7 +117,7 @@ pub fn friends_window(
             .collapsible(false)
             .opened(&mut shown)
             .build(ui, || {
-                if settings.friend_list.iter_mut().any(|friend| data.friends.state_available(friend.account_name())) {
+                if settings.friend_list.friends().iter().any(|friend| data.friends.state_available(friend.account_name())) {
                     if let Some(_t) = ui.begin_table_with_flags("FriendsTable", 4, TableFlags::BORDERS) {
                         ui.table_setup_column("##updown");
                         ui.table_setup_column(&tr.translate("friends-friendlist-account-name"));
@@ -127,11 +127,11 @@ pub fn friends_window(
 
                         let mut swap = None;
 
-                        let states_available: Vec<_> = settings.friend_list.iter()
+                        let states_available: Vec<_> = settings.friend_list.friends().iter()
                             .map(|friend| data.friends.state_available(friend.account_name()))
                             .collect();
 
-                        for (i, friend) in settings.friend_list.iter_mut().enumerate() {
+                        for (i, friend) in settings.friend_list.friends_mut().iter_mut().enumerate() {
                             // Hide currently unavailable friends, but do not remove them
                             if !states_available[i] {
                                 continue;
@@ -186,7 +186,7 @@ pub fn friends_window(
                         }
 
                         if let Some((index1, index2)) = swap {
-                            settings.friend_list.swap(index1, index2);
+                            settings.friend_list.friends_mut().swap(index1, index2);
                         }
 
                     }

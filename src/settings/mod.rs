@@ -17,7 +17,7 @@ pub struct Settings {
     #[serde(default = "defaults::api_keys")]
     pub api_keys: Vec<ApiKey>,
     #[serde(default = "defaults::friends")]
-    pub friend_list: Vec<Friend>,
+    pub friend_list: FriendList,
     #[serde(default = "defaults::friend_default_show_state")]
     pub friend_default_show_state: bool,
     #[serde(default = "defaults::check_updates")]
@@ -57,7 +57,7 @@ pub struct ClearsStyle {
 pub enum AccountHeaderStyle {
     None,
     CenteredText,
-    Collapsible
+    Collapsible,
 }
 
 #[derive(Serialize, Deserialize, Eq, PartialEq, Clone, Copy)]
@@ -76,7 +76,7 @@ pub struct ApiKey {
     #[serde(default = "defaults::show_key_in_clears")]
     show_key_in_clears: bool,
     #[serde(default = "defaults::expanded_in_clears")]
-    expanded_in_clears: bool
+    expanded_in_clears: bool,
 }
 
 fn new_api_key_id() -> Uuid {
@@ -97,7 +97,7 @@ impl ApiKey {
             key: str.to_string(),
             data: ApiKeyData::empty(),
             show_key_in_clears: defaults::show_key_in_clears(),
-            expanded_in_clears: defaults::expanded_in_clears()
+            expanded_in_clears: defaults::expanded_in_clears(),
         }
     }
     pub fn change_key(&mut self, str: &str) {
@@ -256,6 +256,26 @@ impl Friend {
     }
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct FriendList {
+    friends: Vec<Friend>,
+}
+
+impl FriendList {
+    pub fn known(&self, account_name: &str) -> bool {
+        self.friends.iter().any(|f| f.account_name() == account_name)
+    }
+    pub fn add(&mut self, friend: Friend) {
+        self.friends.push(friend)
+    }
+    pub fn friends(&self) -> &Vec<Friend> {
+        &self.friends
+    }
+    pub fn friends_mut(&mut self) -> &mut Vec<Friend> {
+        &mut self.friends
+    }
+}
+
 impl Settings {
     fn default() -> Self {
         Settings {
@@ -361,7 +381,7 @@ fn load_old_settings(json: &str) -> Option<Settings> {
     /// Settings from version 0.1.0
     #[derive(Serialize, Deserialize)]
     struct OldApiKey {
-        key: String
+        key: String,
     }
 
     #[derive(Serialize, Deserialize)]
