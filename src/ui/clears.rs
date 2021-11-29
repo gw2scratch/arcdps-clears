@@ -4,8 +4,8 @@ use arcdps::imgui::{CollapsingHeader, MenuItem, MouseButton, StyleColor, StyleVa
 
 use crate::clears::{RaidClearState, RaidWings};
 use crate::Data;
-use crate::input::get_key_name;
-use crate::settings::{AccountHeaderStyle, ApiKey, ClearsStyle, ClearsTableStyle, Settings};
+
+use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
 use crate::translations::{encounter_english_name, Translation};
 use crate::ui::{get_api_key_name, settings, UiState, utils};
 use crate::workers::BackgroundWorkers;
@@ -35,7 +35,7 @@ pub fn my_clears(
                 ui.text(tr.translate("clears-intro-get-started-postfix"));
             }
         } else if settings.api_keys.iter().filter(|x| x.show_key_in_clears()).count() == 0 {
-            if let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 25.0) {
+            if let _wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 25.0) {
                 ui.text_wrapped(&tr.translate("clears-all-accounts-hidden"));
             }
         }
@@ -80,11 +80,11 @@ pub fn my_clears(
     ui.popup("##RightClickMenuMyClears", || {
         if let _small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0])) {
             ui.menu(&tr.translate("clears-contextmenu-account-list"), || {
-                let mut entries: Vec<_> = settings.api_keys.iter_mut()
+                let entries: Vec<_> = settings.api_keys.iter_mut()
                     .map(|key| (get_api_key_name(key, tr), key.show_key_in_clears_mut()))
                     .collect();
 
-                for (name, mut shown) in entries {
+                for (name, shown) in entries {
                     if MenuItem::new(format!("{}##ClearsContextCheckbox", name))
                         .selected(*shown)
                         .build(ui) {
@@ -297,7 +297,7 @@ pub fn clears_table<F: Fn()>(
             let outer_cell_padding = ui.push_style_var(StyleVar::CellPadding([0.0, 0.0]));
             if let Some(_outer_table) = ui.begin_table_with_flags(
                 "ClearsTableCompactOuter",
-                (raids.wings().len() + 1),
+                raids.wings().len() + 1,
                 TableFlags::BORDERS_OUTER | TableFlags::BORDERS_INNER_V | TableFlags::NO_HOST_EXTEND_X | TableFlags::SIZING_FIXED_FIT | TableFlags::NO_PAD_INNER_X,
             ) {
                 outer_cell_padding.pop();

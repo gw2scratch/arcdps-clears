@@ -19,6 +19,7 @@ pub struct Release {
     changelog_url: String,
 }
 
+#[allow(dead_code)]
 impl Release {
     pub fn version(&self) -> &str {
         &self.version

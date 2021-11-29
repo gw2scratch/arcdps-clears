@@ -1,5 +1,6 @@
 use arcdps::imgui::{ChildWindow, Condition, PopupModal, Selectable, StyleVar, TabBar, TabItem, TableFlags, Ui, Window};
 use chrono::Utc;
+use log::warn;
 
 use crate::{Data, friends};
 use crate::friends::KeyUsability;
@@ -79,15 +80,21 @@ pub fn api_keys_window(
                                 if key.data().account_data().is_none() && key.data().token_info().is_none() {
                                     if ui.button(&tr.translate("api-key-check-api-key-button")) {
                                         let sender = bg_workers.api_sender();
-                                        sender.send(ApiJob::UpdateAccountData(*key.id()));
-                                        sender.send(ApiJob::UpdateTokenInfo(*key.id()));
-                                        sender.send(ApiJob::UpdateClears(*key.id()));
+                                        if let Err(_) = sender.send(ApiJob::UpdateAccountData(*key.id())) {
+                                            warn!("Failed to send request to API worker");
+                                        }
+                                        if let Err(_) = sender.send(ApiJob::UpdateTokenInfo(*key.id())) {
+                                            warn!("Failed to send request to API worker");
+                                        }
+                                        if let Err(_) = sender.send(ApiJob::UpdateClears(*key.id())) {
+                                            warn!("Failed to send request to API worker");
+                                        }
                                     }
                                     ui.separator();
                                     ui.text_wrapped(&tr.translate("api-key-guide-step1-prefix"));
                                     ui.same_line();
                                     if ui.small_button(&tr.translate("api-key-guide-step1-open")) {
-                                        open::that("https://account.arena.net/applications/create");
+                                        let _ = open::that("https://account.arena.net/applications/create");
                                     }
                                     ui.same_line();
                                     ui.text(tr.translate("api-key-guide-step1-url"));
@@ -230,7 +237,9 @@ pub fn api_keys_window(
                                             ui.separator();
                                             if ui.checkbox(&tr.translate("api-key-show-in-my-clears-checkbox"), key.show_key_in_clears_mut()) {
                                                 if key.show_key_in_clears() {
-                                                    bg_workers.api_sender().send(ApiJob::UpdateClears(*key.id()));
+                                                    if let Err(_) = bg_workers.api_sender().send(ApiJob::UpdateClears(*key.id())) {
+                                                        warn!("Failed to send request to API worker");
+                                                    }
                                                 }
                                             }
 
@@ -286,10 +295,12 @@ pub fn api_keys_window(
                                                 }
 
                                                 if public != original_public {
-                                                    bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
+                                                    if let Err(_) = bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
                                                         key_uuid: *key.id(),
                                                         public
-                                                    });
+                                                    }) {
+                                                        warn!("Failed to send request to API worker");
+                                                    }
                                                 }
 
 
@@ -304,10 +315,12 @@ pub fn api_keys_window(
                                                             }
                                                             ui.table_next_column();
                                                             if ui.small_button(format!("Unshare##{}", share.account())) {
-                                                                bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                                if let Err(_) = bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
                                                                     key_uuid: *key.id(),
                                                                     friend_account_name: share.account().to_string(),
-                                                                });
+                                                                }) {
+                                                                    warn!("Failed to send request to API worker");
+                                                                }
                                                             }
                                                         }
 
@@ -327,10 +340,12 @@ pub fn api_keys_window(
                                                         add = add || ui.small_button(&tr.translate("api-key-friends-share-button"));
 
                                                         if add {
-                                                            bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
+                                                            if let Err(_) = bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
                                                                 key_uuid: *key.id(),
                                                                 friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
-                                                            });
+                                                            }) {
+                                                                warn!("Failed to send request to API worker");
+                                                            }
                                                             ui_state.api_key_window.new_friend_name.clear();
                                                         }
                                                     }

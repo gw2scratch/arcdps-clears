@@ -155,6 +155,7 @@ impl Hash for ApiKey {
     }
 }
 
+#[allow(dead_code)]
 impl ApiKey {
     pub fn new(str: &str) -> Self {
         ApiKey {
@@ -205,6 +206,7 @@ pub struct AccountData {
     last_modified: DateTime<Utc>,
 }
 
+#[allow(dead_code)]
 impl AccountData {
     pub fn new(id: String, name: String, last_modified: DateTime<Utc>) -> Self {
         AccountData { id, name, last_modified }
@@ -239,6 +241,7 @@ pub struct TokenInfo {
     token_type: TokenType,
 }
 
+#[allow(dead_code)]
 impl TokenInfo {
     pub fn new(id: String, name: String, permissions: Vec<String>, key_type: TokenType) -> Self {
         TokenInfo {
@@ -294,6 +297,7 @@ pub struct Friend {
     public: bool,
 }
 
+#[allow(dead_code)]
 impl Friend {
     pub fn new(account_name: String, show_in_friends: bool, public: bool) -> Self {
         Friend { account_name, show_in_friends, public, expanded_in_friends: true }
@@ -363,6 +367,7 @@ impl Settings {
         self.api_keys.retain(|x| x.id() != id)
     }
 
+    #[allow(dead_code)]
     pub fn short_names(&self) -> bool {
         self.short_names
     }
