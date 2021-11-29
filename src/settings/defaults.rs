@@ -37,8 +37,10 @@ pub fn api_keys() -> Vec<ApiKey> {
     Vec::new()
 }
 
-pub fn friends() -> Vec<Friend> {
-    Vec::new()
+pub fn friends() -> FriendList {
+    FriendList {
+        friends: Vec::new()
+    }
 }
 
 pub fn friend_default_show_state() -> bool {

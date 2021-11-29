@@ -173,8 +173,8 @@ pub fn start_workers(
                                 if let Some(settings) = settings_mutex.lock().unwrap().as_mut() {
                                     // Add newly discovered friends to stored friend list.
                                     for friend in state.friends() {
-                                        if !settings.friend_list.iter().any(|f| f.account_name() == friend.account()) {
-                                            settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
+                                        if !settings.friend_list.known(friend.account()) {
+                                            settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
                                         }
                                     }
                                 } else {
@@ -410,7 +410,7 @@ fn copy_friends_metadata(settings_mutex: &Mutex<Option<Settings>>) -> Option<Fri
         );
 
     let public_friends = settings_mutex.lock().unwrap().as_ref()
-        .map(|x| x.friend_list.iter()
+        .map(|x| x.friend_list.friends().iter()
             .filter(|x| x.public())
             .map(|x| x.account_name().to_string())
             .collect()
