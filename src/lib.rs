@@ -9,6 +9,7 @@ use crate::api::LiveApi;
 use crate::workers::BackgroundWorkers;
 use crate::ui::UiState;
 use std::ops::Deref;
+use log::error;
 use crate::friends::{FriendData, FriendsApiClient};
 
 
@@ -94,8 +95,7 @@ fn release() {
         match settings.save_to_file(SETTINGS_FILENAME) {
             Ok(_) => {}
             Err(err) => {
-                // TODO: Proper logging
-                eprintln!("Failed to save settings: {:?}", err)
+                error!("Failed to save settings: {:?}", err)
             }
         }
     }

@@ -5,6 +5,7 @@ use std::fs::File;
 use std::hash::{Hash, Hasher};
 use std::io::{BufWriter, Write, Read};
 use std::sync::Mutex;
+use log::error;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
@@ -406,11 +407,14 @@ pub fn load_bg(
     continue_with: Option<fn()>,
 ) {
     std::thread::spawn(move || {
-        if let Ok(settings) = Settings::load_from_file(filename) {
-            *settings_mutex.lock().unwrap() = Some(settings);
-        } else {
-            // TODO: Log failure (unless file doesn't exist) and reset settings
-            *settings_mutex.lock().unwrap() = Some(Settings::default());
+        match Settings::load_from_file(filename) {
+            Ok(settings) => {
+                *settings_mutex.lock().unwrap() = Some(settings);
+            }
+            Err(e) => {
+                error!("Failed to read settings; resetting: {}", e);
+                *settings_mutex.lock().unwrap() = Some(Settings::default());
+            }
         }
 
         if let Some(function) = continue_with {
