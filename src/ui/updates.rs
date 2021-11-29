@@ -30,11 +30,11 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
                     }
                     ui.separator();
                     if ui.button(&tr.translate("update-button-changelog")) {
-                        open::that(release.changelog_url());
+                        let _ = open::that(release.changelog_url());
                     }
                     ui.same_line();
                     if ui.button(&tr.translate("update-button-download")) {
-                        open::that(release.tool_site_url());
+                        let _ = open::that(release.tool_site_url());
                     }
                 } else {
                     ui.text(tr.translate("update-not-available"))

@@ -7,7 +7,7 @@ use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use ureq::Request;
 
-use crate::clears::{ClearData, RaidClearState};
+use crate::clears::{RaidClearState};
 use crate::settings::{ApiKey, TokenType};
 
 const USER_AGENT: &str = concat!("arcdps-clears/", env!("CARGO_PKG_VERSION"));

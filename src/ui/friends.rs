@@ -1,7 +1,8 @@
 use std::time::{Duration, Instant};
 
-use arcdps::imgui::{CollapsingHeader, Direction, DragDropFlags, DragDropSource, DragDropTarget, MenuItem, MouseButton, PopupModal, Selectable, StyleColor, StyleVar, TableFlags, Ui, Window, WindowFlags};
+use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableFlags, Ui, Window};
 use log::warn;
+
 
 use crate::Data;
 use crate::settings::Settings;
@@ -81,7 +82,7 @@ pub fn friends(
     ui.popup("##RightClickMenuFriendsClears", || {
         if let _small_frame_padding = ui.push_style_var(StyleVar::FramePadding([1.0, 1.0])) {
             ui.menu(&tr.translate("friends-contextmenu-friend-list"), || {
-                let mut entries: Vec<_> = settings.friend_list.iter_mut()
+                let entries: Vec<_> = settings.friend_list.iter_mut()
                     .filter(|friend| data.friends.state_available(friend.account_name()))
                     .collect();
 
@@ -130,7 +131,7 @@ pub fn friends_window(
                             .map(|friend| data.friends.state_available(friend.account_name()))
                             .collect();
 
-                        for (i, mut friend) in settings.friend_list.iter_mut().enumerate() {
+                        for (i, friend) in settings.friend_list.iter_mut().enumerate() {
                             // Hide currently unavailable friends, but do not remove them
                             if !states_available[i] {
                                 continue;
@@ -212,7 +213,9 @@ pub fn refresh_button(ui: &Ui, ui_state: &mut UiState, bg_workers: &BackgroundWo
     // and to make it feel like the button is doing something.
     if Instant::now().saturating_duration_since(ui_state.friends_window.last_refresh_use) > Duration::from_secs(2) {
         if ui.button(&tr.translate("friends-refresh-button")) {
-            bg_workers.api_sender().send(ApiJob::UpdateFriendState);
+            if let Err(_) = bg_workers.api_sender().send(ApiJob::UpdateFriendState) {
+                warn!("Failed to send request to API worker");
+            }
             ui_state.friends_window.last_refresh_use = Instant::now();
         }
     } else {

@@ -1,23 +1,22 @@
-use std::thread::{JoinHandle, sleep};
+use std::sync::{Arc, Mutex};
+use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc;
+use std::thread::sleep;
 use std::thread;
 use std::time::{Duration, Instant};
-use std::sync::{Mutex, Arc};
-use crate::{Data, Settings, friends};
-use crate::api::{LiveApi, Gw2Api, ApiError};
-use uuid::Uuid;
-use std::sync::mpsc::{Sender, Receiver};
-use std::sync::mpsc;
+
 use chrono::Utc;
-use crate::friends::{FriendsApiClient, FriendsApiError, FriendRequestMetadata};
-use log::{info, warn, error};
 use itertools::Itertools;
+use log::{error, warn};
+use uuid::Uuid;
+
+use crate::{Data, friends, Settings};
+use crate::api::{ApiError, Gw2Api, LiveApi};
+use crate::friends::{FriendRequestMetadata, FriendsApiClient, FriendsApiError};
 use crate::settings::Friend;
 
 pub struct BackgroundWorkers {
     api_sender: Sender<ApiJob>,
-    api_worker_handle: JoinHandle<()>,
-    friends_refresher_handle: JoinHandle<()>,
-    data_refresher_handle: JoinHandle<()>,
     api_worker_next_wakeup: Arc<Mutex<Instant>>,
 }
 
@@ -59,306 +58,336 @@ pub fn start_workers(
     let friends_refresher_api_tx = api_tx.clone();
     let self_api_tx = api_tx.clone();
 
-    BackgroundWorkers {
-        friends_refresher_handle: thread::spawn(move || {
-            loop {
-                if data_mutex.lock().unwrap().friends.api_state().is_none() {
-                    friends_refresher_api_tx.send(ApiJob::UpdateFriendState);
-                }
-
-                if let Some(state) = data_mutex.lock().unwrap().friends.api_state() {
-                    for key_state in state.keys() {
-                        let valid = key_state.subtoken_expires_at().map(|expiration| {
-                            // We want to submit a new subtoken if there's less than two months remaining.
-                            expiration - Utc::now() > chrono::Duration::days(60)
-                        }).unwrap_or(false);
-
-                        if !valid {
-                            friends_refresher_api_tx.send(ApiJob::UploadFriendApiSubtoken { key_hash: key_state.key_hash().to_string() });
-                        }
-                    }
-
-                    let token_about_to_expire = state.friends().iter()
-                        .any(|friend| {
-                            if let Some(subtoken) = friend.subtoken() {
-                                subtoken.expires_at() - Utc::now() < chrono::Duration::hours(1)
-                            } else {
-                                false
-                            }
-                        });
-                    if token_about_to_expire {
-                        // A subtoken for a friend is about to expire,
-                        // the friend server already has a new one available.
-                        friends_refresher_api_tx.send(ApiJob::UpdateFriendState);
-                    }
-                }
-
-                sleep(Duration::from_secs(10));
+    thread::spawn(move || {
+        let send_job = |job: ApiJob| {
+            if let Err(_) = friends_refresher_api_tx.send(job) {
+                warn!("Failed to send request to API worker.");
             }
-        }),
-        api_worker_handle: thread::spawn(move || {
-            loop {
-                // Note that we often copy strings from settings here to avoid locking settings
-                // for the duration of API requests.
-                match api_rx.recv().unwrap() {
-                    ApiJob::UpdateRaids => {
-                        if let Ok(raids) = api.get_raids() {
-                            data_mutex.lock().unwrap().clears.set_raids(Some(raids))
-                        }
+        };
+
+        loop {
+            if data_mutex.lock().unwrap().friends.api_state().is_none() {
+                send_job(ApiJob::UpdateFriendState);
+            }
+
+            if let Some(state) = data_mutex.lock().unwrap().friends.api_state() {
+                for key_state in state.keys() {
+                    let valid = key_state.subtoken_expires_at().map(|expiration| {
+                        // We want to submit a new subtoken if there's less than two months remaining.
+                        expiration - Utc::now() > chrono::Duration::days(60)
+                    }).unwrap_or(false);
+
+                    if !valid {
+                        send_job(ApiJob::UploadFriendApiSubtoken { key_hash: key_state.key_hash().to_string() });
                     }
-                    ApiJob::UpdateClears(key_uuid) => {
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+                }
 
-                        if let Some(key) = key {
-                            if let Ok(state) = api.get_raids_state(&key) {
-                                // TODO: Handle invalid API key explicitly
-                                data_mutex.lock().unwrap().clears.set_state(key_uuid, Some(state));
-                            }
-                        }
-                    }
-                    ApiJob::UpdateAccountData(key_uuid) => {
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
-
-                        if let Some(key) = key {
-                            if let Ok(data) = api.get_account_data(&key) {
-                                // TODO: Handle invalid API key explicitly
-                                if let Some(key) = settings_mutex.lock().unwrap().as_mut().unwrap().get_key_mut(&key_uuid) {
-                                    key.set_account_data(Some(data));
-                                }
-                            }
-                        }
-                    }
-                    ApiJob::UpdateTokenInfo(key_uuid) => {
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
-
-                        if let Some(key) = key {
-                            if let Ok(info) = api.get_token_info(&key) {
-                                // TODO: Handle invalid API key explicitly
-                                if let Some(key) = settings_mutex.lock().unwrap().as_mut().unwrap().get_key_mut(&key_uuid) {
-                                    key.set_token_info(Some(info));
-                                    // We do request a friend state update in here and not in
-                                    // account data as this is requested after account data
-                                    // and we need both.
-                                    self_api_tx.send(ApiJob::UpdateFriendState);
-                                }
-                            }
-                        }
-                    }
-                    ApiJob::UpdateFriendState => {
-                        let metadata = copy_friends_metadata(settings_mutex);
-                        if let Some(metadata) = metadata {
-                            match friends_api.get_state(metadata) {
-                                Ok(state) => {
-                                    // TODO: Deduplicate this fragment:
-                                    for friend in state.friends() {
-                                        if let Some(subtoken) = friend.subtoken() {
-                                            // TODO: are accounts deduplicated?
-                                            self_api_tx.send(ApiJob::UpdateFriendClears {
-                                                account_name: friend.account().to_string(),
-                                                subtoken: subtoken.subtoken().to_string(),
-                                            });
-                                        }
-                                    }
-
-                                    if let Some(mut settings) = settings_mutex.lock().unwrap().as_mut() {
-                                        // Add newly discovered friends to stored friend list.
-                                        for friend in state.friends() {
-                                            if !settings.friend_list.iter().any(|f| f.account_name() == friend.account()) {
-                                                settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
-                                            }
-                                        }
-                                    } else {
-                                        error!("Friends - settings not loaded yet when received state; not creating new entries.");
-                                    }
-
-                                    data_mutex.lock().unwrap().friends.set_api_state(Some(state));
-                                }
-                                Err(FriendsApiError::UnknownError) => {
-                                    // TODO: Better logging
-                                    warn!("Friends - failed to get state - unknown error.")
-                                }
-                                Err(FriendsApiError::JsonDeserializationFailed(_)) => {
-                                    warn!("Friends - failed to get state - json deserialization failed.")
-                                }
-                                Err(FriendsApiError::UreqError(e)) => {
-                                    warn!("Friends - failed to get state: {}", e)
-                                }
-                            }
-                        }
-                    }
-                    ApiJob::UploadFriendApiSubtoken { key_hash } => {
-                        // We need to find a key with the specified hash and make a copy to avoid
-                        // a lengthy lock on the settings mutex.
-                        let matching_key = settings_mutex.lock().unwrap().as_ref()
-                            .and_then(|x| x.api_keys().iter()
-                                .filter(|x| friends::key_hash(x.key()) == key_hash)
-                                .map(|x| x.key().to_string())
-                                .next()
-                            );
-
-                        if let Some(key) = matching_key {
-                            match api.create_subtoken(&key, &friends::SUBTOKEN_PERMISSIONS, &friends::SUBTOKEN_URLS, Utc::now() + chrono::Duration::days(365)) {
-                                Ok(subtoken) => {
-                                    if let Some(metadata) = copy_friends_metadata(settings_mutex) {
-                                        friends_api.add_subtoken(metadata, &key, subtoken);
-                                    } else {
-                                        // Should not happen, failed to get keys from settings
-                                        error!("Friends - Failed to get keys from settings after we generated a friend subtoken.");
-                                    }
-                                }
-                                Err(ApiError::UnknownError) => {
-                                    warn!("Friends - Failed to get subtoken for from the GW2 API - unknown error.");
-                                    // TODO: Add better logging
-                                }
-                                Err(ApiError::InvalidKey) => {
-                                    warn!("Friends - Failed to get subtoken for from the GW2 API - invalid key.");
-                                }
-                                Err(ApiError::JsonDeserializationFailed(e)) => {
-                                    warn!("Friends - Failed to get subtoken for from the GW2 API - json deserialization failed: {}", e);
-                                }
-                                Err(ApiError::TooManyRequests) => {
-                                    warn!("Friends - Failed to get subtoken for from the GW2 API - too many requests, rate limited.");
-                                }
-                            }
+                let token_about_to_expire = state.friends().iter()
+                    .any(|friend| {
+                        if let Some(subtoken) = friend.subtoken() {
+                            subtoken.expires_at() - Utc::now() < chrono::Duration::hours(1)
                         } else {
-                            warn!("Friends - failed to find a key that is scheduled for a subtoken upload (was it removed in the meantime?).");
+                            false
+                        }
+                    });
+                if token_about_to_expire {
+                    // A subtoken for a friend is about to expire,
+                    // the friend server already has a new one available.
+                    send_job(ApiJob::UpdateFriendState);
+                }
+            }
+
+            sleep(Duration::from_secs(10));
+        }
+    });
+    thread::spawn(move || {
+        let send_job = |job: ApiJob| {
+            if let Err(_) = self_api_tx.send(job) {
+                warn!("Failed to send request to API worker.");
+            }
+        };
+
+        loop {
+            // Note that we often copy strings from settings here to avoid locking settings
+            // for the duration of API requests.
+            match api_rx.recv().unwrap() {
+                ApiJob::UpdateRaids => {
+                    if let Ok(raids) = api.get_raids() {
+                        data_mutex.lock().unwrap().clears.set_raids(Some(raids))
+                    }
+                }
+                ApiJob::UpdateClears(key_uuid) => {
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                    if let Some(key) = key {
+                        if let Ok(state) = api.get_raids_state(&key) {
+                            // TODO: Handle invalid API key explicitly
+                            data_mutex.lock().unwrap().clears.set_state(key_uuid, Some(state));
                         }
                     }
-                    ApiJob::UpdateFriendClears { account_name, subtoken } => {
-                        match api.get_raids_state(&subtoken) {
+                }
+                ApiJob::UpdateAccountData(key_uuid) => {
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                    if let Some(key) = key {
+                        if let Ok(data) = api.get_account_data(&key) {
+                            // TODO: Handle invalid API key explicitly
+                            if let Some(key) = settings_mutex.lock().unwrap().as_mut().unwrap().get_key_mut(&key_uuid) {
+                                key.set_account_data(Some(data));
+                            }
+                        }
+                    }
+                }
+                ApiJob::UpdateTokenInfo(key_uuid) => {
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+
+                    if let Some(key) = key {
+                        if let Ok(info) = api.get_token_info(&key) {
+                            // TODO: Handle invalid API key explicitly
+                            if let Some(key) = settings_mutex.lock().unwrap().as_mut().unwrap().get_key_mut(&key_uuid) {
+                                key.set_token_info(Some(info));
+                                // We do request a friend state update in here and not in
+                                // account data as this is requested after account data
+                                // and we need both.
+                                send_job(ApiJob::UpdateFriendState);
+                            }
+                        }
+                    }
+                }
+                ApiJob::UpdateFriendState => {
+                    let metadata = copy_friends_metadata(settings_mutex);
+                    if let Some(metadata) = metadata {
+                        match friends_api.get_state(metadata) {
                             Ok(state) => {
-                                data_mutex.lock().unwrap().friends.set_clears(account_name, state);
+                                // TODO: Deduplicate this fragment:
+                                for friend in state.friends() {
+                                    if let Some(subtoken) = friend.subtoken() {
+                                        // TODO: are accounts deduplicated?
+                                        send_job(ApiJob::UpdateFriendClears {
+                                            account_name: friend.account().to_string(),
+                                            subtoken: subtoken.subtoken().to_string(),
+                                        });
+                                    }
+                                }
+
+                                if let Some(settings) = settings_mutex.lock().unwrap().as_mut() {
+                                    // Add newly discovered friends to stored friend list.
+                                    for friend in state.friends() {
+                                        if !settings.friend_list.iter().any(|f| f.account_name() == friend.account()) {
+                                            settings.friend_list.push(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
+                                        }
+                                    }
+                                } else {
+                                    error!("Friends - settings not loaded yet when received state; not creating new entries.");
+                                }
+
+                                data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                            }
+                            Err(FriendsApiError::UnknownError) => {
+                                // TODO: Better logging
+                                warn!("Friends - failed to get state - unknown error.")
+                            }
+                            Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                warn!("Friends - failed to get state - json deserialization failed.")
+                            }
+                            Err(FriendsApiError::UreqError(e)) => {
+                                warn!("Friends - failed to get state: {}", e)
+                            }
+                        }
+                    }
+                }
+                ApiJob::UploadFriendApiSubtoken { key_hash } => {
+                    // We need to find a key with the specified hash and make a copy to avoid
+                    // a lengthy lock on the settings mutex.
+                    let matching_key = settings_mutex.lock().unwrap().as_ref()
+                        .and_then(|x| x.api_keys().iter()
+                            .filter(|x| friends::key_hash(x.key()) == key_hash)
+                            .map(|x| x.key().to_string())
+                            .next()
+                        );
+
+                    if let Some(key) = matching_key {
+                        match api.create_subtoken(&key, &friends::SUBTOKEN_PERMISSIONS, &friends::SUBTOKEN_URLS, Utc::now() + chrono::Duration::days(365)) {
+                            Ok(subtoken) => {
+                                if let Some(metadata) = copy_friends_metadata(settings_mutex) {
+                                    match friends_api.add_subtoken(metadata, &key, subtoken) {
+                                        Ok(_) => {}
+                                        Err(FriendsApiError::UnknownError) => {
+                                            warn!("Friends - Failed to send subtoken to friend server.");
+                                        }
+                                        Err(FriendsApiError::JsonDeserializationFailed(e)) => {
+                                            warn!("Friends - Failed to send subtoken to friend server - json deserialization failed: {}.", e);
+                                        }
+                                        Err(FriendsApiError::UreqError(e)) => {
+                                            warn!("Friends - Failed to send subtoken to friend server - {}.", e);
+                                        }
+                                    }
+                                } else {
+                                    // Should not happen, failed to get keys from settings
+                                    error!("Friends - Failed to get keys from settings after we generated a friend subtoken.");
+                                }
                             }
                             Err(ApiError::UnknownError) => {
-                                warn!("Failed to get clears for friend {} - unknown error.", account_name);
+                                warn!("Friends - Failed to get subtoken for from the GW2 API - unknown error.");
                                 // TODO: Add better logging
                             }
                             Err(ApiError::InvalidKey) => {
-                                warn!("Failed to get clears for friend {} - invalid key.", account_name);
+                                warn!("Friends - Failed to get subtoken for from the GW2 API - invalid key.");
                             }
                             Err(ApiError::JsonDeserializationFailed(e)) => {
-                                warn!("Failed to get clears for friend {} - json deserialization failed: {}", account_name, e);
+                                warn!("Friends - Failed to get subtoken for from the GW2 API - json deserialization failed: {}", e);
                             }
                             Err(ApiError::TooManyRequests) => {
-                                warn!("Failed to get clears for friend {} - too many requests, rate limited.", account_name);
+                                warn!("Friends - Failed to get subtoken for from the GW2 API - too many requests, rate limited.");
                             }
                         }
+                    } else {
+                        warn!("Friends - failed to find a key that is scheduled for a subtoken upload (was it removed in the meantime?).");
                     }
-                    ApiJob::ShareKeyWithFriend { key_uuid, friend_account_name } => {
-                        let metadata = copy_friends_metadata(settings_mutex);
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+                }
+                ApiJob::UpdateFriendClears { account_name, subtoken } => {
+                    match api.get_raids_state(&subtoken) {
+                        Ok(state) => {
+                            data_mutex.lock().unwrap().friends.set_clears(account_name, state);
+                        }
+                        Err(ApiError::UnknownError) => {
+                            warn!("Failed to get clears for friend {} - unknown error.", account_name);
+                            // TODO: Add better logging
+                        }
+                        Err(ApiError::InvalidKey) => {
+                            warn!("Failed to get clears for friend {} - invalid key.", account_name);
+                        }
+                        Err(ApiError::JsonDeserializationFailed(e)) => {
+                            warn!("Failed to get clears for friend {} - json deserialization failed: {}", account_name, e);
+                        }
+                        Err(ApiError::TooManyRequests) => {
+                            warn!("Failed to get clears for friend {} - too many requests, rate limited.", account_name);
+                        }
+                    }
+                }
+                ApiJob::ShareKeyWithFriend { key_uuid, friend_account_name } => {
+                    let metadata = copy_friends_metadata(settings_mutex);
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
-                        if let Some(metadata) = metadata {
-                            if let Some(key) = key {
-                                match friends_api.share(metadata, &key, friend_account_name) {
-                                    Ok(state) => {
-                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
-                                    }
-                                    // TODO: deduplicate this logging
-                                    Err(FriendsApiError::UnknownError) => {
-                                        warn!("Friends - failed to share key - unknown error.")
-                                    }
-                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
-                                        warn!("Friends - failed to share key - json deserialization failed.")
-                                    }
-                                    Err(FriendsApiError::UreqError(e)) => {
-                                        warn!("Friends - failed to share key: {}", e)
-                                    }
+                    if let Some(metadata) = metadata {
+                        if let Some(key) = key {
+                            match friends_api.share(metadata, &key, friend_account_name) {
+                                Ok(state) => {
+                                    data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                }
+                                // TODO: deduplicate this logging
+                                Err(FriendsApiError::UnknownError) => {
+                                    warn!("Friends - failed to share key - unknown error.")
+                                }
+                                Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                    warn!("Friends - failed to share key - json deserialization failed.")
+                                }
+                                Err(FriendsApiError::UreqError(e)) => {
+                                    warn!("Friends - failed to share key: {}", e)
                                 }
                             }
                         }
                     }
-                    ApiJob::UnshareKeyWithFriend { key_uuid, friend_account_name } => {
-                        let metadata = copy_friends_metadata(settings_mutex);
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+                }
+                ApiJob::UnshareKeyWithFriend { key_uuid, friend_account_name } => {
+                    let metadata = copy_friends_metadata(settings_mutex);
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
-                        if let Some(metadata) = metadata {
-                            if let Some(key) = key {
-                                match friends_api.unshare(metadata, &key, friend_account_name) {
-                                    Ok(state) => {
-                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
-                                    }
-                                    // TODO: deduplicate this logging
-                                    Err(FriendsApiError::UnknownError) => {
-                                        warn!("Friends - failed to share key - unknown error.")
-                                    }
-                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
-                                        warn!("Friends - failed to share key - json deserialization failed.")
-                                    }
-                                    Err(FriendsApiError::UreqError(e)) => {
-                                        warn!("Friends - failed to share key: {}", e)
-                                    }
+                    if let Some(metadata) = metadata {
+                        if let Some(key) = key {
+                            match friends_api.unshare(metadata, &key, friend_account_name) {
+                                Ok(state) => {
+                                    data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                }
+                                // TODO: deduplicate this logging
+                                Err(FriendsApiError::UnknownError) => {
+                                    warn!("Friends - failed to share key - unknown error.")
+                                }
+                                Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                    warn!("Friends - failed to share key - json deserialization failed.")
+                                }
+                                Err(FriendsApiError::UreqError(e)) => {
+                                    warn!("Friends - failed to share key: {}", e)
                                 }
                             }
                         }
                     }
-                    ApiJob::SetKeyPublicFriend { key_uuid, public } => {
-                        let metadata = copy_friends_metadata(settings_mutex);
-                        let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
+                }
+                ApiJob::SetKeyPublicFriend { key_uuid, public } => {
+                    let metadata = copy_friends_metadata(settings_mutex);
+                    let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
-                        if let Some(metadata) = metadata {
-                            if let Some(key) = key {
-                                match friends_api.set_public(metadata, &key, public) {
-                                    Ok(state) => {
-                                        data_mutex.lock().unwrap().friends.set_api_state(Some(state));
-                                    }
-                                    // TODO: deduplicate this logging
-                                    Err(FriendsApiError::UnknownError) => {
-                                        warn!("Friends - failed to set key public status - unknown error.")
-                                    }
-                                    Err(FriendsApiError::JsonDeserializationFailed(_)) => {
-                                        warn!("Friends - failed to set key public status - json deserialization failed.")
-                                    }
-                                    Err(FriendsApiError::UreqError(e)) => {
-                                        warn!("Friends - failed to set key public status: {}", e)
-                                    }
+                    if let Some(metadata) = metadata {
+                        if let Some(key) = key {
+                            match friends_api.set_public(metadata, &key, public) {
+                                Ok(state) => {
+                                    data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                }
+                                // TODO: deduplicate this logging
+                                Err(FriendsApiError::UnknownError) => {
+                                    warn!("Friends - failed to set key public status - unknown error.")
+                                }
+                                Err(FriendsApiError::JsonDeserializationFailed(_)) => {
+                                    warn!("Friends - failed to set key public status - json deserialization failed.")
+                                }
+                                Err(FriendsApiError::UreqError(e)) => {
+                                    warn!("Friends - failed to set key public status: {}", e)
                                 }
                             }
                         }
-
                     }
                 }
             }
-        }),
+        }
+    });
+
+    thread::spawn(move || {
+        let send_job = |job: ApiJob| {
+            if let Err(_) = refresher_api_tx.send(job) {
+                warn!("Failed to send request to API worker.");
+            }
+        };
+
+        loop {
+            if data_mutex.lock().unwrap().clears.raids().is_none() {
+                send_job(ApiJob::UpdateRaids);
+            }
+
+            if let Some(settings) = settings_mutex.lock().unwrap().as_ref() {
+                for key in settings.api_keys() {
+                    if key.data().account_data().is_none() {
+                        send_job(ApiJob::UpdateAccountData(*key.id()));
+                    }
+                    if key.data().token_info().is_none() {
+                        send_job(ApiJob::UpdateTokenInfo(*key.id()));
+                    }
+                    if key.show_key_in_clears() {
+                        send_job(ApiJob::UpdateClears(*key.id()));
+                    }
+                }
+            }
+
+            if let Some(state) = data_mutex.lock().unwrap().friends.api_state() {
+                for friend in state.friends() {
+                    if let Some(subtoken) = friend.subtoken() {
+                        // TODO: are accounts deduplicated?
+                        send_job(ApiJob::UpdateFriendClears {
+                            account_name: friend.account().to_string(),
+                            subtoken: subtoken.subtoken().to_string(),
+                        });
+                    }
+                }
+            }
+
+            let sleep_duration = Duration::from_secs(60);
+            *api_next_wakeup_for_worker.lock().unwrap() = Instant::now() + sleep_duration;
+            sleep(sleep_duration);
+        }
+    });
+
+    BackgroundWorkers {
         api_worker_next_wakeup: api_next_wakeup,
         api_sender: api_tx,
-        data_refresher_handle: thread::spawn(move || {
-            loop {
-                if data_mutex.lock().unwrap().clears.raids().is_none() {
-                    refresher_api_tx.send(ApiJob::UpdateRaids);
-                }
-
-                if let Some(settings) = settings_mutex.lock().unwrap().as_ref() {
-                    for key in settings.api_keys() {
-                        if key.data().account_data().is_none() {
-                            refresher_api_tx.send(ApiJob::UpdateAccountData(*key.id()));
-                        }
-                        if key.data().token_info().is_none() {
-                            refresher_api_tx.send(ApiJob::UpdateTokenInfo(*key.id()));
-                        }
-                        if key.show_key_in_clears() {
-                            refresher_api_tx.send(ApiJob::UpdateClears(*key.id()));
-                        }
-                    }
-                }
-
-                if let Some(state) = data_mutex.lock().unwrap().friends.api_state() {
-                    for friend in state.friends() {
-                        if let Some(subtoken) = friend.subtoken() {
-                            // TODO: are accounts deduplicated?
-                            refresher_api_tx.send(ApiJob::UpdateFriendClears {
-                                account_name: friend.account().to_string(),
-                                subtoken: subtoken.subtoken().to_string(),
-                            });
-                        }
-                    }
-                }
-
-                let sleep_duration = Duration::from_secs(60);
-                *api_next_wakeup_for_worker.lock().unwrap() = Instant::now() + sleep_duration;
-                sleep(sleep_duration);
-            }
-        }),
     }
 }
 
@@ -392,8 +421,7 @@ fn copy_friends_metadata(settings_mutex: &Mutex<Option<Settings>>) -> Option<Fri
     } else {
         Some(FriendRequestMetadata {
             api_keys: api_keys.unwrap(),
-            public_friends: public_friends.unwrap()
+            public_friends: public_friends.unwrap(),
         })
     }
-
 }

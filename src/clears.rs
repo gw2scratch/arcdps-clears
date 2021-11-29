@@ -54,6 +54,7 @@ pub struct RaidWing {
     encounters: Vec<RaidEncounter>,
 }
 
+#[allow(dead_code)]
 impl RaidWing {
     pub fn new(id: String, encounters: Vec<RaidEncounter>) -> Self {
         RaidWing { id, encounters }
@@ -73,6 +74,7 @@ pub struct RaidEncounter {
     encounter_type: EncounterType,
 }
 
+#[allow(dead_code)]
 impl RaidEncounter {
     pub fn new(id: String, encounter_type: EncounterType) -> Self {
         RaidEncounter { id, encounter_type }
@@ -103,6 +105,7 @@ impl RaidClearState {
     }
 }
 
+#[allow(dead_code)]
 impl RaidClearState {
     pub fn is_finished(&self, encounter: &RaidEncounter) -> bool {
         self.finished_encounter_ids.iter().any(|x| *x == encounter.id)

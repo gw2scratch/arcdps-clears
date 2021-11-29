@@ -9,8 +9,8 @@ use crate::api::LiveApi;
 use crate::workers::BackgroundWorkers;
 use crate::ui::UiState;
 use std::ops::Deref;
-use crate::friends::{FriendState, FriendData, FriendsApiClient};
-use log::{info, warn, error};
+use crate::friends::{FriendData, FriendsApiClient};
+
 
 mod api;
 mod clears;

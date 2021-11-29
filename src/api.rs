@@ -277,7 +277,7 @@ impl Gw2Api for ApiMock {
         ))
     }
 
-    fn create_subtoken(&self, api_key: &str, permissions: &[&str], urls: &[&str], expiration: DateTime<Utc>) -> Result<String, ApiError> {
+    fn create_subtoken(&self, _api_key: &str, _permissions: &[&str], _urls: &[&str], _expiration: DateTime<Utc>) -> Result<String, ApiError> {
         unimplemented!()
     }
 }
@@ -563,10 +563,10 @@ mod tests {
         assert_eq!(parsed.permissions().len(), 2);
         assert_eq!(parsed.permissions()[0], "account");
         assert_eq!(parsed.permissions()[1], "progression");
-        let expiration: DateTime<Utc> = Utc.ymd(2021, 6, 20).and_hms(14, 34, 47);
-        let issued: DateTime<Utc> = Utc.ymd(2021, 5, 21).and_hms(14, 34, 47);
+        let _expiration: DateTime<Utc> = Utc.ymd(2021, 6, 20).and_hms(14, 34, 47);
+        let _issued: DateTime<Utc> = Utc.ymd(2021, 5, 21).and_hms(14, 34, 47);
         assert!(match parsed.token_type() {
-            TokenType::Subtoken { expires_at: expiration, issued_at: issued, urls: None } => true,
+            TokenType::Subtoken { expires_at: _expiration, issued_at: _issued, urls: None } => true,
             _ => false
         })
     }

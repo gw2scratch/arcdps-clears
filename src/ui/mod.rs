@@ -1,9 +1,12 @@
+// Do not warn when using the `if let _token = ui.push_style() {}` pattern.
+#![allow(irrefutable_let_patterns)]
+
 use crate::settings::{ApiKey, Settings};
 use crate::translations::Translation;
 use crate::updates::Release;
 use crate::workers::BackgroundWorkers;
 use crate::Data;
-use arcdps::imgui::{TabItem, TabBar, Window, Ui, MouseButton, StyleVar, TabBarFlags};
+use arcdps::imgui::{TabItem, TabBar, Window, Ui};
 use uuid::Uuid;
 use std::time::Instant;
 
