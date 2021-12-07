@@ -262,11 +262,14 @@ pub struct FriendList {
 }
 
 impl FriendList {
-    pub fn known(&self, account_name: &str) -> bool {
-        self.friends.iter().any(|f| f.account_name() == account_name)
+    pub fn get(&self, account_name: &str) -> Option<&Friend> {
+        self.friends.iter().filter(|f| f.account_name() == account_name).next()
     }
     pub fn add(&mut self, friend: Friend) {
         self.friends.push(friend)
+    }
+    pub fn remove(&mut self, account_name: &str) {
+        self.friends.retain(|x| x.account_name != account_name);
     }
     pub fn friends(&self) -> &Vec<Friend> {
         &self.friends

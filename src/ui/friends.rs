@@ -1,11 +1,11 @@
 use std::time::{Duration, Instant};
 
-use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableFlags, Ui, Window};
+use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableColumnSetup, TableFlags, Ui, Window};
 use log::warn;
 
 
 use crate::Data;
-use crate::settings::Settings;
+use crate::settings::{Friend, Settings};
 use crate::translations::Translation;
 use crate::ui::{settings, UiState, utils};
 use crate::ui::clears::{clears_table, ClearTableEntry};
@@ -117,23 +117,25 @@ pub fn friends_window(
             .collapsible(false)
             .opened(&mut shown)
             .build(ui, || {
-                if settings.friend_list.friends().iter().any(|friend| data.friends.state_available(friend.account_name())) {
-                    if let Some(_t) = ui.begin_table_with_flags("FriendsTable", 4, TableFlags::BORDERS) {
+                if settings.friend_list.friends().iter().any(|friend| friend.public() || data.friends.state_available(friend.account_name())) {
+                    if let Some(_t) = ui.begin_table_with_flags("FriendsTable", 5, TableFlags::BORDERS) {
                         ui.table_setup_column("##updown");
                         ui.table_setup_column(&tr.translate("friends-friendlist-account-name"));
                         ui.table_setup_column(&tr.translate("friends-friendlist-shown"));
                         ui.table_setup_column("##remove");
+                        ui.table_setup_column("##status");
                         ui.table_headers_row();
 
                         let mut swap = None;
+                        let mut removal = None;
 
-                        let states_available: Vec<_> = settings.friend_list.friends().iter()
-                            .map(|friend| data.friends.state_available(friend.account_name()))
+                        let shown_indices: Vec<_> = settings.friend_list.friends().iter()
+                            .map(|friend| friend.public() || data.friends.state_available(friend.account_name()))
                             .collect();
 
                         for (i, friend) in settings.friend_list.friends_mut().iter_mut().enumerate() {
                             // Hide currently unavailable friends, but do not remove them
-                            if !states_available[i] {
+                            if !shown_indices[i] {
                                 continue;
                             }
 
@@ -142,8 +144,8 @@ pub fn friends_window(
 
                             // To implement moving, we need to find previous non-hidden friend and
                             // its index in the non-filtered friend list.
-                            let prev = (0..i).rev().filter(|prev_i| states_available[*prev_i]).next();
-                            let next = (i + 1..states_available.len()).filter(|next_i| states_available[*next_i]).next();
+                            let prev = (0..i).rev().filter(|prev_i| shown_indices[*prev_i]).next();
+                            let next = (i + 1..shown_indices.len()).filter(|next_i| shown_indices[*next_i]).next();
 
                             if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
                                 if let Some(prev_i) = prev {
@@ -178,15 +180,31 @@ pub fn friends_window(
 
                                 ui.table_next_column();
                                 if friend.public() {
-                                    ui.button("Remove"); // TODO: Translate
+                                    if ui.button(format!("{}##friend_{}", tr.translate("friends-friendlist-remove"), friend.account_name())) {
+                                        removal = Some(i);
+                                    }
                                 } else {
                                     utils::help_marker(ui, "This friend shared their clears with you."); // TODO: Translate
+                                }
+                            }
+                            ui.table_next_column();
+
+                            if !data.friends.state_available(friend.account_name()) {
+                                ui.text(tr.translate("friends-friendlist-error-no-data"))
+                            }
+                            if let Some(known) = data.friends.known(friend.account_name()) {
+                                if !known {
+                                    ui.text(tr.translate("friends-friendlist-error-not-known"))
                                 }
                             }
                         }
 
                         if let Some((index1, index2)) = swap {
                             settings.friend_list.friends_mut().swap(index1, index2);
+                        }
+
+                        if let Some(i) = removal {
+                            settings.friend_list.friends_mut().remove(i);
                         }
 
                     }
@@ -198,10 +216,35 @@ pub fn friends_window(
                 }
 
                 refresh_button(ui, ui_state, bg_workers, tr);
+                ui.same_line();
 
-                // TODO: Translate
-                // TODO: Implement
-                ui.button("Add friend");
+                ui.popup("add-friend-popup", || {
+                    let mut add = ui.input_text(tr.translate("friends-friendlist-add-account-name"), &mut ui_state.friends_window.new_friend_name)
+                        .enter_returns_true(true)
+                        .build();
+
+                    add = add || ui.button(tr.translate("friends-friendlist-add-add"));
+
+                    if add {
+                        // Make sure that duplicates are not added.
+                        if settings.friend_list.get(&ui_state.friends_window.new_friend_name).is_none() {
+                            settings.friend_list.add(Friend::new(ui_state.friends_window.new_friend_name.clone(), true, true));
+                            if let Err(_) = bg_workers.api_sender().send(ApiJob::UpdateFriendState) {
+                                warn!("Failed to send request to API worker");
+                            }
+                        }
+                        ui_state.friends_window.new_friend_name.clear();
+                        ui.close_current_popup();
+                    }
+                    ui.same_line();
+                    if ui.button(tr.translate("friends-friendlist-add-close")) {
+                        ui.close_current_popup();
+                    }
+                });
+
+                if ui.button(tr.translate("friends-friendlist-button-add")) {
+                    ui.open_popup("add-friend-popup")
+                }
             });
 
         ui_state.friends_window.shown = shown;
