@@ -173,8 +173,15 @@ pub fn start_workers(
                                 if let Some(settings) = settings_mutex.lock().unwrap().as_mut() {
                                     // Add newly discovered friends to stored friend list.
                                     for friend in state.friends() {
-                                        if !settings.friend_list.known(friend.account()) {
-                                            settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, false))
+                                        if let Some(existing_friend) = settings.friend_list.get(friend.account()) {
+                                            if friend.public() && !existing_friend.public() {
+                                                // Remove privately shared entries, otherwise there
+                                                // would be stuck entries that cannot be removed.
+                                                settings.friend_list.remove(friend.account());
+                                                settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, friend.public()));
+                                            }
+                                        } else {
+                                            settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, friend.public()));
                                         }
                                     }
                                 } else {

@@ -181,7 +181,7 @@ dependencies = [
 [[package]]
 name = "imgui"
 version = "0.8.0"
-source = "git+https://github.com/gw2scratch/imgui-rs#e96a032c5f07f113436578c4136d1667e744f5f9"
+source = "git+https://github.com/gw2scratch/imgui-rs#2169503f8b43437af8041ee4af66c50bccab7fbb"
 dependencies = [
  "bitflags",
  "imgui-sys",
@@ -191,7 +191,7 @@ dependencies = [
 [[package]]
 name = "imgui-sys"
 version = "0.8.0"
-source = "git+https://github.com/gw2scratch/imgui-rs#e96a032c5f07f113436578c4136d1667e744f5f9"
+source = "git+https://github.com/gw2scratch/imgui-rs#2169503f8b43437af8041ee4af66c50bccab7fbb"
 dependencies = [
  "cc",
  "chlorine",
@@ -400,9 +400,9 @@ dependencies = [
 
 [[package]]
 name = "ryu"
-version = "1.0.5"
+version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+checksum = "3c9613b5a66ab9ba26415184cfc41156594925a9cf3a2057e57f31ff145f6568"
 
 [[package]]
 name = "scopeguard"

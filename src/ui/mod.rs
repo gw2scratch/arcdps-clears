@@ -43,6 +43,7 @@ impl UiState {
             friends_window: FriendsWindowState {
                 shown: false,
                 last_refresh_use: Instant::now(),
+                new_friend_name: String::new(),
             }
         }
     }
@@ -71,6 +72,7 @@ pub struct UpdateWindowState {
 pub struct FriendsWindowState {
     pub shown: bool,
     pub last_refresh_use: Instant,
+    pub new_friend_name: String,
 }
 
 impl ApiKeyWindowState {
