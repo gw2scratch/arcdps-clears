@@ -170,24 +170,6 @@ pub fn start_workers(
                                     }
                                 }
 
-                                if let Some(settings) = settings_mutex.lock().unwrap().as_mut() {
-                                    // Add newly discovered friends to stored friend list.
-                                    for friend in state.friends() {
-                                        if let Some(existing_friend) = settings.friend_list.get(friend.account()) {
-                                            if friend.public() && !existing_friend.public() {
-                                                // Remove privately shared entries, otherwise there
-                                                // would be stuck entries that cannot be removed.
-                                                settings.friend_list.remove(friend.account());
-                                                settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, friend.public()));
-                                            }
-                                        } else {
-                                            settings.friend_list.add(Friend::new(friend.account().to_string(), settings.friend_default_show_state, friend.public()));
-                                        }
-                                    }
-                                } else {
-                                    error!("Friends - settings not loaded yet when received state; not creating new entries.");
-                                }
-
                                 data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                             }
                             Err(FriendsApiError::UnknownError) => {
@@ -418,7 +400,6 @@ fn copy_friends_metadata(settings_mutex: &Mutex<Option<Settings>>) -> Option<Fri
 
     let public_friends = settings_mutex.lock().unwrap().as_ref()
         .map(|x| x.friend_list.friends().iter()
-            .filter(|x| x.public())
             .map(|x| x.account_name().to_string())
             .collect()
         );

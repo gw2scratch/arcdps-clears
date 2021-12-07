@@ -18,8 +18,6 @@ pub struct Settings {
     pub api_keys: Vec<ApiKey>,
     #[serde(default = "defaults::friends")]
     pub friend_list: FriendList,
-    #[serde(default = "defaults::friend_default_show_state")]
-    pub friend_default_show_state: bool,
     #[serde(default = "defaults::check_updates")]
     pub check_updates: bool,
     #[serde(default = "defaults::short_names")]
@@ -228,13 +226,12 @@ pub struct Friend {
     account_name: String,
     show_in_friends: bool,
     expanded_in_friends: bool,
-    public: bool,
 }
 
 #[allow(dead_code)]
 impl Friend {
-    pub fn new(account_name: String, show_in_friends: bool, public: bool) -> Self {
-        Friend { account_name, show_in_friends, public, expanded_in_friends: true }
+    pub fn new(account_name: String, show_in_friends: bool) -> Self {
+        Friend { account_name, show_in_friends, expanded_in_friends: true }
     }
     pub fn account_name(&self) -> &str {
         &self.account_name
@@ -250,9 +247,6 @@ impl Friend {
     }
     pub fn expanded_in_friends_mut(&mut self) -> &mut bool {
         &mut self.expanded_in_friends
-    }
-    pub fn public(&self) -> bool {
-        self.public
     }
 }
 
@@ -285,7 +279,6 @@ impl Settings {
             friends_api_url: defaults::friends_api_url(),
             api_keys: defaults::api_keys(),
             friend_list: defaults::friends(),
-            friend_default_show_state: defaults::friend_default_show_state(),
             check_updates: defaults::check_updates(),
             short_names: defaults::short_names(),
             my_clears_style: defaults::my_clears_style(),

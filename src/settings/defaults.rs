@@ -43,10 +43,6 @@ pub fn friends() -> FriendList {
     }
 }
 
-pub fn friend_default_show_state() -> bool {
-    true
-}
-
 pub fn short_names() -> bool {
     true
 }

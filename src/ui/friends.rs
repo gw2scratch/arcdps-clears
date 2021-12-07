@@ -1,6 +1,6 @@
 use std::time::{Duration, Instant};
 
-use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableColumnSetup, TableFlags, Ui, Window};
+use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableFlags, Ui, Window};
 use log::warn;
 
 
@@ -117,7 +117,7 @@ pub fn friends_window(
             .collapsible(false)
             .opened(&mut shown)
             .build(ui, || {
-                if settings.friend_list.friends().iter().any(|friend| friend.public() || data.friends.state_available(friend.account_name())) {
+                if settings.friend_list.friends().iter().any(|friend| data.friends.state_available(friend.account_name())) {
                     if let Some(_t) = ui.begin_table_with_flags("FriendsTable", 5, TableFlags::BORDERS) {
                         ui.table_setup_column("##updown");
                         ui.table_setup_column(&tr.translate("friends-friendlist-account-name"));
@@ -130,7 +130,7 @@ pub fn friends_window(
                         let mut removal = None;
 
                         let shown_indices: Vec<_> = settings.friend_list.friends().iter()
-                            .map(|friend| friend.public() || data.friends.state_available(friend.account_name()))
+                            .map(|friend| data.friends.state_available(friend.account_name()))
                             .collect();
 
                         for (i, friend) in settings.friend_list.friends_mut().iter_mut().enumerate() {
@@ -179,12 +179,8 @@ pub fn friends_window(
                                 ui.checkbox(&format!("##friend_show_{}", friend.account_name()), friend.show_in_friends_mut());
 
                                 ui.table_next_column();
-                                if friend.public() {
-                                    if ui.button(format!("{}##friend_{}", tr.translate("friends-friendlist-remove"), friend.account_name())) {
-                                        removal = Some(i);
-                                    }
-                                } else {
-                                    utils::help_marker(ui, "This friend shared their clears with you."); // TODO: Translate
+                                if ui.button(format!("{}##friend_{}", tr.translate("friends-friendlist-remove"), friend.account_name())) {
+                                    removal = Some(i);
                                 }
                             }
                             ui.table_next_column();
@@ -228,7 +224,7 @@ pub fn friends_window(
                     if add {
                         // Make sure that duplicates are not added.
                         if settings.friend_list.get(&ui_state.friends_window.new_friend_name).is_none() {
-                            settings.friend_list.add(Friend::new(ui_state.friends_window.new_friend_name.clone(), true, true));
+                            settings.friend_list.add(Friend::new(ui_state.friends_window.new_friend_name.clone(), true));
                             if let Err(_) = bg_workers.api_sender().send(ApiJob::UpdateFriendState) {
                                 warn!("Failed to send request to API worker");
                             }
