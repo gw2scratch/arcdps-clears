@@ -82,3 +82,18 @@ pub fn show_key_in_clears() -> bool {
 pub fn expanded_in_clears() -> bool {
     true
 }
+
+pub mod feature_ads {
+    use crate::settings::FeatureAdverts;
+
+    pub fn ads() -> FeatureAdverts {
+        FeatureAdverts {
+            friends_shown: friends_shown()
+        }
+    }
+
+    pub fn friends_shown() -> bool {
+        // We default to true, as we only really want to advertise this to users who are not new.
+        true
+    }
+}
