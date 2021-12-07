@@ -24,17 +24,17 @@ pub fn friends(
         ui.text_colored(WARNING_RED, tr.translate("friends-no-connection-to-server"));
         refresh_button(ui, ui_state, bg_workers, tr);
     } else {
-        if let Some(raids) = data.clears.raids() {
-            let mut entries: Vec<_> = settings.friend_list.friends_mut().iter_mut()
-                .filter(|friend| friend.show_in_friends())
-                .filter(|friend| data.friends.state_available(friend.account_name()))
-                .map(|friend| ClearTableEntry {
-                    account_name: friend.account_name().to_string(),
-                    state: data.friends.clears(friend.account_name()),
-                    expanded: friend.expanded_in_friends_mut(),
-                })
-                .collect();
+        let mut entries: Vec<_> = settings.friend_list.friends_mut().iter_mut()
+            .filter(|friend| friend.show_in_friends())
+            .filter(|friend| data.friends.state_available(friend.account_name()))
+            .map(|friend| ClearTableEntry {
+                account_name: friend.account_name().to_string(),
+                state: data.friends.clears(friend.account_name()),
+                expanded: friend.expanded_in_friends_mut(),
+            })
+            .collect();
 
+        if let Some(raids) = data.clears.raids() {
             if entries.is_empty() {
                 let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 25.0);
                 ui.text_wrapped(&tr.translate("friends-intro"));
@@ -66,11 +66,17 @@ pub fn friends(
             );
         }
 
-        if ui.button(&tr.translate("friends-friendlist-button")) {
+        let friends_window_button_text = if entries.is_empty() {
+            tr.translate("friends-friendlist-button-no-friends")
+        } else {
+            tr.translate("friends-friendlist-button")
+        };
+
+        if ui.button(friends_window_button_text) {
             ui_state.friends_window.shown = true;
         }
         ui.same_line();
-        if ui.button(&tr.translate("friends-share-button")) {
+        if ui.button(tr.translate("friends-share-button")) {
             ui_state.api_key_window.shown = true;
         }
     }
