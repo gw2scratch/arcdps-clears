@@ -38,7 +38,15 @@ pub struct Settings {
     pub main_window_show_bg: bool,
     #[serde(default = "defaults::main_window_show_title")]
     pub main_window_show_title: bool,
+    #[serde(default = "defaults::feature_ads::ads")]
+    pub feature_adverts: FeatureAdverts,
     // Are you adding a new style option? Make sure to add to `reset_style()`!
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FeatureAdverts {
+    #[serde(default = "defaults::feature_ads::friends_shown")]
+    pub friends_shown: bool
 }
 
 #[derive(Serialize, Deserialize)]
@@ -289,6 +297,7 @@ impl Settings {
             hide_in_loading_screens: defaults::hide_in_loading_screens(),
             main_window_show_bg: defaults::main_window_show_bg(),
             main_window_show_title: defaults::main_window_show_title(),
+            feature_adverts: defaults::feature_ads::ads(),
             // Are you adding a new style option? Make sure to add to `reset_style()`!
         }
     }
