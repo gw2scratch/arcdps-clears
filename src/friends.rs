@@ -159,6 +159,13 @@ impl FriendData {
             false
         }
     }
+    pub fn known(&self, account_name: &str) -> Option<bool> {
+        if let Some(state) = &self.api_state {
+            state.friends.iter().filter(|x| x.account == account_name).next().map(|x| x.known)
+        } else {
+            None
+        }
+    }
     pub fn clears_by_account(&self) -> &HashMap<String, RaidClearState> {
         &self.clears_by_account
     }
@@ -296,7 +303,7 @@ impl RequestExt for Request {
     fn apply_metadata(self, metadata: FriendRequestMetadata) -> Self {
         self.set("User-Agent", USER_AGENT)
             .set("x-auth-keys", &metadata.api_keys.iter().map(|key| key_hash(key)).join(","))
-            .set("x-public-keys", &metadata.public_friends.join(","))
+            .set("x-public-friends", &metadata.public_friends.join(","))
     }
 }
 
