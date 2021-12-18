@@ -32,7 +32,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::keybind_input(
             &ui,
             "##MainWindowKeybindInput",
-            &mut settings.main_window_keybind,
+            &mut settings.keybinds.main_window,
             tr,
         );
         ui.same_line();
@@ -46,7 +46,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::keybind_input(
             &ui,
             "##APIKeyWindowKeybindInput",
-            &mut settings.api_window_keybind,
+            &mut settings.keybinds.api_window,
             tr,
         );
         ui.same_line();

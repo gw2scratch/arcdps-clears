@@ -47,18 +47,6 @@ pub fn short_names() -> bool {
     true
 }
 
-pub fn api_window_keybind() -> Option<usize> {
-    None
-}
-
-pub fn main_window_keybind() -> Option<usize> {
-    // C (for clears)
-    // Note that arcdps uses this as a default keybind, but it seems to be an uncommonly used one.
-    // As we eat the input, there should be no issue and the behavior should be obvious. The user
-    // can change the conflicting keybind in our plugin or in arcdps itself if needed.
-    Some(67)
-}
-
 pub fn close_window_with_escape() -> bool {
     true
 }
@@ -81,6 +69,17 @@ pub fn show_key_in_clears() -> bool {
 
 pub fn expanded_in_clears() -> bool {
     true
+}
+
+pub fn keybinds() -> Keybinds {
+    Keybinds {
+        // C (for clears)
+        // Note that arcdps uses this as a default keybind, but it seems to be an uncommonly used one.
+        // As we eat the input, there should be no issue and the behavior should be obvious. The user
+        // can change the conflicting keybind in our plugin or in arcdps itself if needed.
+        main_window: Some(67),
+        api_window: None,
+    }
 }
 
 pub mod feature_ads {
