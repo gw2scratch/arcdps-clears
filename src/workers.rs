@@ -13,7 +13,6 @@ use uuid::Uuid;
 use crate::{Data, friends, Settings};
 use crate::api::{ApiError, Gw2Api, LiveApi};
 use crate::friends::{FriendRequestMetadata, FriendsApiClient, FriendsApiError};
-use crate::settings::Friend;
 
 pub struct BackgroundWorkers {
     api_sender: Sender<ApiJob>,
