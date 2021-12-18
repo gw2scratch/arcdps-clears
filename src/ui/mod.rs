@@ -6,7 +6,7 @@ use crate::translations::Translation;
 use crate::updates::Release;
 use crate::workers::BackgroundWorkers;
 use crate::Data;
-use arcdps::imgui::{TabItem, TabBar, Window, Ui, TabItemFlags, TabBarFlags, StyleVar, StyleColor};
+use arcdps::imgui::{TabItem, TabBar, Window, Ui, StyleColor};
 use uuid::Uuid;
 use std::time::Instant;
 
