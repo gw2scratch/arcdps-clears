@@ -1,4 +1,5 @@
 mod defaults;
+mod migrations;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -26,10 +27,8 @@ pub struct Settings {
     pub my_clears_style: ClearsStyle,
     #[serde(default = "defaults::friends_clears_style")]
     pub friends_clears_style: ClearsStyle,
-    #[serde(default = "defaults::main_window_keybind")]
-    pub main_window_keybind: Option<usize>,
-    #[serde(default = "defaults::api_window_keybind")]
-    pub api_window_keybind: Option<usize>,
+    #[serde(default = "defaults::keybinds")]
+    pub keybinds: Keybinds,
     #[serde(default = "defaults::close_window_with_escape")]
     pub close_window_with_escape: bool,
     #[serde(default = "defaults::hide_in_loading_screens")]
@@ -41,6 +40,12 @@ pub struct Settings {
     #[serde(default = "defaults::feature_ads::ads")]
     pub feature_adverts: FeatureAdverts,
     // Are you adding a new style option? Make sure to add to `reset_style()`!
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Keybinds {
+    pub main_window: Option<usize>,
+    pub api_window: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -291,8 +296,7 @@ impl Settings {
             short_names: defaults::short_names(),
             my_clears_style: defaults::my_clears_style(),
             friends_clears_style: defaults::friends_clears_style(),
-            main_window_keybind: defaults::main_window_keybind(),
-            api_window_keybind: defaults::api_window_keybind(),
+            keybinds: defaults::keybinds(),
             close_window_with_escape: defaults::close_window_with_escape(),
             hide_in_loading_screens: defaults::hide_in_loading_screens(),
             main_window_show_bg: defaults::main_window_show_bg(),
@@ -336,8 +340,8 @@ impl Settings {
         let mut settings_json = String::new();
         file.read_to_string(&mut settings_json)?;
 
-        // Try deserialization of settings from version 0.1.0 first
-        if let Some(settings) = load_old_settings(&settings_json) {
+        // Try deserialization of settings from older versions first
+        if let Some(settings) = migrations::load_old_settings(&settings_json) {
             return Ok(settings);
         }
 
@@ -379,32 +383,4 @@ pub fn load_bg(
             function();
         }
     });
-}
-
-
-fn load_old_settings(json: &str) -> Option<Settings> {
-    /// Settings from version 0.1.0
-    #[derive(Serialize, Deserialize)]
-    struct OldApiKey {
-        key: String,
-    }
-
-    #[derive(Serialize, Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct OldSettings {
-        main_api_key: Option<OldApiKey>,
-        short_names: bool,
-    }
-
-    let old_setting_result: serde_json::Result<OldSettings> = serde_json::from_str(&json);
-    if let Ok(old_settings) = old_setting_result {
-        let mut settings = Settings::default();
-        settings.short_names = old_settings.short_names;
-        if let Some(main_key) = old_settings.main_api_key {
-            settings.api_keys.push(ApiKey::new(&main_key.key))
-        }
-
-        return Some(settings);
-    }
-    None
 }

@@ -163,7 +163,7 @@ fn options_end(ui: &imgui::Ui) {
 
 fn wnd_filter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
     if let Some(settings) = SETTINGS.lock().unwrap().as_ref() {
-        if let Some(main_window_keybind) = settings.main_window_keybind {
+        if let Some(main_window_keybind) = settings.keybinds.main_window {
             if key_down && key == main_window_keybind {
                 let shown = UI_STATE.lock().unwrap().main_window.shown;
                 UI_STATE.lock().unwrap().main_window.shown = !shown;
@@ -171,7 +171,7 @@ fn wnd_filter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
             }
         }
 
-        if let Some(api_window_keybind) = settings.api_window_keybind {
+        if let Some(api_window_keybind) = settings.keybinds.api_window {
             if key_down && key == api_window_keybind {
                 let shown = UI_STATE.lock().unwrap().api_key_window.shown;
                 UI_STATE.lock().unwrap().api_key_window.shown = !shown;
