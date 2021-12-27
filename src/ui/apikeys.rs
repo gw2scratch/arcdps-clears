@@ -282,16 +282,17 @@ pub fn api_keys_window(
                                             }
 
                                             if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
-                                                if state.shared_to().len() == 0 {
-                                                    ui.text_wrapped(&tr.translate("api-key-friends-intro"));
-                                                }
+                                                ui.text_wrapped(&tr.translate("api-key-friends-intro"));
 
                                                 let original_public = state.public();
                                                 let mut public = state.public();
-                                                // TODO: Translate
                                                 if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                    ui.radio_button("Public", &mut public, true);
-                                                    ui.radio_button("Friends only", &mut public, false);
+                                                    ui.radio_button(tr.translate("api-key-friends-share-public"), &mut public, true);
+                                                    ui.same_line();
+                                                    utils::help_marker(ui, tr.translate("api-key-friends-share-public-description"));
+                                                    ui.radio_button(tr.translate("api-key-friends-share-friends"), &mut public, false);
+                                                    ui.same_line();
+                                                    utils::help_marker(ui, tr.translate("api-key-friends-share-friends-description"));
                                                 }
 
                                                 if public != original_public {
