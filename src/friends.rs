@@ -6,8 +6,9 @@ use itertools::Itertools;
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
 use ureq::Request;
+use crate::clears;
 
-use crate::clears::{RaidClearState};
+use crate::clears::{FinishedEncountersStore, RaidClearState};
 use crate::settings::{ApiKey, TokenType};
 
 const USER_AGENT: &str = concat!("arcdps-clears/", env!("CARGO_PKG_VERSION"));
@@ -172,8 +173,16 @@ impl FriendData {
     pub fn set_api_state(&mut self, api_state: Option<State>) {
         self.api_state = api_state;
     }
-    pub fn clears(&self, account: &str) -> Option<&RaidClearState> {
-        self.clears_by_account.get(account)
+    pub fn finished_encounters(&self, account: &str) -> Option<&FinishedEncountersStore> {
+        static EMPTY_CLEARS: FinishedEncountersStore = FinishedEncountersStore::empty();
+
+        let state = self.clears_by_account.get(account)?;
+        let last_reset = clears::last_raid_reset(Utc::now());
+        if last_reset >= state.last_api_update_time() {
+            Some(&EMPTY_CLEARS)
+        } else {
+            Some(&state.finished_encounters())
+        }
     }
     pub fn set_clears(&mut self, account: String, clear_data: RaidClearState) {
         self.clears_by_account.insert(account, clear_data);

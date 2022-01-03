@@ -1,13 +1,15 @@
 use serde::{Deserialize, Serialize};
 use ureq::Error;
 
-use crate::clears::{EncounterType, RaidClearState, RaidEncounter, RaidWing, RaidWings};
+use crate::clears::{EncounterType, FinishedEncountersStore, RaidEncounter, RaidWing, RaidWings};
 use chrono::{DateTime, Utc, TimeZone};
+use log::error;
 use crate::settings::{AccountData, TokenInfo, TokenType};
 
 const USER_AGENT: &str = concat!("arcdps-clears v", env!("CARGO_PKG_VERSION"));
 const LIVE_GW2_API_URL: &str = "https://api.guildwars2.com/";
 
+#[derive(Debug)]
 pub enum ApiError {
     UnknownError,
     InvalidKey,
@@ -35,9 +37,9 @@ fn parse_raids(json: &str) -> Result<RaidWings, serde_json::Error> {
     ))
 }
 
-fn parse_clears(json: &str) -> Result<RaidClearState, serde_json::Error> {
+fn parse_clears(json: &str) -> Result<FinishedEncountersStore, serde_json::Error> {
     let cleared_ids: Vec<String> = serde_json::from_str(json)?;
-    Ok(RaidClearState::new(cleared_ids))
+    Ok(FinishedEncountersStore::new(cleared_ids))
 }
 
 fn parse_account_data(json: &str) -> Result<AccountData, serde_json::Error> {
@@ -85,10 +87,11 @@ fn parse_token_info(json: &str) -> Result<TokenInfo, serde_json::Error> {
 
 pub trait Gw2Api {
     fn get_raids(&self) -> Result<RaidWings, ApiError>;
-    fn get_raids_state(&self, api_key: &str) -> Result<RaidClearState, ApiError>;
+    fn get_finished_encounters(&self, api_key: &str) -> Result<FinishedEncountersStore, ApiError>;
     fn get_account_data(&self, api_key: &str) -> Result<AccountData, ApiError>;
     fn get_token_info(&self, api_key: &str) -> Result<TokenInfo, ApiError>;
     fn create_subtoken(&self, api_key: &str, permissions: &[&str], urls: &[&str], expiration: DateTime<Utc>) -> Result<String, ApiError>;
+    fn get_account_last_modified(&self, api_key: &str) -> Result<DateTime<Utc>, ApiError>;
 }
 
 pub struct LiveApi {
@@ -122,8 +125,7 @@ impl Gw2Api for LiveApi {
         }
     }
 
-    fn get_raids_state(&self, api_key: &str) -> Result<RaidClearState, ApiError> {
-        // TODO: Check last update in account data
+    fn get_finished_encounters(&self, api_key: &str) -> Result<FinishedEncountersStore, ApiError> {
         match ureq::get(&format!("{}v2/account/raids", self.url))
             .set("User-Agent", USER_AGENT)
             .set("Authorization", &format!("Bearer {}", api_key))
@@ -154,6 +156,37 @@ impl Gw2Api for LiveApi {
                     _ => Err(ApiError::UnknownError),
                 }
             }
+        }
+    }
+
+    fn get_account_last_modified(&self, api_key: &str) -> Result<DateTime<Utc>, ApiError> {
+        // Why masteries?
+        // This endpoint provides access to the last-modified header,
+        // but doesn't reveal much information (unlike /v2/account/).
+        // This makes it a very nice option to use for restricted subtokens
+        // received from the friends API.
+        // And all other API keys *should* provide access to this endpoint as well,
+        // except for custom restricted subtokens.
+        match ureq::get(&format!("{}v2/account/masteries", self.url))
+            .set("User-Agent", USER_AGENT)
+            .set("X-Schema-Version", "2021-05-20T00:00:00.000Z")
+            .set("Authorization", &format!("Bearer {}", api_key))
+            .call()
+        {
+            Ok(response) => {
+                if let Some(last_modified) = response.header("last-modified") {
+                    if let Ok(time) = DateTime::parse_from_rfc2822(last_modified) {
+                        Ok(time.into())
+                    } else {
+                        error!("Failed to parse last modified header time");
+                        return Err(ApiError::UnknownError)
+                    }
+                } else {
+                    error!("Missing last-modified header in response");
+                    return Err(ApiError::UnknownError)
+                }
+            }
+            Err(_) => Err(ApiError::UnknownError),
         }
     }
 
@@ -252,8 +285,8 @@ impl Gw2Api for ApiMock {
         ]))
     }
 
-    fn get_raids_state(&self, _: &str) -> Result<RaidClearState, ApiError> {
-        Ok(RaidClearState::new(vec![
+    fn get_finished_encounters(&self, _: &str) -> Result<FinishedEncountersStore, ApiError> {
+        Ok(FinishedEncountersStore::new(vec![
             "gorseval".to_string(),
             "slothasor".to_string(),
             "bandit_trio".to_string(),
@@ -279,6 +312,10 @@ impl Gw2Api for ApiMock {
 
     fn create_subtoken(&self, _api_key: &str, _permissions: &[&str], _urls: &[&str], _expiration: DateTime<Utc>) -> Result<String, ApiError> {
         unimplemented!()
+    }
+
+    fn get_account_last_modified(&self, _api_key: &str) -> Result<DateTime<Utc>, ApiError> {
+        Ok(Utc::now())
     }
 }
 

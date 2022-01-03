@@ -125,6 +125,7 @@
     "api-key-warning-subtoken-expired": "The subtoken is expired!",
     "api-key-warning-subtoken-url-missing-account": "The subtoken does not have access to /v2/account!",
     "api-key-warning-subtoken-url-missing-account-raids": "The subtoken does not have access to /v2/account/raids!",
+    "api-key-warning-subtoken-url-missing-account-masteries": "The subtoken does not have access to /v2/account/masteries!",
     "api-key-friends-warning-no-token-info": "Cannot be shared with friends, no data about key!",
     "api-key-friends-warning-no-permissions": "Cannot be shared with friends, missing permissions!",
     "api-key-friends-warning-subtoken-missing-urls": "Cannot be shared with friends, missing subtoken urls!",

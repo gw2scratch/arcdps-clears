@@ -29,7 +29,7 @@ pub fn friends(
             .filter(|friend| data.friends.state_available(friend.account_name()))
             .map(|friend| ClearTableEntry {
                 account_name: friend.account_name().to_string(),
-                state: data.friends.clears(friend.account_name()),
+                state: data.friends.finished_encounters(friend.account_name()),
                 expanded: friend.expanded_in_friends_mut(),
             })
             .collect();
