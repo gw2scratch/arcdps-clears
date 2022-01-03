@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::{Data, friends, Settings};
 use crate::api::{ApiError, Gw2Api, LiveApi};
+use crate::clears::RaidClearState;
 use crate::friends::{FriendRequestMetadata, FriendsApiClient, FriendsApiError};
 
 pub struct BackgroundWorkers {
@@ -119,9 +120,12 @@ pub fn start_workers(
                     let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
                     if let Some(key) = key {
-                        if let Ok(state) = api.get_raids_state(&key) {
-                            // TODO: Handle invalid API key explicitly
-                            data_mutex.lock().unwrap().clears.set_state(key_uuid, Some(state));
+                        if let Ok(finished_encounters) = api.get_finished_encounters(&key) {
+                            if let Ok(last_modified) = api.get_account_last_modified(&key) {
+                                // TODO: Handle invalid API key explicitly
+                                let state = RaidClearState::new(finished_encounters, Utc::now(), last_modified);
+                                data_mutex.lock().unwrap().clears.set_state(key_uuid, Some(state));
+                            }
                         }
                     }
                 }
@@ -234,9 +238,17 @@ pub fn start_workers(
                     }
                 }
                 ApiJob::UpdateFriendClears { account_name, subtoken } => {
-                    match api.get_raids_state(&subtoken) {
-                        Ok(state) => {
-                            data_mutex.lock().unwrap().friends.set_clears(account_name, state);
+                    match api.get_finished_encounters(&subtoken) {
+                        Ok(finished_encounters) => {
+                            match api.get_account_last_modified(&subtoken) {
+                                Ok(last_modified) => {
+                                    let state = RaidClearState::new(finished_encounters, Utc::now(), last_modified);
+                                    data_mutex.lock().unwrap().friends.set_clears(account_name, state);
+                                }
+                                Err(err) => {
+                                    warn!("Failed to get last-modified for friend {} - {:?}.", account_name, err);
+                                }
+                            }
                         }
                         Err(ApiError::UnknownError) => {
                             warn!("Failed to get clears for friend {} - unknown error.", account_name);

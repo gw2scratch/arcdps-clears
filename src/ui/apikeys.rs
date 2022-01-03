@@ -224,11 +224,15 @@ pub fn api_keys_window(
                                                     if let Some(urls) = urls {
                                                         let account_access = urls.iter().any(|x| x == "/v2/account");
                                                         let clears_access = urls.iter().any(|x| x == "/v2/account/raids");
+                                                        let masteries_access = urls.iter().any(|x| x == "/v2/account/masteries");
                                                         if !account_access {
                                                             ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-url-missing-account"));
                                                         }
                                                         if !clears_access {
                                                             ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-url-missing-account-raids"));
+                                                        }
+                                                        if !masteries_access {
+                                                            ui.text_colored(WARNING_RED, tr.translate("api-key-warning-subtoken-url-missing-account-masteries"));
                                                         }
                                                     }
                                                 }

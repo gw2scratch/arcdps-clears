@@ -2,7 +2,7 @@ use std::time::Instant;
 
 use arcdps::imgui::{CollapsingHeader, MenuItem, MouseButton, StyleColor, StyleVar, TableBgTarget, TableColumnFlags, TableColumnSetup, TableFlags, TableRowFlags, Ui};
 
-use crate::clears::{RaidClearState, RaidWings};
+use crate::clears::{FinishedEncountersStore, RaidWings};
 use crate::Data;
 
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
@@ -44,7 +44,7 @@ pub fn my_clears(
             .filter(|key| key.show_key_in_clears())
             .map(|key| ClearTableEntry {
                 account_name: get_api_key_name(key, tr),
-                state: data.clears.state(key),
+                state: data.clears.finished_encounters(&key),
                 expanded: key.expanded_in_clears_mut()
             })
             .collect();
@@ -100,7 +100,7 @@ pub fn my_clears(
 
 pub struct ClearTableEntry<'a> {
     pub account_name: String,
-    pub state: Option<&'a RaidClearState>,
+    pub state: Option<&'a FinishedEncountersStore>,
     pub expanded: &'a mut bool,
 }
 
