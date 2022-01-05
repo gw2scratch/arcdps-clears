@@ -13,12 +13,8 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
-    #[serde(default = "defaults::friends_api_url")]
-    pub friends_api_url: String,
     #[serde(default = "defaults::api_keys")]
     pub api_keys: Vec<ApiKey>,
-    #[serde(default = "defaults::friends")]
-    pub friend_list: FriendList,
     #[serde(default = "defaults::check_updates")]
     pub check_updates: bool,
     #[serde(default = "defaults::short_names")]
@@ -39,7 +35,16 @@ pub struct Settings {
     pub main_window_show_title: bool,
     #[serde(default = "defaults::feature_ads::ads")]
     pub feature_adverts: FeatureAdverts,
-    // Are you adding a new style option? Make sure to add to `reset_style()`!
+    #[serde(default = "defaults::friends::settings")]
+    pub friends: FriendSettings,
+    // Are you adding a new style option? Make sure to add it to `reset_style()`!
+}
+
+pub struct FriendSettings {
+    #[serde(default = "defaults::friends::api_url")]
+    pub friends_api_url: String,
+    #[serde(default = "defaults::friends::friend_list")]
+    pub friend_list: FriendList,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -51,7 +56,7 @@ pub struct Keybinds {
 #[derive(Serialize, Deserialize)]
 pub struct FeatureAdverts {
     #[serde(default = "defaults::feature_ads::friends_shown")]
-    pub friends_shown: bool
+    pub friends_shown: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -289,9 +294,7 @@ impl FriendList {
 impl Settings {
     fn default() -> Self {
         Settings {
-            friends_api_url: defaults::friends_api_url(),
             api_keys: defaults::api_keys(),
-            friend_list: defaults::friends(),
             check_updates: defaults::check_updates(),
             short_names: defaults::short_names(),
             my_clears_style: defaults::my_clears_style(),
@@ -302,6 +305,7 @@ impl Settings {
             main_window_show_bg: defaults::main_window_show_bg(),
             main_window_show_title: defaults::main_window_show_title(),
             feature_adverts: defaults::feature_ads::ads(),
+            friends: defaults::friends::settings(),
             // Are you adding a new style option? Make sure to add to `reset_style()`!
         }
     }

@@ -25,22 +25,12 @@ pub fn friends_clears_style() -> ClearsStyle {
     }
 }
 
-pub fn friends_api_url() -> String {
-    "https://clears.gw2scratch.com/".to_string()
-}
-
 pub fn check_updates() -> bool {
     true
 }
 
 pub fn api_keys() -> Vec<ApiKey> {
     Vec::new()
-}
-
-pub fn friends() -> FriendList {
-    FriendList {
-        friends: Vec::new()
-    }
 }
 
 pub fn short_names() -> bool {
@@ -79,6 +69,27 @@ pub fn keybinds() -> Keybinds {
         // can change the conflicting keybind in our plugin or in arcdps itself if needed.
         main_window: Some(67),
         api_window: None,
+    }
+}
+
+pub mod friends {
+    use super::*;
+
+    pub fn settings() -> FriendSettings {
+        FriendSettings {
+            friend_list: friend_list(),
+            friends_api_url: api_url(),
+        }
+    }
+
+    pub fn api_url() -> String {
+        "https://clears.gw2scratch.com/".to_string()
+    }
+
+    pub fn friend_list() -> FriendList {
+        FriendList {
+            friends: Vec::new()
+        }
     }
 }
 
