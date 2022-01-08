@@ -16,7 +16,7 @@ pub fn get_key_name(key: usize) -> Option<&'static str> {
         36 => Some("HOME"),
         37 => Some("LEFT ARROW"),
         38 => Some("UP ARROW"),
-        39 => Some("RIGHT ARROw"),
+        39 => Some("RIGHT ARROW"),
         40 => Some("DOWN ARROW"),
         48 => Some("0"),
         49 => Some("1"),
