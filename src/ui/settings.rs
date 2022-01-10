@@ -91,7 +91,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.translate("setting-check-updates-description"));
     }
 
-    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [ui.text_line_height() * 25.0, 0.0]) {
+    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [ui.text_line_height() * 30.0, 0.0]) {
         ui_state.api_key_window.shown = true;
     }
 }
