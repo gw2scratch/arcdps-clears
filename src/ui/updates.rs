@@ -32,9 +32,15 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
                     if ui.button(&tr.translate("update-button-changelog")) {
                         let _ = open::that(release.changelog_url());
                     }
+                    if ui.is_item_hovered() {
+                        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+                    }
                     ui.same_line();
                     if ui.button(&tr.translate("update-button-download")) {
                         let _ = open::that(release.tool_site_url());
+                    }
+                    if ui.is_item_hovered() {
+                        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
                     }
                 } else {
                     ui.text(tr.translate("update-not-available"))

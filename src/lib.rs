@@ -22,6 +22,7 @@ mod translations;
 mod updates;
 mod input;
 mod friends;
+mod guide;
 
 const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
 const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
@@ -79,7 +80,7 @@ fn init() {
         }
 
         let friends_api_url = SETTINGS.lock().unwrap().as_ref()
-            .expect("Settings should be loaded by now.").friends_api_url.to_string();
+            .expect("Settings should be loaded by now.").friends.friends_api_url.to_string();
 
         *BACKGROUND_WORKERS.lock().unwrap() = Some(workers::start_workers(
             &DATA,

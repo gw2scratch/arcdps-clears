@@ -1,6 +1,7 @@
 use std::borrow::Cow;
 
 use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, PopupModal, TableFlags, Ui};
+use crate::guide;
 
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
 use crate::translations::Translation;
@@ -11,7 +12,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         .build(&ui) {
         /* Hide in loading screens */
         ui.checkbox(
-            &tr.translate("setting-hide-in-loading-screens"),
+            tr.translate("setting-hide-in-loading-screens"),
             &mut settings.hide_in_loading_screens,
         );
         ui.same_line();
@@ -25,6 +26,42 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         ui.same_line();
         utils::help_marker(ui, tr.translate("setting-close-window-with-escape-description"));
     }
+
+    if CollapsingHeader::new(&tr.translate("settings-section-friends"))
+        .build(&ui) {
+        ui.checkbox(
+            tr.translate("setting-friends-enabled"),
+            &mut settings.friends.enabled,
+        );
+        ui.same_line();
+        utils::help_marker(ui, tr.translate("setting-friends-enabled-description"));
+
+        ui.input_text(tr.translate("setting-friends-url"), &mut settings.friends.friends_api_url).build();
+        ui.same_line();
+        ui.align_text_to_frame_padding();
+        utils::help_marker(ui, tr.translate("setting-friends-url-description"));
+
+        ui.spacing();
+        if ui.button(tr.translate("setting-friends-how-to-use")) {
+            let _ = open::that(guide::HOW_TO_USE_FRIENDS_URL);
+        }
+        if ui.is_item_hovered() {
+            ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+        }
+        ui.same_line();
+        if ui.button(tr.translate("setting-friends-privacy")) {
+            let _ = open::that(guide::FRIEND_PRIVACY_URL);
+        }
+        if ui.is_item_hovered() {
+            ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+        }
+        if !settings.friends.is_url_default() {
+            ui.same_line();
+            if ui.button(tr.translate("setting-friends-reset-url")) {
+                settings.friends.reset_url();
+            }
+        }
+    };
 
     if CollapsingHeader::new(&tr.translate("settings-section-keybinds"))
         .build(&ui) {
