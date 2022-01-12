@@ -44,6 +44,7 @@ impl UiState {
                 shown: false,
                 last_refresh_use: Instant::now(),
                 new_friend_name: String::new(),
+                enable_set_all_keys_public: true,
             }
         }
     }
@@ -73,6 +74,7 @@ pub struct FriendsWindowState {
     pub shown: bool,
     pub last_refresh_use: Instant,
     pub new_friend_name: String,
+    pub enable_set_all_keys_public: bool,
 }
 
 impl ApiKeyWindowState {

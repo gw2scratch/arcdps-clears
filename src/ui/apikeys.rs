@@ -29,6 +29,10 @@ pub fn api_keys_window(
             .collapsible(false)
             .opened(&mut shown)
             .build(&ui, || {
+                // We copy this here as we will be doing borrows later on and settings won't be
+                // available when this value is needed.
+                let friends_enabled = settings.friends.enabled;
+
                 let max_name_width = settings.api_keys.iter()
                     .map(|api_key| {
                         ui.calc_text_size(&get_api_key_name(api_key, tr))[0]
@@ -253,105 +257,111 @@ pub fn api_keys_window(
                                         });
                                     TabItem::new(&tr.translate("api-key-details-tab-friends"))
                                         .build(&ui, || {
-                                            let key_usable = match friends::get_key_usability(key) {
-                                                KeyUsability::NoTokenInfo => {
-                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-token-info"));
-                                                    false
-                                                }
-                                                KeyUsability::Usable => true,
-                                                KeyUsability::InsufficientPermissions => {
-                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-permissions"));
-                                                    false
-                                                }
-                                                KeyUsability::InsufficientSubtokenUrls(urls) => {
-                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-missing-urls"));
-                                                    for url in urls {
-                                                        ui.text_colored(WARNING_RED, format!("\t{}", url));
+                                            // Check enabled
+                                            if !friends_enabled {
+                                                let _wrap = ui.push_text_wrap_pos();
+                                                ui.text_colored(WARNING_RED, tr.translate("api-key-friends-disabled"));
+                                            } else {
+                                                let key_usable = match friends::get_key_usability(key) {
+                                                    KeyUsability::NoTokenInfo => {
+                                                        ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-token-info"));
+                                                        false
                                                     }
-                                                    false
-                                                }
-                                                KeyUsability::SubtokenExpired => {
-                                                    ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-expired"));
-                                                    false
-                                                }
-                                            };
-
-                                            if !key_usable {
-                                                return;
-                                            }
-
-                                            if data.friends.api_state().is_none() {
-                                                ui.text_colored(WARNING_RED, tr.translate("friends-no-connection-to-server"));
-                                                refresh_button(ui, ui_state, bg_workers, tr);
-                                            }
-
-                                            if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
-                                                ui.text_wrapped(&tr.translate("api-key-friends-intro"));
-
-                                                let original_public = state.public();
-                                                let mut public = state.public();
-                                                if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                    ui.radio_button(tr.translate("api-key-friends-share-public"), &mut public, true);
-                                                    ui.same_line();
-                                                    utils::help_marker(ui, tr.translate("api-key-friends-share-public-description"));
-                                                    ui.radio_button(tr.translate("api-key-friends-share-friends"), &mut public, false);
-                                                    ui.same_line();
-                                                    utils::help_marker(ui, tr.translate("api-key-friends-share-friends-description"));
-                                                }
-
-                                                if public != original_public {
-                                                    if let Err(_) = bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
-                                                        key_uuid: *key.id(),
-                                                        public
-                                                    }) {
-                                                        warn!("Failed to send request to API worker");
+                                                    KeyUsability::Usable => true,
+                                                    KeyUsability::InsufficientPermissions => {
+                                                        ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-no-permissions"));
+                                                        false
                                                     }
+                                                    KeyUsability::InsufficientSubtokenUrls(urls) => {
+                                                        ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-missing-urls"));
+                                                        for url in urls {
+                                                            ui.text_colored(WARNING_RED, format!("\t{}", url));
+                                                        }
+                                                        false
+                                                    }
+                                                    KeyUsability::SubtokenExpired => {
+                                                        ui.text_colored(WARNING_RED, tr.translate("api-key-friends-warning-subtoken-expired"));
+                                                        false
+                                                    }
+                                                };
+
+                                                if !key_usable {
+                                                    return;
                                                 }
 
+                                                if data.friends.api_state().is_none() {
+                                                    ui.text_colored(WARNING_RED, tr.translate("friends-no-connection-to-server"));
+                                                    refresh_button(ui, ui_state, bg_workers, tr);
+                                                }
 
-                                                if !state.public() {
-                                                    if let Some(_t) = ui.begin_table_with_flags("ApiKeyFriendsTable", 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
-                                                        for share in state.shared_to() {
+                                                if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
+                                                    ui.text_wrapped(&tr.translate("api-key-friends-intro"));
+
+                                                    let original_public = state.public();
+                                                    let mut public = state.public();
+                                                    if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
+                                                        ui.radio_button(tr.translate("api-key-friends-share-public"), &mut public, true);
+                                                        ui.same_line();
+                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-public-description"));
+                                                        ui.radio_button(tr.translate("api-key-friends-share-friends"), &mut public, false);
+                                                        ui.same_line();
+                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-friends-description"));
+                                                    }
+
+                                                    if public != original_public {
+                                                        if let Err(_) = bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
+                                                            key_uuid: *key.id(),
+                                                            public,
+                                                        }) {
+                                                            warn!("Failed to send request to API worker");
+                                                        }
+                                                    }
+
+
+                                                    if !state.public() {
+                                                        if let Some(_t) = ui.begin_table_with_flags("ApiKeyFriendsTable", 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
+                                                            for share in state.shared_to() {
+                                                                ui.table_next_row();
+                                                                ui.table_next_column();
+                                                                ui.text(share.account());
+                                                                if !share.account_available() {
+                                                                    utils::warning_marker(&ui, tr.translate("api-key-friends-warning-unknown-user"));
+                                                                }
+                                                                ui.table_next_column();
+                                                                if ui.small_button(format!("{}##{}", tr.translate("api-key-friends-unshare-button"), share.account())) {
+                                                                    if let Err(_) = bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                                        key_uuid: *key.id(),
+                                                                        friend_account_name: share.account().to_string(),
+                                                                    }) {
+                                                                        warn!("Failed to send request to API worker");
+                                                                    }
+                                                                }
+                                                            }
+
                                                             ui.table_next_row();
                                                             ui.table_next_column();
-                                                            ui.text(share.account());
-                                                            if !share.account_available() {
-                                                                utils::warning_marker(&ui, tr.translate("api-key-friends-warning-unknown-user"));
-                                                            }
+
+                                                            let width = ui.push_item_width(ui.current_font_size() * 20.0);
+                                                            let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
+                                                            let mut add = ui.input_text("##add_new_friend_name", &mut ui_state.api_key_window.new_friend_name)
+                                                                .hint("Account Name.1234") // TODO: Test ingame to see if it's visible, might need a tooltip
+                                                                .enter_returns_true(true)
+                                                                .build();
+                                                            width.pop(ui);
+                                                            padding.pop();
+
                                                             ui.table_next_column();
-                                                            if ui.small_button(format!("Unshare##{}", share.account())) {
-                                                                if let Err(_) = bg_workers.api_sender().send(ApiJob::UnshareKeyWithFriend {
+                                                            add = add || ui.small_button(&tr.translate("api-key-friends-share-button"));
+
+                                                            if add {
+                                                                if let Err(_) = bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
                                                                     key_uuid: *key.id(),
-                                                                    friend_account_name: share.account().to_string(),
+                                                                    friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
                                                                 }) {
                                                                     warn!("Failed to send request to API worker");
                                                                 }
+                                                                ui_state.api_key_window.new_friend_name.clear();
                                                             }
-                                                        }
-
-                                                        ui.table_next_row();
-                                                        ui.table_next_column();
-
-                                                        let width = ui.push_item_width(ui.current_font_size() * 20.0);
-                                                        let padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0]));
-                                                        let mut add = ui.input_text("##add_new_friend_name", &mut ui_state.api_key_window.new_friend_name)
-                                                            .hint("Account Name.1234") // TODO: Test ingame to see if it's visible, might need a tooltip
-                                                            .enter_returns_true(true)
-                                                            .build();
-                                                        width.pop(ui);
-                                                        padding.pop();
-
-                                                        ui.table_next_column();
-                                                        add = add || ui.small_button(&tr.translate("api-key-friends-share-button"));
-
-                                                        if add {
-                                                            if let Err(_) = bg_workers.api_sender().send(ApiJob::ShareKeyWithFriend {
-                                                                key_uuid: *key.id(),
-                                                                friend_account_name: ui_state.api_key_window.new_friend_name.to_string(),
-                                                            }) {
-                                                                warn!("Failed to send request to API worker");
-                                                            }
-                                                            ui_state.api_key_window.new_friend_name.clear();
                                                         }
                                                     }
                                                 }

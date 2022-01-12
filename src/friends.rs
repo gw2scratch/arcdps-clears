@@ -217,6 +217,7 @@ impl From<ureq::Error> for FriendsApiError {
     }
 }
 
+#[derive(Clone)]
 pub struct FriendRequestMetadata {
     pub api_keys: Vec<String>,
     pub public_friends: Vec<String>,

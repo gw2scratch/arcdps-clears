@@ -25,6 +25,12 @@ pub fn help_marker<T: AsRef<str>>(ui: &Ui, text: T) {
     }
 }
 
+pub fn help_text<T: AsRef<str>>(ui: &Ui, text: T) {
+    if let _alpha = ui.push_style_var(StyleVar::Alpha(0.5)) {
+        ui.text(text);
+    }
+}
+
 pub fn warning_marker<T: AsRef<str>>(ui: &Ui, text: T) {
     if let _alpha = ui.push_style_var(StyleVar::Alpha(0.5)) {
         ui.text("(!)");

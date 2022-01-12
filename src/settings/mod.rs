@@ -40,11 +40,23 @@ pub struct Settings {
     // Are you adding a new style option? Make sure to add it to `reset_style()`!
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct FriendSettings {
+    #[serde(default = "defaults::friends::enabled")]
+    pub enabled: bool,
     #[serde(default = "defaults::friends::api_url")]
     pub friends_api_url: String,
     #[serde(default = "defaults::friends::friend_list")]
-    pub friend_list: FriendList,
+    pub list: FriendList,
+}
+
+impl FriendSettings {
+    pub fn is_url_default(&self) -> bool {
+        self.friends_api_url == defaults::friends::api_url()
+    }
+    pub fn reset_url(&mut self) {
+        self.friends_api_url = defaults::friends::api_url();
+    }
 }
 
 #[derive(Serialize, Deserialize)]

@@ -77,9 +77,14 @@ pub mod friends {
 
     pub fn settings() -> FriendSettings {
         FriendSettings {
-            friend_list: friend_list(),
+            enabled: enabled(),
+            list: friend_list(),
             friends_api_url: api_url(),
         }
+    }
+
+    pub fn enabled() -> bool {
+        false
     }
 
     pub fn api_url() -> String {
