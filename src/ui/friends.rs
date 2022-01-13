@@ -6,7 +6,7 @@ use arcdps::imgui::{Direction, MenuItem, MouseButton, StyleVar, TableFlags, Ui, 
 use log::warn;
 
 
-use crate::{Data, guide};
+use crate::{Data, urls};
 use crate::settings::{Friend, Settings};
 use crate::translations::Translation;
 use crate::ui::{settings, UiState, utils};
@@ -71,7 +71,7 @@ pub fn friends(
         ui.dummy([x_offset, 0.0]);
         ui.same_line();
         if ui.button(privacy_text) {
-            let _ = open::that(guide::FRIEND_PRIVACY_URL);
+            let _ = open::that(urls::guide::FRIEND_PRIVACY);
         }
         if ui.is_item_hovered() {
             ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));

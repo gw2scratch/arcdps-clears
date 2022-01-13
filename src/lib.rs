@@ -22,7 +22,7 @@ mod translations;
 mod updates;
 mod input;
 mod friends;
-mod guide;
+mod urls;
 
 const SETTINGS_FILENAME: &str = "addons/arcdps/settings_clears.json";
 const TRANSLATION_FILENAME: &str = "addons/arcdps/arcdps_lang_clears.json";
