@@ -17,12 +17,14 @@ mod clears;
 mod utils;
 mod friends;
 mod style;
+mod about;
 
 pub struct UiState {
     pub main_window: MainWindowState,
     pub update_window: UpdateWindowState,
     pub api_key_window: ApiKeyWindowState,
     pub friends_window: FriendsWindowState,
+    pub about_window: AboutWindowState,
 }
 
 impl UiState {
@@ -45,7 +47,10 @@ impl UiState {
                 last_refresh_use: Instant::now(),
                 new_friend_name: String::new(),
                 enable_set_all_keys_public: true,
-            }
+            },
+            about_window: AboutWindowState {
+                shown: false
+            },
         }
     }
 }
@@ -75,6 +80,10 @@ pub struct FriendsWindowState {
     pub last_refresh_use: Instant,
     pub new_friend_name: String,
     pub enable_set_all_keys_public: bool,
+}
+
+pub struct AboutWindowState {
+    pub shown: bool,
 }
 
 impl ApiKeyWindowState {
@@ -145,6 +154,8 @@ pub fn draw_ui(
     friends::friends_window(ui, ui_state, data, bg_workers, settings, tr);
 
     updates::update_window(ui, ui_state, tr);
+
+    about::about_window(ui, ui_state, tr);
 
     apikeys::api_keys_window(ui, ui_state, data, bg_workers, settings, tr);
 }

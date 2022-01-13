@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 
 use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, PopupModal, TableFlags, Ui};
-use crate::guide;
 
+use crate::urls;
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
 use crate::translations::Translation;
 use crate::ui::{UiState, utils};
@@ -43,14 +43,14 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
 
         ui.spacing();
         if ui.button(tr.translate("setting-friends-how-to-use")) {
-            let _ = open::that(guide::HOW_TO_USE_FRIENDS_URL);
+            let _ = open::that(urls::guide::HOW_TO_USE_FRIENDS);
         }
         if ui.is_item_hovered() {
             ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
         }
         ui.same_line();
         if ui.button(tr.translate("setting-friends-privacy")) {
-            let _ = open::that(guide::FRIEND_PRIVACY_URL);
+            let _ = open::that(urls::guide::FRIEND_PRIVACY);
         }
         if ui.is_item_hovered() {
             ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
@@ -128,8 +128,18 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.translate("setting-check-updates-description"));
     }
 
-    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [ui.text_line_height() * 30.0, 0.0]) {
+    ui.spacing();
+    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [ui.text_line_height() * 30.0, ui.text_line_height() * 2.5]) {
         ui_state.api_key_window.shown = true;
+    }
+
+    ui.spacing();
+    if ui.button(tr.translate("settings-guide-button")) {
+        let _ = open::that(urls::guide::GUIDE);
+    }
+    ui.same_line();
+    if ui.button(tr.translate("settings-about-button")) {
+        ui_state.about_window.shown = true;
     }
 }
 
