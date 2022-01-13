@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, PopupModal, TableFlags, Ui};
+use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, Drag, PopupModal, Slider, TableFlags, Ui};
 
 use crate::urls;
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
@@ -25,6 +25,12 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         );
         ui.same_line();
         utils::help_marker(ui, tr.translate("setting-close-window-with-escape-description"));
+
+        Slider::new(tr.translate("setting-clear-check-interval"), 1, 10)
+            .display_format(tr.translate("setting-clear-check-interval-format"))
+            .build(ui, &mut settings.clears_check_interval_minutes);
+        ui.same_line();
+        utils::help_marker(ui, tr.translate("setting-clear-check-interval-description"));
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-friends"))
