@@ -59,7 +59,7 @@
     "setting-friends-enabled": "Enable Friends",
     "setting-friends-enabled-description": "Enables connecting to the friends server.",
     "setting-friends-url": "Friend server URL",
-    "setting-friends-url-description": "The URL of the server that shares clears between friends.",
+    "setting-friends-url-description": "The URL of the server that shares clears between friends. Requires a restart to take effect.",
     "setting-friends-reset-url": "Reset URL to default",
     "setting-friends-how-to-use": "How to use",
     "setting-friends-privacy": "Privacy",
