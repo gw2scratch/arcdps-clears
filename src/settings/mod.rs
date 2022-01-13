@@ -13,6 +13,8 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize)]
 pub struct Settings {
+    #[serde(default = "defaults::last_run_version")]
+    pub last_run_version: String,
     #[serde(default = "defaults::api_keys")]
     pub api_keys: Vec<ApiKey>,
     #[serde(default = "defaults::check_updates")]
@@ -308,6 +310,7 @@ impl FriendList {
 impl Settings {
     fn default() -> Self {
         Settings {
+            last_run_version: defaults::last_run_version(),
             api_keys: defaults::api_keys(),
             check_updates: defaults::check_updates(),
             short_names: defaults::short_names(),
@@ -364,12 +367,19 @@ impl Settings {
             return Ok(settings);
         }
 
-        let settings = serde_json::from_str(&settings_json)?;
+        let mut settings: Settings = serde_json::from_str(&settings_json)?;
+
+        // Version-based migrations can be added here,
+        // before we update the last version.
+
+        settings.last_run_version = env!("CARGO_PKG_VERSION").to_string();
+
         Ok(settings)
     }
 
     #[must_use]
     pub fn save_to_file(&self, filename: &str) -> Result<(), Box<dyn Error>> {
+        // Update the last run version
         // We first serialize settings into a temporary file and then move the file
         let tmp_filename = format!("{}.tmp", filename);
         let tmp_file = File::create(&tmp_filename)?;

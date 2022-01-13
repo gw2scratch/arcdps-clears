@@ -65,6 +65,10 @@ pub fn clears_check_interval_minutes() -> u32 {
     3
 }
 
+pub fn last_run_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
 pub fn keybinds() -> Keybinds {
     Keybinds {
         // C (for clears)
