@@ -28,7 +28,7 @@ pub fn api_keys_window(
             .no_nav()
             .collapsible(false)
             .opened(&mut shown)
-            .build(&ui, || {
+            .build(ui, || {
                 // We copy this here as we will be doing borrows later on and settings won't be
                 // available when this value is needed.
                 let friends_enabled = settings.friends.enabled;
@@ -44,12 +44,12 @@ pub fn api_keys_window(
                     ChildWindow::new("ApiLeftPane")
                         // The -frame_height is to make space for buttons at the bottom.
                         .size([left_pane_width, -ui.frame_height_with_spacing()])
-                        .build(&ui, || {
+                        .build(ui, || {
                             for api_key in settings.api_keys.iter() {
                                 let name = get_api_key_name(api_key, tr);
                                 if Selectable::new(format!("{}##{}", name, api_key.id().to_string()))
                                     .selected(ui_state.api_key_window.is_key_selected(api_key))
-                                    .build(&ui) {
+                                    .build(ui) {
                                     ui_state.api_key_window.selected_key = SelectedApiKey::Id(*api_key.id());
                                 }
                             }
@@ -65,7 +65,7 @@ pub fn api_keys_window(
                     ChildWindow::new("ApiRightPane")
                         // The -frame_height is to make space for buttons at the bottom.
                         .size([0.0, -ui.frame_height_with_spacing()])
-                        .build(&ui, || {
+                        .build(ui, || {
                             let selected_key = match ui_state.api_key_window.selected_key {
                                 SelectedApiKey::None => None,
                                 SelectedApiKey::Id(id) => settings.get_key_mut(&id)
@@ -109,9 +109,9 @@ pub fn api_keys_window(
                                 }
 
                                 ui.separator();
-                                TabBar::new("api_key_tabs").build(&ui, || {
+                                TabBar::new("api_key_tabs").build(ui, || {
                                     TabItem::new(&tr.translate("api-key-details-tab-details"))
-                                        .build(&ui, || {
+                                        .build(ui, || {
                                             if key.data().account_data().is_some() || key.data().token_info().is_some() {
                                                 if let Some(_t) = ui.begin_table_with_flags("ApiKeyData", 2, TableFlags::SIZING_FIXED_FIT) {
                                                     ui.table_next_row();
@@ -170,7 +170,7 @@ pub fn api_keys_window(
                                                         }
 
                                                         // Extra permission indicator
-                                                        if extra_perms.len() > 0 {
+                                                        if !extra_perms.is_empty() {
                                                             ui.same_line();
                                                             ui.text(format!("{}{}{}",
                                                                             tr.translate("api-key-details-permissions-extra-prefix"),
@@ -256,7 +256,7 @@ pub fn api_keys_window(
                                             }
                                         });
                                     TabItem::new(&tr.translate("api-key-details-tab-friends"))
-                                        .build(&ui, || {
+                                        .build(ui, || {
                                             // Check enabled
                                             if !friends_enabled {
                                                 let _wrap = ui.push_text_wrap_pos();
@@ -325,7 +325,7 @@ pub fn api_keys_window(
                                                                 ui.table_next_column();
                                                                 ui.text(share.account());
                                                                 if !share.account_available() {
-                                                                    utils::warning_marker(&ui, tr.translate("api-key-friends-warning-unknown-user"));
+                                                                    utils::warning_marker(ui, tr.translate("api-key-friends-warning-unknown-user"));
                                                                 }
                                                                 ui.table_next_column();
                                                                 if ui.small_button(format!("{}##{}", tr.translate("api-key-friends-unshare-button"), share.account())) {
@@ -369,7 +369,7 @@ pub fn api_keys_window(
                                         });
                                 });
                             } else {
-                                if settings.api_keys.len() == 0 {
+                                if settings.api_keys.is_empty() {
                                     ui.text_wrapped(&tr.translate("api-key-window-intro-first-key"));
                                 } else {
                                     ui.text_wrapped(&tr.translate("api-key-window-intro"));

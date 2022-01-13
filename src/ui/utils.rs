@@ -20,7 +20,7 @@ pub fn help_marker<T: AsRef<str>>(ui: &Ui, text: T) {
         ui.tooltip(|| {
             let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 35.0);
             ui.text(text);
-            wrap.pop(&ui);
+            wrap.pop(ui);
         });
     }
 }
@@ -40,7 +40,7 @@ pub fn warning_marker<T: AsRef<str>>(ui: &Ui, text: T) {
         ui.tooltip(|| {
             let wrap = ui.push_text_wrap_pos_with_pos(ui.current_font_size() * 35.0);
             ui.text(text);
-            wrap.pop(&ui);
+            wrap.pop(ui);
         });
     }
 }
@@ -51,7 +51,7 @@ pub fn keybind_input<T: AsRef<str> + Display + Copy>(ui: &Ui, label: T, keybind:
         Some(key) => key.to_string(),
     };
     let width_token = ui.push_item_width(ui.current_font_size() * 3.0);
-    if InputText::new(&ui, label, &mut keybind_buffer)
+    if InputText::new(ui, label, &mut keybind_buffer)
         .chars_decimal(true)
         .build() {
         if let Ok(new_keybind) = keybind_buffer.parse() {
@@ -60,7 +60,7 @@ pub fn keybind_input<T: AsRef<str> + Display + Copy>(ui: &Ui, label: T, keybind:
             *keybind = None;
         }
     }
-    width_token.pop(&ui);
+    width_token.pop(ui);
 
     let original_style = ui.clone_style();
     if let _spacing = ui.push_style_var(StyleVar::ItemSpacing([1.0, original_style.item_spacing[1]])) {
@@ -76,7 +76,7 @@ pub fn keybind_input<T: AsRef<str> + Display + Copy>(ui: &Ui, label: T, keybind:
         };
         if let _width = ui.push_item_width(ui.calc_text_size(&preview_buffer)[0] + original_style.frame_padding[0] * 2.0) {
             if let _alpha = ui.push_style_var(StyleVar::Alpha(0.5)) {
-                InputText::new(&ui, &format!("{}##preview", label), &mut preview_buffer)
+                InputText::new(ui, &format!("{}##preview", label), &mut preview_buffer)
                     .read_only(true)
                     .build();
             }

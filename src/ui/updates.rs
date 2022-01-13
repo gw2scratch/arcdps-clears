@@ -12,7 +12,7 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
             .no_nav()
             .collapsible(false)
             .opened(&mut shown)
-            .build(&ui, || {
+            .build(ui, || {
                 if let Some(release) = release {
                     ui.text(tr.translate("update-available"));
                     ui.separator();

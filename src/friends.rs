@@ -76,7 +76,7 @@ impl State {
         &self.friends
     }
     pub fn key_state(&self, api_key: &ApiKey) -> Option<&KeyState> {
-        self.keys().iter().filter(|x| x.key_hash == key_hash(api_key.key())).next()
+        self.keys().iter().find(|x| x.key_hash == key_hash(api_key.key()))
     }
 }
 
@@ -162,7 +162,7 @@ impl FriendData {
     }
     pub fn known(&self, account_name: &str) -> Option<bool> {
         if let Some(state) = &self.api_state {
-            state.friends.iter().filter(|x| x.account == account_name).next().map(|x| x.known)
+            state.friends.iter().find(|x| x.account == account_name).map(|x| x.known)
         } else {
             None
         }
@@ -181,7 +181,7 @@ impl FriendData {
         if last_reset >= state.last_api_update_time() {
             Some(&EMPTY_CLEARS)
         } else {
-            Some(&state.finished_encounters())
+            Some(state.finished_encounters())
         }
     }
     pub fn set_clears(&mut self, account: String, clear_data: RaidClearState) {
@@ -196,7 +196,7 @@ impl FriendData {
 }
 
 fn parse_state(json: &str) -> Result<State, serde_json::Error> {
-    Ok(serde_json::from_str(json)?)
+    serde_json::from_str(json)
 }
 
 pub enum FriendsApiError {
@@ -333,10 +333,7 @@ pub enum KeyUsability {
 
 impl KeyUsability {
     pub fn is_usable(&self) -> bool {
-        match self {
-            KeyUsability::Usable => true,
-            _ => false
-        }
+        matches!(self, KeyUsability::Usable)
     }
 }
 

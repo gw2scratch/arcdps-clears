@@ -19,7 +19,7 @@ pub fn my_clears(
     tr: &Translation,
 ) {
     if let Some(raids) = data.clears.raids() {
-        if settings.api_keys.len() == 0 {
+        if settings.api_keys.is_empty() {
             utils::centered_text(ui, &tr.translate("clears-intro-welcome"));
             ui.text("");
             ui.text(tr.translate("clears-intro-get-started-prefix"));
@@ -44,20 +44,20 @@ pub fn my_clears(
             .filter(|key| key.show_key_in_clears())
             .map(|key| ClearTableEntry {
                 account_name: get_api_key_name(key, tr),
-                state: data.clears.finished_encounters(&key),
+                state: data.clears.finished_encounters(key),
                 expanded: key.expanded_in_clears_mut()
             })
             .collect();
 
         clears_table(ui, raids, &mut entries, &settings.my_clears_style, settings.short_names, tr, || {
-            utils::centered_text(&ui, &tr.translate("clears-no-clears-data-yet"));
+            utils::centered_text(ui, &tr.translate("clears-no-clears-data-yet"));
             ui.text("");
             // TODO: Custom prompt for missing perms
 
             let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
             let until_wakeup = time.saturating_duration_since(Instant::now());
             utils::centered_text(
-                &ui,
+                ui,
                 format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
             );
         });
@@ -68,7 +68,7 @@ pub fn my_clears(
         let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
         let until_wakeup = time.saturating_duration_since(Instant::now());
         utils::centered_text(
-            &ui,
+            ui,
             format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
         );
     }
@@ -93,7 +93,7 @@ pub fn my_clears(
                 }
             });
             ui.separator();
-            settings::style_section(&ui, "my-clears-style-tooltip", &mut settings.my_clears_style, tr);
+            settings::style_section(ui, "my-clears-style-tooltip", &mut settings.my_clears_style, tr);
         }
     })
 }
@@ -125,7 +125,7 @@ pub fn clears_table<F: Fn()>(
             let mut first_key = true;
             for (i, item) in data.iter_mut().enumerate() {
                 if !first_key {
-                    account_separator(&ui, style.account_header_style);
+                    account_separator(ui, style.account_header_style);
                 }
                 first_key = false;
 
@@ -159,7 +159,7 @@ pub fn clears_table<F: Fn()>(
                                 for column in 0..max_bosses {
                                     ui.table_next_column();
                                     if let Some(encounter) = wing.encounters().get(column) {
-                                        let finished = clears.is_finished(&encounter);
+                                        let finished = clears.is_finished(encounter);
 
                                         let bg_color = if finished {
                                             style.finished_clear_color
@@ -196,7 +196,7 @@ pub fn clears_table<F: Fn()>(
             for (i, item) in data.iter_mut().enumerate() {
 
                 if !first_key {
-                    account_separator(&ui, style.account_header_style);
+                    account_separator(ui, style.account_header_style);
                 }
                 first_key = false;
 
@@ -230,7 +230,7 @@ pub fn clears_table<F: Fn()>(
                                 for wing in raids.wings() {
                                     ui.table_next_column();
                                     if let Some(encounter) = wing.encounters().get(boss) {
-                                        let finished = clears.is_finished(&encounter);
+                                        let finished = clears.is_finished(encounter);
 
                                         let bg_color = if finished {
                                             style.finished_clear_color
@@ -239,9 +239,9 @@ pub fn clears_table<F: Fn()>(
                                         };
 
                                         if short_names {
-                                            utils::centered_text(&ui, tr.encounter_short_name_im_string(encounter));
+                                            utils::centered_text(ui, tr.encounter_short_name_im_string(encounter));
                                         } else {
-                                            utils::centered_text(&ui, encounter_english_name(encounter));
+                                            utils::centered_text(ui, encounter_english_name(encounter));
                                         }
 
                                         ui.table_set_bg_color(TableBgTarget::CELL_BG, bg_color);
@@ -302,8 +302,7 @@ pub fn clears_table<F: Fn()>(
             ) {
                 outer_cell_padding.pop();
 
-                let mut table_headers_names = Vec::new();
-                table_headers_names.push(tr.translate("clears-account-column-header"));
+                let mut table_headers_names = vec![tr.translate("clears-account-column-header")];
                 ui.table_setup_column_with(TableColumnSetup {
                     name: table_headers_names.last().unwrap(),
                     flags: TableColumnFlags::WIDTH_FIXED,
@@ -374,7 +373,7 @@ pub fn clears_table<F: Fn()>(
                             for encounter in wing.encounters() {
                                 ui.table_next_column();
                                 if let Some(clears) = item.state {
-                                    let finished = clears.is_finished(&encounter);
+                                    let finished = clears.is_finished(encounter);
 
                                     let bg_color = if finished {
                                         style.finished_clear_color
@@ -403,7 +402,7 @@ pub fn clears_table<F: Fn()>(
                                     standard_style.pop();
                                     padding_style.pop();
                                 } else {
-                                    utils::centered_text(&ui, &tr.translate("clears-compressed-layout-short-unknown"));
+                                    utils::centered_text(ui, &tr.translate("clears-compressed-layout-short-unknown"));
                                 }
                             }
                         }
@@ -413,9 +412,9 @@ pub fn clears_table<F: Fn()>(
                             if ui.table_column_flags_with_column(i).contains(TableColumnFlags::IS_HOVERED) {
                                 ui.tooltip(|| {
                                     if short_names {
-                                        utils::centered_text(&ui, tr.encounter_short_name_im_string(encounter));
+                                        utils::centered_text(ui, tr.encounter_short_name_im_string(encounter));
                                     } else {
-                                        utils::centered_text(&ui, encounter_english_name(encounter));
+                                        utils::centered_text(ui, encounter_english_name(encounter));
                                     }
                                 });
                             }
@@ -441,7 +440,7 @@ pub fn account_header<T: AsRef<str>>(ui: &Ui, name: T, expanded: &mut bool, styl
         AccountHeaderStyle::None => {}
         AccountHeaderStyle::CenteredText => utils::centered_text(ui, name),
         AccountHeaderStyle::Collapsible => {
-            *expanded = CollapsingHeader::new(name).default_open(*expanded).build(&ui);
+            *expanded = CollapsingHeader::new(name).default_open(*expanded).build(ui);
             shown = *expanded;
         }
     };

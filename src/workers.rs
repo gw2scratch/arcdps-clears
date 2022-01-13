@@ -354,7 +354,7 @@ pub fn start_workers(
 
                     if let Some(metadata) = metadata {
                         for key in &metadata.api_keys {
-                            match friends_api.set_public(metadata.clone(), &key, public) {
+                            match friends_api.set_public(metadata.clone(), key, public) {
                                 Ok(state) => {
                                     data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                 }

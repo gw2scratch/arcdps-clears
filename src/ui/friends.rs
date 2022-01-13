@@ -99,13 +99,13 @@ pub fn friends(
                     wrap.pop(ui);
                 } else {
                     clears_table(ui, raids, &mut entries, &settings.friends_clears_style, settings.short_names, tr, || {
-                        utils::centered_text(&ui, &tr.translate("friends-no-data-available"));
+                        utils::centered_text(ui, &tr.translate("friends-no-data-available"));
                         ui.text("");
 
                         let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
                         let until_wakeup = time.saturating_duration_since(Instant::now());
                         utils::centered_text(
-                            &ui,
+                            ui,
                             format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
                         );
                     });
@@ -118,7 +118,7 @@ pub fn friends(
                 let time = *bg_workers.api_refresher_next_wakeup().lock().unwrap();
                 let until_wakeup = time.saturating_duration_since(Instant::now());
                 utils::centered_text(
-                    &ui,
+                    ui,
                     format!("{}{}{}", tr.translate("next-refresh-secs-prefix"), until_wakeup.as_secs(), tr.translate("next-refresh-secs-suffix")),
                 );
             }
@@ -208,8 +208,8 @@ pub fn friends_window(
 
                             // To implement moving, we need to find previous non-hidden friend and
                             // its index in the non-filtered friend list.
-                            let prev = (0..i).rev().filter(|prev_i| shown_indices[*prev_i]).next();
-                            let next = (i + 1..shown_indices.len()).filter(|next_i| shown_indices[*next_i]).next();
+                            let prev = (0..i).rev().find(|prev_i| shown_indices[*prev_i]);
+                            let next = (i + 1..shown_indices.len()).find(|next_i| shown_indices[*next_i]);
 
                             if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
                                 if let Some(prev_i) = prev {
