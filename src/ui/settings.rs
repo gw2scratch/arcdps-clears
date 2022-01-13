@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, Drag, PopupModal, Slider, TableFlags, Ui};
+use arcdps::imgui::{CollapsingHeader, ColorEdit, ColorEditFlags, PopupModal, Slider, TableFlags, Ui};
 
 use crate::urls;
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
