@@ -32,7 +32,7 @@ pub fn load_0_1_0(json: &str) -> Option<Settings> {
         short_names: bool,
     }
 
-    let old_setting_result: serde_json::Result<Settings0_1> = serde_json::from_str(&json);
+    let old_setting_result: serde_json::Result<Settings0_1> = serde_json::from_str(json);
     if let Ok(old_settings) = old_setting_result {
         let mut settings = Settings::default();
         settings.short_names = old_settings.short_names;
@@ -127,7 +127,7 @@ pub fn load_0_3(json: &str) -> Option<Settings> {
         },
     }
 
-    let old_setting_result: serde_json::Result<Settings0_3> = serde_json::from_str(&json);
+    let old_setting_result: serde_json::Result<Settings0_3> = serde_json::from_str(json);
     if let Ok(old_settings) = old_setting_result {
         let mut settings = Settings::default();
 

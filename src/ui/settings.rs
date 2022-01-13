@@ -9,7 +9,7 @@ use crate::ui::{UiState, utils};
 
 pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
     if CollapsingHeader::new(&tr.translate("settings-section-behavior"))
-        .build(&ui) {
+        .build(ui) {
         /* Hide in loading screens */
         ui.checkbox(
             tr.translate("setting-hide-in-loading-screens"),
@@ -34,7 +34,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-friends"))
-        .build(&ui) {
+        .build(ui) {
         ui.checkbox(
             tr.translate("setting-friends-enabled"),
             &mut settings.friends.enabled,
@@ -70,10 +70,10 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     };
 
     if CollapsingHeader::new(&tr.translate("settings-section-keybinds"))
-        .build(&ui) {
+        .build(ui) {
         /* Keybind: Main window */
         utils::keybind_input(
-            &ui,
+            ui,
             "##MainWindowKeybindInput",
             &mut settings.keybinds.main_window,
             tr,
@@ -87,7 +87,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
 
         /* Keybind: API key window */
         utils::keybind_input(
-            &ui,
+            ui,
             "##APIKeyWindowKeybindInput",
             &mut settings.keybinds.api_window,
             tr,
@@ -110,22 +110,22 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-common-style"))
-        .build(&ui) {
+        .build(ui) {
         common_style_section(ui, settings, tr);
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-my-clears-style"))
-        .build(&ui) {
+        .build(ui) {
         style_section(ui, "myclears-style", &mut settings.my_clears_style, tr);
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-friends-clears-style"))
-        .build(&ui) {
+        .build(ui) {
         style_section(ui, "friends-style", &mut settings.friends_clears_style, tr);
     }
 
     if CollapsingHeader::new(&tr.translate("settings-section-updates"))
-        .build(&ui) {
+        .build(ui) {
         ui.checkbox(
             &tr.translate("setting-check-updates"),
             &mut settings.check_updates,
@@ -287,7 +287,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
     ColorEdit::new(format!("{}##{}", tr.translate("setting-finished-clear-color"), imgui_id_label),
                    &mut style.finished_clear_color)
         .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
-        .build(&ui);
+        .build(ui);
     ui.same_line();
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.translate("setting-finished-clear-color-description"));
@@ -295,7 +295,7 @@ pub fn style_section(ui: &Ui, imgui_id_label: &str, style: &mut ClearsStyle, tr:
     ColorEdit::new(format!("{}##{}", tr.translate("setting-unfinished-clear-color"), imgui_id_label),
                    &mut style.unfinished_clear_color)
         .flags(ColorEditFlags::NO_INPUTS | ColorEditFlags::ALPHA_PREVIEW_HALF | ColorEditFlags::ALPHA_BAR)
-        .build(&ui);
+        .build(ui);
     ui.same_line();
     ui.align_text_to_frame_padding();
     utils::help_marker(ui, tr.translate("setting-unfinished-clear-color-description"));

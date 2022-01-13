@@ -71,7 +71,7 @@ fn init() {
         if SETTINGS.lock().unwrap().as_ref().expect("Settings should be loaded by now.").check_updates {
             std::thread::spawn(move || {
                 // TODO: Log update check failures
-                if let Ok(Some(release)) = updates::get_update(&SETTINGS.lock().unwrap().as_ref().unwrap()) {
+                if let Ok(Some(release)) = updates::get_update(SETTINGS.lock().unwrap().as_ref().unwrap()) {
                     let mut ui_state = UI_STATE.lock().unwrap();
                     ui_state.update_window.release = Some(release);
                     ui_state.update_window.shown = true;
@@ -130,7 +130,7 @@ fn imgui(imgui_ui: &imgui::Ui, not_loading_or_character_selection: bool) {
                 &mut ui_state,
                 &mut data,
                 &mut settings.as_mut().expect("Settings should be loaded at this point."),
-                &workers.as_ref().expect("Workers should be created at this point."),
+                workers.as_ref().expect("Workers should be created at this point."),
                 &translation,
     );
 }
@@ -142,7 +142,7 @@ fn options(ui: &imgui::Ui, window_name: Option<&str>) -> bool {
         ui.checkbox(&tr.translate("arcdps-menu-name"), &mut ui_state.main_window.shown);
     }
 
-    return false;
+    false
 }
 
 fn options_end(ui: &imgui::Ui) {
@@ -181,7 +181,7 @@ fn wnd_filter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
         }
     }
 
-    return true;
+    true
 }
 
 fn wnd_nofilter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
@@ -203,5 +203,5 @@ fn wnd_nofilter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
         }
     }
 
-    return true;
+    true
 }

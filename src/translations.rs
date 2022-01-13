@@ -62,7 +62,7 @@ pub fn encounter_english_name(encounter: &RaidEncounter) -> String {
         }).collect();
         capitalized
     }
-    let parts = encounter.id().split("_");
+    let parts = encounter.id().split('_');
     parts.enumerate().map(|(i, x)| {
         // The first word should always get capitalized
         if i > 0 && ["of", "in", "the"].contains(&x) {

@@ -179,11 +179,11 @@ impl Gw2Api for LiveApi {
                         Ok(time.into())
                     } else {
                         error!("Failed to parse last modified header time");
-                        return Err(ApiError::UnknownError)
+                        Err(ApiError::UnknownError)
                     }
                 } else {
                     error!("Missing last-modified header in response");
-                    return Err(ApiError::UnknownError)
+                    Err(ApiError::UnknownError)
                 }
             }
             Err(_) => Err(ApiError::UnknownError),

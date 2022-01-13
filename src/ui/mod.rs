@@ -122,29 +122,29 @@ pub fn draw_ui(
             .draw_background(settings.main_window_show_bg)
             .collapsible(false)
             .opened(&mut shown)
-            .build(&ui, || {
+            .build(ui, || {
                 TabBar::new("main_tabs")
-                    .build(&ui, || {
+                    .build(ui, || {
                         TabItem::new(&tr.translate("clears-tab-title"))
-                            .build(&ui, || {
+                            .build(ui, || {
                                 clears::my_clears(ui, ui_state, data, bg_workers, settings, tr);
                             });
 
                         if !settings.feature_adverts.friends_shown {
                             if let _color = ui.push_style_color(StyleColor::Tab, [0.0, 0.5, 0.0, 1.0]) {
                                 TabItem::new(&tr.translate("friends-tab-title"))
-                                    .build(&ui, || {
+                                    .build(ui, || {
                                         settings.feature_adverts.friends_shown = true;
                                         friends::friends(ui, ui_state, data, bg_workers, settings, tr)
                                     });
                             }
                         } else {
                             TabItem::new(&tr.translate("friends-tab-title"))
-                                .build(&ui, || friends::friends(ui, ui_state, data, bg_workers, settings, tr));
+                                .build(ui, || friends::friends(ui, ui_state, data, bg_workers, settings, tr));
 
                         }
                         TabItem::new(&tr.translate("settings-tab-title"))
-                            .build(&ui, || settings::settings(ui, ui_state, settings, tr));
+                            .build(ui, || settings::settings(ui, ui_state, settings, tr));
                 });
             });
         ui_state.main_window.shown = shown;

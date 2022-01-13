@@ -291,7 +291,7 @@ pub struct FriendList {
 
 impl FriendList {
     pub fn get(&self, account_name: &str) -> Option<&Friend> {
-        self.friends.iter().filter(|f| f.account_name() == account_name).next()
+        self.friends.iter().find(|f| f.account_name() == account_name)
     }
     pub fn add(&mut self, friend: Friend) {
         self.friends.push(friend)
@@ -341,11 +341,11 @@ impl Settings {
     }
 
     pub fn get_key(&self, id: &Uuid) -> Option<&ApiKey> {
-        self.api_keys.iter().filter(|x| x.id == *id).next()
+        self.api_keys.iter().find(|x| x.id == *id)
     }
 
     pub fn get_key_mut(&mut self, id: &Uuid) -> Option<&mut ApiKey> {
-        self.api_keys.iter_mut().filter(|x| x.id == *id).next()
+        self.api_keys.iter_mut().find(|x| x.id == *id)
     }
 
     pub fn remove_key(&mut self, id: &Uuid) {
@@ -377,7 +377,6 @@ impl Settings {
         Ok(settings)
     }
 
-    #[must_use]
     pub fn save_to_file(&self, filename: &str) -> Result<(), Box<dyn Error>> {
         // Update the last run version
         // We first serialize settings into a temporary file and then move the file

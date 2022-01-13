@@ -56,7 +56,7 @@ impl fmt::Display for UpdateError {
 
 pub fn get_update(settings: &Settings) -> Result<Option<Release>, Box<dyn Error>> {
     let release = get_latest_release()?;
-    if is_ignored(&settings, &release) {
+    if is_ignored(settings, &release) {
         Ok(None)
     } else {
         Ok(Some(release))
