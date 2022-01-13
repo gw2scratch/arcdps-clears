@@ -415,7 +415,9 @@ pub fn start_workers(
                 }
             }
 
-            let sleep_duration = Duration::from_secs(60);
+            let sleep_minutes = settings_mutex.lock().unwrap().as_ref().expect("Settings should be loaded by now").clears_check_interval_minutes;
+
+            let sleep_duration = Duration::from_secs((60 * sleep_minutes) as u64);
             *api_next_wakeup_for_worker.lock().unwrap() = Instant::now() + sleep_duration;
             sleep(sleep_duration);
         }

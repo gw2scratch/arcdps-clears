@@ -61,6 +61,10 @@ pub fn expanded_in_clears() -> bool {
     true
 }
 
+pub fn clears_check_interval_minutes() -> u32 {
+    3
+}
+
 pub fn keybinds() -> Keybinds {
     Keybinds {
         // C (for clears)

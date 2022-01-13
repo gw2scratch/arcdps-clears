@@ -37,6 +37,8 @@ pub struct Settings {
     pub feature_adverts: FeatureAdverts,
     #[serde(default = "defaults::friends::settings")]
     pub friends: FriendSettings,
+    #[serde(default = "defaults::clears_check_interval_minutes")]
+    pub clears_check_interval_minutes: u32
     // Are you adding a new style option? Make sure to add it to `reset_style()`!
 }
 
@@ -318,6 +320,7 @@ impl Settings {
             main_window_show_title: defaults::main_window_show_title(),
             feature_adverts: defaults::feature_ads::ads(),
             friends: defaults::friends::settings(),
+            clears_check_interval_minutes: defaults::clears_check_interval_minutes(),
             // Are you adding a new style option? Make sure to add to `reset_style()`!
         }
     }
