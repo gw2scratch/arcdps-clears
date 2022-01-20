@@ -6,6 +6,7 @@ use crate::urls;
 use crate::settings::{AccountHeaderStyle, ClearsStyle, ClearsTableStyle, Settings};
 use crate::translations::Translation;
 use crate::ui::{UiState, utils};
+use crate::ui::utils::url_button;
 
 pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
     if CollapsingHeader::new(&tr.translate("settings-section-behavior"))
@@ -48,19 +49,9 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
         utils::help_marker(ui, tr.translate("setting-friends-url-description"));
 
         ui.spacing();
-        if ui.button(tr.translate("setting-friends-how-to-use")) {
-            let _ = open::that(urls::guide::HOW_TO_USE_FRIENDS);
-        }
-        if ui.is_item_hovered() {
-            ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-        }
+        utils::url_button(ui, tr.translate("setting-friends-how-to-use"), urls::guide::HOW_TO_USE_FRIENDS, tr);
         ui.same_line();
-        if ui.button(tr.translate("setting-friends-privacy")) {
-            let _ = open::that(urls::guide::FRIEND_PRIVACY);
-        }
-        if ui.is_item_hovered() {
-            ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-        }
+        utils::url_button(ui, tr.translate("setting-friends-privacy"), urls::guide::FRIEND_PRIVACY, tr);
         if !settings.friends.is_url_default() {
             ui.same_line();
             if ui.button(tr.translate("setting-friends-reset-url")) {
@@ -140,9 +131,7 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     }
 
     ui.spacing();
-    if ui.button(tr.translate("settings-guide-button")) {
-        let _ = open::that(urls::guide::GUIDE);
-    }
+    url_button(ui, tr.translate("settings-guide-button"), urls::guide::GUIDE, tr);
     ui.same_line();
     if ui.button(tr.translate("settings-about-button")) {
         ui_state.about_window.shown = true;

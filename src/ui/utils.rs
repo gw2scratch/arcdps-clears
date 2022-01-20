@@ -45,6 +45,30 @@ pub fn warning_marker<T: AsRef<str>>(ui: &Ui, text: T) {
     }
 }
 
+pub fn small_url_button<TLabel: AsRef<str>>(ui: &Ui, label: TLabel, url: &str, tr: &Translation) {
+    if ui.small_button(label) {
+        let url_cloned = url.to_string();
+        let _ = std::thread::spawn(move || {
+            let _ = open::that(url_cloned);
+        });
+    }
+    if ui.is_item_hovered() {
+        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+    }
+}
+
+pub fn url_button<TLabel: AsRef<str>>(ui: &Ui, label: TLabel, url: &str, tr: &Translation) {
+    if ui.button(label) {
+        let url_cloned = url.to_string();
+        let _ = std::thread::spawn(move || {
+            let _ = open::that(url_cloned);
+        });
+    }
+    if ui.is_item_hovered() {
+        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+    }
+}
+
 pub fn keybind_input<T: AsRef<str> + Display + Copy>(ui: &Ui, label: T, keybind: &mut Option<usize>, tr: &Translation) {
     let mut keybind_buffer = match keybind {
         None => String::new(),

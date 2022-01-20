@@ -1,5 +1,5 @@
 use arcdps::imgui::{Window, TableFlags, Ui};
-use crate::ui::UiState;
+use crate::ui::{UiState, utils};
 use crate::translations::Translation;
 
 pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
@@ -29,19 +29,9 @@ pub fn update_window(ui: &Ui, ui_state: &mut UiState, tr: &Translation) {
                         ui.text(release.version());
                     }
                     ui.separator();
-                    if ui.button(&tr.translate("update-button-changelog")) {
-                        let _ = open::that(release.changelog_url());
-                    }
-                    if ui.is_item_hovered() {
-                        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-                    }
+                    utils::url_button(ui, tr.translate("update-button-changelog"), release.changelog_url(), tr);
                     ui.same_line();
-                    if ui.button(&tr.translate("update-button-download")) {
-                        let _ = open::that(release.tool_site_url());
-                    }
-                    if ui.is_item_hovered() {
-                        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-                    }
+                    utils::url_button(ui, tr.translate("update-button-download"), release.tool_site_url(), tr);
                 } else {
                     ui.text(tr.translate("update-not-available"))
                 }

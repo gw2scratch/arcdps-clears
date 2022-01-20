@@ -70,12 +70,7 @@ pub fn friends(
         let _spacing = ui.push_style_var(StyleVar::ItemSpacing([0.0, 0.0]));
         ui.dummy([x_offset, 0.0]);
         ui.same_line();
-        if ui.button(privacy_text) {
-            let _ = open::that(urls::guide::FRIEND_PRIVACY);
-        }
-        if ui.is_item_hovered() {
-            ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-        }
+        utils::url_button(ui, privacy_text, urls::guide::FRIEND_PRIVACY, tr);
     } else {
         if data.friends.api_state().is_none() {
             ui.text_colored(WARNING_RED, tr.translate("friends-no-connection-to-server"));

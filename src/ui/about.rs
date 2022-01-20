@@ -27,31 +27,12 @@ fn about(ui: &Ui, tr: &Translation) {
     utils::centered_text(ui, tr.translate("about-made-by"));
     ui.spacing();
     ui.dummy([ui.text_line_height() * 20.0, ui.text_line_height() * 2.0]);
-    if ui.button(tr.translate("about-guide-button")) {
-        let _ = open::that(urls::guide::GUIDE);
-    }
+
+    utils::url_button(ui, tr.translate("about-guide-button"), urls::guide::GUIDE, tr);
     ui.same_line();
-    if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-    }
-    if ui.button(tr.translate("about-source-button")) {
-        let _ = open::that(urls::SOURCE_CODE);
-    }
-    if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-    }
+    utils::url_button(ui, tr.translate("about-source-button"), urls::SOURCE_CODE, tr);
     ui.same_line();
-    if ui.button(tr.translate("about-website-button")) {
-        let _ = open::that(urls::WEBSITE);
-    }
-    if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-    }
+    utils::url_button(ui, tr.translate("about-website-button"), urls::WEBSITE, tr);
     ui.same_line();
-    if ui.button(tr.translate("about-discord-button")) {
-        let _ = open::that(urls::DISCORD);
-    }
-    if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
-    }
+    utils::url_button(ui, tr.translate("about-discord-button"), urls::DISCORD, tr);
 }

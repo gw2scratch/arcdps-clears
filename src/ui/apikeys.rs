@@ -97,9 +97,7 @@ pub fn api_keys_window(
                                     ui.separator();
                                     ui.text_wrapped(&tr.translate("api-key-guide-step1-prefix"));
                                     ui.same_line();
-                                    if ui.small_button(&tr.translate("api-key-guide-step1-open")) {
-                                        let _ = open::that("https://account.arena.net/applications/create");
-                                    }
+                                    utils::small_url_button(ui, tr.translate("api-key-guide-step1-open"), "https://account.arena.net/applications/create", tr);
                                     ui.same_line();
                                     ui.text(tr.translate("api-key-guide-step1-url"));
                                     ui.text_wrapped(&tr.translate("api-key-guide-step2"));
