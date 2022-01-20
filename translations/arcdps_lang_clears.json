@@ -103,7 +103,7 @@
     "clears-no-clears-data-yet": "Clear data is not yet available.",
     "next-refresh-secs-prefix": "Next refresh in ",
     "next-refresh-secs-suffix": " seconds.",
-    "tooltip-opens-in-a-browser": "Opens in a browser",
+    "tooltip-opens-in-a-browser": "Opens in a browser.",
     "update-window-title": "arcdps clears - update",
     "update-available": "A new update is available!",
     "update-not-available": "No new update available.",

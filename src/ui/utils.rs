@@ -53,7 +53,11 @@ pub fn small_url_button<TLabel: AsRef<str>>(ui: &Ui, label: TLabel, url: &str, t
         });
     }
     if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+        ui.tooltip(|| {
+            ui.text(tr.translate("tooltip-opens-in-a-browser"));
+            ui.spacing();
+            help_text(ui, url);
+        });
     }
 }
 
@@ -65,7 +69,11 @@ pub fn url_button<TLabel: AsRef<str>>(ui: &Ui, label: TLabel, url: &str, tr: &Tr
         });
     }
     if ui.is_item_hovered() {
-        ui.tooltip_text(tr.translate("tooltip-opens-in-a-browser"));
+        ui.tooltip(|| {
+            ui.text(tr.translate("tooltip-opens-in-a-browser"));
+            ui.spacing();
+            help_text(ui, url);
+        });
     }
 }
 
