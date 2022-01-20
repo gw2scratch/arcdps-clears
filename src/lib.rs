@@ -190,6 +190,16 @@ fn wnd_nofilter(key: usize, key_down: bool, _prev_key_down: bool) -> bool {
             if key_down && key == input::KEY_ESCAPE {
                 // We do not close the update window to avoid accidental closes.
 
+                if UI_STATE.lock().unwrap().friends_window.shown {
+                    UI_STATE.lock().unwrap().friends_window.shown = false;
+                    return false;
+                }
+
+                if UI_STATE.lock().unwrap().about_window.shown {
+                    UI_STATE.lock().unwrap().about_window.shown = false;
+                    return false;
+                }
+
                 if UI_STATE.lock().unwrap().api_key_window.shown {
                     UI_STATE.lock().unwrap().api_key_window.shown = false;
                     return false;
