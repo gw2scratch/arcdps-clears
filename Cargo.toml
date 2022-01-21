@@ -1,6 +1,6 @@
 [package]
 name = "clears"
-version = "1.0.0-rc2"
+version = "1.0.0"
 authors = ["Jiří Sejkora <sejsel@sejsel.cz>"]
 edition = "2018"
 

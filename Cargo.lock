@@ -96,7 +96,7 @@ checksum = "fff857943da45f546682664a79488be82e69e43c1a7a2307679ab9afb3a66d2e"
 
 [[package]]
 name = "clears"
-version = "1.0.0-rc2"
+version = "1.0.0"
 dependencies = [
  "arcdps",
  "chrono",
