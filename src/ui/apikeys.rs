@@ -295,28 +295,53 @@ pub fn api_keys_window(
                                                 if let Some(state) = data.friends.api_state().and_then(|x| x.key_state(key)) {
                                                     ui.text_wrapped(&tr.translate("api-key-friends-intro"));
 
-                                                    let original_public = state.public();
-                                                    let mut public = state.public();
-                                                    if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
-                                                        ui.radio_button(tr.translate("api-key-friends-share-public"), &mut public, true);
-                                                        ui.same_line();
-                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-public-description"));
-                                                        ui.radio_button(tr.translate("api-key-friends-share-friends"), &mut public, false);
-                                                        ui.same_line();
-                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-friends-description"));
+                                                    #[derive(Copy, Clone, Eq, PartialEq)]
+                                                    enum PrivacyOption {
+                                                        Public,
+                                                        FriendsOnly,
+                                                        Disabled
                                                     }
 
-                                                    if public != original_public {
+                                                    let original_privacy = if state.disabled() {
+                                                        PrivacyOption::Disabled
+                                                    } else {
+                                                        if state.public() {
+                                                            PrivacyOption::Public
+                                                        } else {
+                                                            PrivacyOption::FriendsOnly
+                                                        }
+                                                    };
+
+                                                    let mut privacy = original_privacy;
+
+                                                    if let _padding = ui.push_style_var(StyleVar::FramePadding([0.0, 0.0])) {
+                                                        ui.radio_button(tr.translate("api-key-friends-share-public"), &mut privacy, PrivacyOption::Public);
+                                                        ui.same_line();
+                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-public-description"));
+                                                        ui.radio_button(tr.translate("api-key-friends-share-friends"), &mut privacy, PrivacyOption::FriendsOnly);
+                                                        ui.same_line();
+                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-friends-description"));
+                                                        ui.radio_button(tr.translate("api-key-friends-share-disabled"), &mut privacy, PrivacyOption::Disabled);
+                                                        ui.same_line();
+                                                        utils::help_marker(ui, tr.translate("api-key-friends-share-disabled-description"));
+                                                    }
+
+                                                    if privacy != original_privacy {
+                                                        let (public, disabled) = match privacy {
+                                                            PrivacyOption::Public => (true, false),
+                                                            PrivacyOption::FriendsOnly => (false, false),
+                                                            PrivacyOption::Disabled => (false, true),
+                                                        };
                                                         if let Err(_) = bg_workers.api_sender().send(ApiJob::SetKeyPublicFriend {
                                                             key_uuid: *key.id(),
                                                             public,
+                                                            disabled
                                                         }) {
                                                             warn!("Failed to send request to API worker");
                                                         }
                                                     }
 
-
-                                                    if !state.public() {
+                                                    if privacy == PrivacyOption::FriendsOnly {
                                                         if let Some(_t) = ui.begin_table_with_flags("ApiKeyFriendsTable", 2, TableFlags::SIZING_FIXED_FIT | TableFlags::SCROLL_Y) {
                                                             for share in state.shared_to() {
                                                                 ui.table_next_row();

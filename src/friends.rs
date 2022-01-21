@@ -51,6 +51,7 @@ pub struct KeyState {
     subtoken_expires_at: Option<DateTime<Utc>>,
     account: Option<String>,
     public: bool,
+    disabled: bool,
 }
 
 #[derive(Deserialize)]
@@ -110,6 +111,9 @@ impl KeyState {
     }
     pub fn public(&self) -> bool {
         self.public
+    }
+    pub fn disabled(&self) -> bool {
+        self.disabled
     }
 }
 
@@ -289,12 +293,13 @@ impl FriendsApiClient {
         }
     }
 
-    pub fn set_public(&self, metadata: FriendRequestMetadata, api_key: &str, public: bool) -> Result<State, FriendsApiError> {
+    pub fn set_public(&self, metadata: FriendRequestMetadata, api_key: &str, public: bool, disabled: bool) -> Result<State, FriendsApiError> {
         let response = ureq::post(&format!("{}key/public", self.url))
             .apply_metadata(metadata)
             .send_form(&[
                 ("key_hash", &key_hash(api_key)),
-                ("public", &public.to_string())
+                ("public", &public.to_string()),
+                ("disabled", &disabled.to_string()),
             ])?;
 
         if let Ok(text) = response.into_string() {

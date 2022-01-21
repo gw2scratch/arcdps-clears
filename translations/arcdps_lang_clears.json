@@ -155,6 +155,8 @@
     "api-key-friends-share-friends-description": "After selecting this option, you can set a list of people who can see your clears.",
     "api-key-friends-share-public": "Everyone",
     "api-key-friends-share-public-description": "Anyone can see your clears if they know your account name.",
+    "api-key-friends-share-disabled": "Do not share",
+    "api-key-friends-share-disabled-description": "Nobody can see your clears.",
     "api-key-friends-warning-unknown-user": "Unknown user",
     "api-key-friends-share-button": "Share",
     "api-key-friends-unshare-button": "Unshare",

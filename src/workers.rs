@@ -40,7 +40,7 @@ pub enum ApiJob {
     UpdateFriendClears { account_name: String, subtoken: String },
     ShareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
     UnshareKeyWithFriend { key_uuid: Uuid, friend_account_name: String },
-    SetKeyPublicFriend { key_uuid: Uuid, public: bool },
+    SetKeyPublicFriend { key_uuid: Uuid, public: bool, disabled: bool },
     SetAllKeysPublicFriend { public: bool },
 }
 
@@ -325,13 +325,13 @@ pub fn start_workers(
                         }
                     }
                 }
-                ApiJob::SetKeyPublicFriend { key_uuid, public } => {
+                ApiJob::SetKeyPublicFriend { key_uuid, public, disabled } => {
                     let metadata = copy_friends_metadata(settings_mutex);
                     let key: Option<String> = copy_api_key(settings_mutex, key_uuid);
 
                     if let Some(metadata) = metadata {
                         if let Some(key) = key {
-                            match friends_api.set_public(metadata, &key, public) {
+                            match friends_api.set_public(metadata, &key, public, disabled) {
                                 Ok(state) => {
                                     data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                 }
@@ -354,7 +354,7 @@ pub fn start_workers(
 
                     if let Some(metadata) = metadata {
                         for key in &metadata.api_keys {
-                            match friends_api.set_public(metadata.clone(), key, public) {
+                            match friends_api.set_public(metadata.clone(), key, public, false) {
                                 Ok(state) => {
                                     data_mutex.lock().unwrap().friends.set_api_state(Some(state));
                                 }
