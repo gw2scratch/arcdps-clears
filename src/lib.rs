@@ -154,10 +154,12 @@ fn options_end(ui: &imgui::Ui) {
         // We wait for settings to get loaded first.
         return;
     }
-    ui::settings::settings(ui,
-                           &mut ui_state,
-                           settings.as_mut().expect("Settings should be loaded at this point."),
-                           &tr,
+    ui::settings::settings(
+        ui,
+        &mut ui_state,
+        settings.as_mut().expect("Settings should be loaded at this point."),
+        &tr,
+        true
     );
 }
 

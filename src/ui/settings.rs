@@ -8,7 +8,13 @@ use crate::translations::Translation;
 use crate::ui::{UiState, utils};
 use crate::ui::utils::url_button;
 
-pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &Translation) {
+pub fn settings(
+    ui: &Ui,
+    ui_state: &mut UiState,
+    settings: &mut Settings,
+    tr: &Translation,
+    api_key_button_expanded: bool,
+) {
     if CollapsingHeader::new(&tr.translate("settings-section-behavior"))
         .build(ui) {
         /* Hide in loading screens */
@@ -126,7 +132,14 @@ pub fn settings(ui: &Ui, ui_state: &mut UiState, settings: &mut Settings, tr: &T
     }
 
     ui.spacing();
-    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [ui.text_line_height() * 30.0, ui.text_line_height() * 2.5]) {
+
+    let api_key_button_width = if api_key_button_expanded {
+        ui.current_column_width()
+    } else {
+        ui.text_line_height() * 30.0
+    };
+
+    if ui.button_with_size(&tr.translate("setting-button-manage-api-keys"), [api_key_button_width, ui.text_line_height() * 2.5]) {
         ui_state.api_key_window.shown = true;
     }
 

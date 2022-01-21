@@ -144,7 +144,7 @@ pub fn draw_ui(
 
                         }
                         TabItem::new(&tr.translate("settings-tab-title"))
-                            .build(ui, || settings::settings(ui, ui_state, settings, tr));
+                            .build(ui, || settings::settings(ui, ui_state, settings, tr, false));
                 });
             });
         ui_state.main_window.shown = shown;
