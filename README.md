@@ -5,20 +5,30 @@
 # arcdps clears
 A plugin for arcdps which adds a window for quickly checking your current weekly clears in the game.
 
-[![Ingame screenshot](https://i.imgur.com/8GcJjT4.png)](https://gw2scratch.com/tools/arcdps-clears)
-
 This plugin uses the official Guild Wars 2 API to get the clear data, you will need an [API key](https://wiki.guildwars2.com/wiki/API:API_key) (with access to *account* and *progression*).
 
 The plugin uses no actual arcdps combat data, so it is the same as your typical overlay program – no need to worry about breaking any rules.
 
-## Current State
+## Screenshots
+[![Ingame screenshot](https://i.imgur.com/mLdc74W.png)](https://gw2scratch.com/tools/arcdps-clears)
+[![Friends](https://i.imgur.com/2X3XWZs.png)](https://gw2scratch.com/tools/arcdps-clears)
 
-Please note, this is currently an early version. It's already useful to me, so I am releasing it as it is.
-However, there are some extra things that I want to add in the future.
 
-- There is currently no support for clears of friends (the tab does nothing right now)
-- There is currently no support for non-raid content (sorry, no dungeons yet!)
-- There are some secret plans for big new features
+## Features
+
+- Shows raid clears for your account(s) within the game.
+- Shows raid clears of friends if they also use the addon.
+- Offers multiple table styles and many other configuration options
+
+### Currently not supported
+
+- non-raid content (sorry, no dungeons or world bosses yet!)
+- weekly CM achievement – currently impossible due to [API limitations](https://github.com/gw2-api/issues/issues/2)
+
+## Usage
+
+An [user guide](https://guides.gw2scratch.com/clears/) is available,
+with installation steps and descriptions of how to use the plugin.
 
 ## Translations
 
