@@ -215,7 +215,9 @@ pub fn start_workers(
                             Ok(subtoken) => {
                                 if let Some(metadata) = copy_friends_metadata(settings_mutex) {
                                     match friends_api.add_subtoken(metadata, &key, subtoken) {
-                                        Ok(_) => {}
+                                        Ok(state) => {
+                                            data_mutex.lock().unwrap().friends.set_api_state(Some(state));
+                                        }
                                         Err(FriendsApiError::UnknownError) => {
                                             warn!("Friends - Failed to send subtoken to friend server.");
                                         }
