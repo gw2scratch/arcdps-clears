@@ -393,7 +393,8 @@ mod tests {
       "subtoken_added_at": null,
       "subtoken_expires_at": null,
       "account": null,
-      "public": false
+      "public": false,
+      "disabled": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
@@ -401,7 +402,8 @@ mod tests {
       "subtoken_added_at": null,
       "subtoken_expires_at": null,
       "account": null,
-      "public": false
+      "public": false,
+      "disabled": false
     }
   ],
   "friends": []
@@ -443,7 +445,8 @@ mod tests {
       "subtoken_added_at": "2020-03-28T16:29:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:29:04.644008111Z",
       "account": "OurAccount.1234",
-      "public": false
+      "public": false,
+      "disabled": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
@@ -451,7 +454,8 @@ mod tests {
       "subtoken_added_at": "2020-03-28T16:30:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:30:04.644008111Z",
       "account": "OurAccount.5678",
-      "public": false
+      "public": false,
+      "disabled": false
     }
   ],
   "friends": []
@@ -491,7 +495,8 @@ mod tests {
       "subtoken_added_at": "2020-03-28T16:29:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:29:04.644008111Z",
       "account": "OurAccount.1234",
-      "public": false
+      "public": false,
+      "disabled": false
     },
     {
       "key_hash": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
@@ -499,7 +504,8 @@ mod tests {
       "subtoken_added_at": "2020-03-28T16:30:04.644008111Z",
       "subtoken_expires_at": "2021-03-28T16:30:04.644008111Z",
       "account": "OurAccount.5678",
-      "public": false
+      "public": false,
+      "disabled": false
     }
   ],
   "friends": [
