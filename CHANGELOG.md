@@ -1,6 +1,10 @@
 # arcdps clears changelog
 This is the full changelog of **arcdps clears**.
 
+## arcdps clears 0.3.1
+#### Fixes
+- We kinda forgot to update the version number to 0.3.0, so here we go with another release that just bumps the number, and the addon should no longer keep telling you it's out of date every time it's launched!
+
 ## arcdps clears 0.3.0
 This is a small release adding a couple of style options and simplifying color settings.
 
