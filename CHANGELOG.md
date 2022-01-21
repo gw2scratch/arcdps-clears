@@ -1,6 +1,30 @@
 # arcdps clears changelog
 This is the full changelog of **arcdps clears**.
 
+## arcdps clears 1.0
+The **Friends** update is finally here.
+
+#### New features
+- Added support for seeing clears of your friends:
+    - requires friends to also use the addon,
+    - clears may be set as public or friends only (for a configured list of friends) for each API key in the API key management window,
+    - friend clears have a separate style from the *My clears* tab,
+    - see the *Friends* tab or the [guide](https://guides.gw2scratch.com/clears/friends/how-to.html) for more details.
+- Added a [user guide](https://guides.gw2scratch.com/clears/).
+- Added a "show title bar" setting for the Clears window.
+- Added a "show background" setting for the Clears window.
+- Added a setting for changing the clear check interval (defaults to every 3 minutes).
+- Shown accounts may be toggled in the right-click menu.
+- Added settings to the Extensions tab in arcdps settings (in addition to the current location).
+- Added an *About* window.
+
+#### Changes
+- Settings not applicable to the current clear layout are hidden.
+
+#### Fixes
+- Raid reset is now handled correctly.
+- Opening browser windows no longer causes freezes when running Guild Wars 2 in wine.
+
 ## arcdps clears 0.3.1
 #### Fixes
 - We kinda forgot to update the version number to 0.3.0, so here we go with another release that just bumps the number, and the addon should no longer keep telling you it's out of date every time it's launched!
