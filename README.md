@@ -1,4 +1,4 @@
-[![Build and test](https://img.shields.io/github/workflow/status/gw2scratch/arcdps-clears/Build%20and%20test?logo=github)](https://github.com/gw2scratch/arcdps-clears/actions/workflows/build-and-test.yml)
+[![Build and test](https://img.shields.io/github/actions/workflow/status/gw2scratch/arcdps-clears/build-and-test.yml?logo=github)](https://github.com/gw2scratch/arcdps-clears/actions/workflows/build-and-test.yml)
 [![Website](https://img.shields.io/website?down_message=gw2scratch.com&up_message=gw2scratch.com&url=https%3A%2F%2Fgw2scratch.com)](https://gw2scratch.com/tools/arcdps-clears)
 [![Discord](https://img.shields.io/discord/543804828808249374?label=discord&logo=discord&logoColor=white&)](https://discord.gg/rNXRS6ZkYe)
 
